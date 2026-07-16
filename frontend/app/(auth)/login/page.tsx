@@ -36,8 +36,11 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      await login(values);
-      router.push("/dashboard");
+      const session = await login(values);
+      const isStaff = session.roles.some((role) =>
+        ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
+      );
+      router.push(isStaff ? "/dashboard" : "/properties");
       router.refresh();
     } catch (error) {
       if (error instanceof ApiRequestError) {

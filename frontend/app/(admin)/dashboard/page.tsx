@@ -2,6 +2,7 @@
 
 import { Clock, Gavel, UserPlus } from "lucide-react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { RequirePermission } from "@/components/auth/RequirePermission";
 import { CategoryMixDonut } from "@/components/dashboard/CategoryMixDonut";
 import { ListPanel } from "@/components/dashboard/ListPanel";
 import { RevenueBarChart } from "@/components/dashboard/RevenueBarChart";
@@ -26,6 +27,7 @@ export default function SuperAdminDashboardPage() {
 
   return (
     <AdminShell>
+       <RequirePermission module="reports" need="view">
       <div className="space-y-6 p-6">
         <WelcomeBanner name={firstName} {...welcomeBanner} />
 
@@ -49,6 +51,7 @@ export default function SuperAdminDashboardPage() {
           <ListPanel title="Auctions Ending Soon" items={auctionsEndingSoon} viewAllHref="/auctions" icon={Clock} />
         </div>
       </div>
+      </RequirePermission>
     </AdminShell>
   );
 }
