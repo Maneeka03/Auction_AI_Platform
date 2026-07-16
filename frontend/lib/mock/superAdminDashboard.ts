@@ -46,32 +46,32 @@ export const monthlyRevenue: MonthlyRevenuePoint[] = [
 ];
 
 export const categoryMix: CategoryMixDatum[] = [
-  { name: "Watches", percent: 38, color: "var(--color-brand-500)" },
-  { name: "Fine Art", percent: 27, color: "var(--color-amber-500)" },
-  { name: "Jewelry", percent: 22, color: "var(--color-success-500)" },
-  { name: "Coins", percent: 13, color: "var(--color-neutral-300)" },
+  { name: "Residential", percent: 52, color: "var(--color-brand-500)" },
+  { name: "Commercial", percent: 31, color: "var(--color-amber-500)" },
+  { name: "Land/Plots", percent: 11, color: "var(--color-success-500)" },
+  { name: "Multi-Family", percent: 6, color: "var(--color-neutral-300)" },
 ];
 
 export const recentSales: ListItem[] = [
-  { id: "sale-1", title: "Lot #142 — Vintage Chronograph", subtitle: "14 Sep 2025", meta: "+$2,450 ", imageSrc: "/images/auction_items/Vintage_Chronograph.jpg"},
-  { id: "sale-2", title: "Lot #138 — Art Deco Necklace", subtitle: "20 Mar 2025", meta: "+$3,950" ,imageSrc: "/images/auction_items/Art_Deco_Necklace.jpg"},
-  { id: "sale-3", title: "Lot #129 — Silver Coin Set", subtitle: "26 Mar 2025", meta: "+$1,450",imageSrc: "/images/auction_items/Silver_Coin_Set.jpg" },
-  { id: "sale-4", title: "Lot #114 — Oil Painting, Coastal", subtitle: "10 Feb 2025", meta: "+$7,580",imageSrc: "/images/auction_items/Oil_Painting.jpg" },
-  { id: "sale-5", title: "Lot #101 — Pocket Watch, 1920s", subtitle: "10 Jan 2025", meta: "+$9,770" , imageSrc: "/images/auction_items/Pocket_Watch.jpg" },
+  { id: "sale-1", title: "142 Maple Grove Ave, Austin TX", subtitle: "14 Sep 2025", meta: "+$425,000" },
+  { id: "sale-2", title: "38 Harborview Blvd, Miami FL", subtitle: "20 Mar 2025", meta: "+$1,250,000" },
+  { id: "sale-3", title: "Unit 12B, Skyline Towers, Chicago IL", subtitle: "26 Mar 2025", meta: "+$680,000" },
+  { id: "sale-4", title: "Riverside Commercial Plaza, Denver CO", subtitle: "10 Feb 2025", meta: "+$2,150,000" },
+  { id: "sale-5", title: "9 Oakwood Lane, Portland OR", subtitle: "10 Jan 2025", meta: "+$510,000" },
 ];
 
 export const recentlyRegistered: ListItem[] = [
-  { id: "reg-1", title: "Bright Bridge Collectibles", subtitle: "Seller", meta: "bbg@example.com",imageSrc: "/images/avatars/ann-mcclure.jpg" },
-  { id: "reg-2", title: "Coastal Star Auctions", subtitle: "Seller", meta: "csc@example.com",imageSrc: "/images/avatars/john-doe.avif" },
-  { id: "reg-3", title: "Harbor View Estates", subtitle: "Buyer", meta: "hv@example.com",imageSrc: "/images/avatars/sarah-anderson.avif" },
-  { id: "reg-4", title: "Golden Gate Ltd", subtitle: "Buyer", meta: "ggl@example.com" ,imageSrc: "/images/avatars/thomas-william.avif"},
-  { id: "reg-5", title: "Redwood Inc", subtitle: "Seller", meta: "rw@example.com",imageSrc: "/images/avatars/ann-mcclure.jpg" },
+  { id: "reg-1", title: "Bright Bridge Realty", subtitle: "Seller", meta: "bbg@example.com" },
+  { id: "reg-2", title: "Coastal Star Properties", subtitle: "Seller", meta: "csc@example.com" },
+  { id: "reg-3", title: "Harbor View Investments", subtitle: "Buyer", meta: "hv@example.com" },
+  { id: "reg-4", title: "Golden Gate Holdings", subtitle: "Buyer", meta: "ggl@example.com" },
+  { id: "reg-5", title: "Redwood Property Group", subtitle: "Seller", meta: "rw@example.com" },
 ];
 
 export const auctionsEndingSoon: ListItem[] = [
-  { id: "end-1", title: "Lot #142 — Vintage Chronograph", subtitle: "Ends in 2h 15m", meta: "12 bids", actionLabel: "Notify Bidders", actionHref: "/auctions", imageSrc: "/images/auction_items/Vintage_Chronograph.jpg" },
-  { id: "end-2", title: "Lot #150 — Art Deco Necklace", subtitle: "Ends in 4h 40m", meta: "7 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" ,imageSrc: "/images/auction_items/Art_Deco_Necklace.jpg"},
-  { id: "end-3", title: "Lot #133 — Silver Coin Set", subtitle: "Ends in 6h 05m", meta: "3 bids", actionLabel: "Notify Bidders", actionHref: "/auctions",imageSrc: "/images/auction_items/Silver_Coin_Set.jpg" },
-  { id: "end-4", title: "Lot #127 — Oil Painting", subtitle: "Ends in 9h 30m", meta: "15 bids", actionLabel: "Notify Bidders", actionHref: "/auctions",imageSrc: "/images/auction_items/Oil_Painting.jpg" },
-  { id: "end-5", title: "Lot #119 — Pocket Watch", subtitle: "Ends in 11h 50m", meta: "5 bids", actionLabel: "Notify Bidders", actionHref: "/auctions", imageSrc: "/images/auction_items/Pocket_Watch.jpg" },
+  { id: "end-1", title: "142 Maple Grove Ave, Austin TX", subtitle: "Ends in 2h 15m", meta: "12 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" },
+  { id: "end-2", title: "27 Cedar Point Rd, Nashville TN", subtitle: "Ends in 4h 40m", meta: "7 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" },
+  { id: "end-3", title: "Suite 400, Meridian Office Park, Dallas TX", subtitle: "Ends in 6h 05m", meta: "3 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" },
+  { id: "end-4", title: "8 Lakeview Terrace, Charlotte NC", subtitle: "Ends in 9h 30m", meta: "15 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" },
+  { id: "end-5", title: "215 Birchwood Commercial Center, Phoenix AZ", subtitle: "Ends in 11h 50m", meta: "5 bids", actionLabel: "Notify Bidders", actionHref: "/auctions" },
 ];
