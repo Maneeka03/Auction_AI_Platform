@@ -3,20 +3,20 @@ import { Building2, Home } from "lucide-react";
 import type { PropertyCategory } from "@/types/property";
 
 interface PropertyThumbnailProps {
-  imageSrc?: string;
+  imageUrl: string | null;
   category: PropertyCategory;
 }
 
-export function PropertyThumbnail({ imageSrc, category }: PropertyThumbnailProps) {
-  if (imageSrc) {
+export function PropertyThumbnail({ imageUrl, category }: PropertyThumbnailProps) {
+  if (imageUrl) {
     return (
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-        <Image src={imageSrc} alt="" fill sizes="36px" className="object-cover" />
+        <Image src={imageUrl} alt="" fill sizes="36px" className="object-cover" />
       </span>
     );
   }
 
-  const Icon = category === "Residential" ? Home : Building2;
+  const Icon = category === "residential" ? Home : Building2;
 
   return (
     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600">

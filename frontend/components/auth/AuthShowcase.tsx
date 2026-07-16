@@ -17,18 +17,21 @@ const TESTIMONIALS = [
       "Buy and sell with confidence. Every listing on our platform is verified, authenticated, and backed by a team that knows what it's protecting.The verification process gave me real peace of mind",
     name: "Rosanna French",
     role: "Verified Buyer",
+    avatarSrc: "/images/avatars/ann-mcclure.jpg",
   },
   {
     quote:
       "The verification process gave me real peace of mind. I knew exactly what I was bidding on before I placed a single offer.The verification process gave me real peace of mind",
     name: "Marcus Webb",
     role: "Verified Seller",
+    avatarSrc: "/images/avatars/john-doe.avif",
   },
   {
     quote:
       "Escrow, KYC, provenance tracking — everything a serious collector needs is already built into the platform.The verification process gave me real peace of mind",
     name: "Aiko Tanaka",
     role: "Verified Buyer",
+    avatarSrc: "/images/avatars/thomas-william.avif",
   },
 ];
 
@@ -57,10 +60,11 @@ const active = TESTIMONIALS[activeIndex];
         </div>
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-12">
             <div className="max-w-2xl">
-                {/* <span className="block text-left text-6xl font-bold leading-none text-success-500" aria-hidden="true">&ldquo;</span> */}
                 <p key={activeIndex} className="mt-4 text-left text-xl font-medium text-white animate-slide-in">{active.quote}</p>
                 <div className="mt-8 flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-white/20" aria-hidden="true" />
+                  <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/20">
+                    <Image key={active.avatarSrc} src={active.avatarSrc} alt="" fill sizes="44px" className="object-cover" />
+                  </span>
                     <div className="text-left">
                         <p className="text-sm font-semibold text-white">{active.name}</p>
                         <p className="text-sm text-brand-200">{active.role}</p>

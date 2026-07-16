@@ -1,49 +1,61 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AddPropertyDrawer } from "@/components/properties/AddPropertyDrawer";
 import { EditPropertyDrawer } from "@/components/properties/EditPropertyDrawer";
-import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
+import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
-import { properties as initialProperties } from "@/lib/mock/properties";
+import { createProperty, listProperties, updateProperty } from "@/lib/api/properties";
+import { ApiRequestError } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
 
-function formatPrice(value: number): string {
-  return `$${value.toLocaleString()}`;
+function formatPrice(value: string): string {
+  return `$${Number(value).toLocaleString()}`;
 }
 
 export default function ListingsPage() {
-  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const { accessToken } = useAuth();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
-  function handleCreate(newProperty: Omit<Property, "id" | "listedAt" | "status">) {
-    const property: Property = {
-      ...newProperty,
-      id: `prop-${Date.now()}`,
-      status: "available",
-      listedAt: new Date().toLocaleDateString(),
-    };
-    setProperties((prev) => [property, ...prev]);
+  const fetchProperties = useCallback(async () => {
+    if (!accessToken) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await listProperties(accessToken, { page: 1, size: 50 });
+      setProperties(result.items);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Failed to load properties.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    void fetchProperties();
+  }, [fetchProperties]);
+
+  async function handleCreate(payload: Parameters<typeof createProperty>[1]) {
+    if (!accessToken) return;
+    await createProperty(accessToken, payload);
     setShowAddDrawer(false);
+    void fetchProperties();
   }
 
-  function handleSave(updates: Partial<Property>) {
-    if (!editingProperty) return;
-    setProperties((prev) =>
-      prev.map((p) => (p.id === editingProperty.id ? { ...p, ...updates } : p)),
-    );
+  async function handleSave(updates: Parameters<typeof updateProperty>[2]) {
+    if (!accessToken || !editingProperty) return;
+    await updateProperty(accessToken, editingProperty.id, updates);
     setEditingProperty(null);
-  }
-
-  function handleDelete(property: Property) {
-    const confirmed = window.confirm(`Remove ${property.address}? This can't be undone from here.`);
-    if (!confirmed) return;
-    setProperties((prev) => prev.filter((p) => p.id !== property.id));
+    void fetchProperties();
   }
 
   return (
@@ -68,16 +80,28 @@ export default function ListingsPage() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
-                  <th className="px-4 py-3 font-medium">Address</th>
+                  <th className="px-4 py-3 font-medium">Title / Address</th>
                   <th className="px-4 py-3 font-medium">Category</th>
-                  <th className="px-4 py-3 font-medium">Price</th>
+                  <th className="px-4 py-3 font-medium">Reserve Price</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Listed</th>
+                  <th className="px-4 py-3 font-medium">Created</th>
                   <th className="w-20 px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {properties.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                      Loading properties...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-danger-600">
+                      {error}
+                    </td>
+                  </tr>
+                ) : properties.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
                       No properties listed yet.
@@ -88,23 +112,31 @@ export default function ListingsPage() {
                     <tr key={property.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <PropertyThumbnail imageSrc={property.imageSrc} category={property.category} />
-                          <span className="font-medium text-neutral-900">{property.address}</span>
+                          <PropertyThumbnail imageUrl={property.image_url} category={property.category} />
+                          <div>
+                            <p className="font-medium text-neutral-900">{property.title}</p>
+                            <p className="text-xs text-neutral-500">{property.address}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">{property.category}</td>
-                      <td className="px-4 py-3 text-neutral-600">{formatPrice(property.price)}</td>
+                       <td className="px-4 py-3">
+                        <CategoryBadge category={property.category} />
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">{formatPrice(property.reserve_price)}</td>
                       <td className="px-4 py-3">
                         <PropertyStatusBadge status={property.status} />
                       </td>
-                      <td className="px-4 py-3 text-neutral-500">{property.listedAt}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end">
-                          <PropertyRowMenu
-                            onEdit={() => setEditingProperty(property)}
-                            onDelete={() => handleDelete(property)}
-                          />
-                        </div>
+                      <td className="px-4 py-3 text-neutral-500">
+                        {new Date(property.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setEditingProperty(property)}
+                          className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
+                        >
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))

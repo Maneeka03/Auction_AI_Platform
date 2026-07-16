@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Select } from "@/components/ui/Select";
 import type { UserStatus } from "@/types/auth";
 import { STAFF_ROLES, type AdminUserListItem, type StaffRole, type UpdateUserPayload } from "@/types/adminUsers";
 
@@ -103,14 +104,14 @@ export function EditUserDrawer({ user, onClose, onSave }: EditUserDrawerProps) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">Status</label>
-              <select
+              <Select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as UserStatus)}
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="active">Active</option>
-                <option value="suspended">Suspended</option>
-              </select>
+                onChange={(v) => setStatus(v as UserStatus)}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "suspended", label: "Suspended" },
+                ]}
+              />
               <p className="mt-1 text-xs text-neutral-400">Suspending revokes their active session immediately.</p>
             </div>
 
