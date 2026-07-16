@@ -3,23 +3,31 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import type { CreatePropertyRequest, PropertyCategory } from "@/types/property";
+import type { Auction, RoomAccess, UpdateAuctionRequest } from "@/types/auction";
 
-interface AddPropertyDrawerProps {
+interface EditAuctionDrawerProps {
+  auction: Auction;
   onClose: () => void;
-  onCreate: (payload: CreatePropertyRequest) => Promise<void>;
+  onSave: (payload: UpdateAuctionRequest) => Promise<void>;
 }
 
-export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps) {
-  const [title, setTitle] = useState("");
-  const [address, setAddress] = useState("");
-  const [category, setCategory] = useState<PropertyCategory>("residential");
-  const [reservePrice, setReservePrice] = useState("");
-  const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+function toDatetimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
+export function EditAuctionDrawer({ auction, onClose, onSave }: EditAuctionDrawerProps) {
+  const [endsAt, setEndsAt] = useState(toDatetimeLocal(auction.ends_at));
+  const [reservePrice, setReservePrice] = useState(auction.reserve_price);
+  const [increments, setIncrements] = useState(auction.increments.join(", "));
+  const [roomAccess, setRoomAccess] = useState<RoomAccess>(auction.room_access);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  const isUpcoming = auction.status === "upcoming";
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -35,21 +43,33 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     event.preventDefault();
     setError(null);
 
-    if (!title.trim() || !address.trim() || !reservePrice) {
-      setError("Title, address, and reserve price are required.");
+    const endDate = new Date(endsAt);
+    if (endDate <= new Date()) {
+      setError("End time must be in the future.");
       return;
+    }
+
+    const payload: UpdateAuctionRequest = {
+      ends_at: endDate.toISOString(),
+      reserve_price: reservePrice,
+    };
+
+    if (isUpcoming) {
+      const incrementList = increments
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (incrementList.length === 0 || incrementList.some((v) => Number.isNaN(Number(v)))) {
+        setError("Increments must be a comma-separated list of numbers.");
+        return;
+      }
+      payload.increments = incrementList;
+      payload.room_access = roomAccess;
     }
 
     setIsSubmitting(true);
     try {
-      await onCreate({
-        title,
-        address,
-        category,
-        reserve_price: reservePrice,
-        description: description || undefined,
-        image_url: imageUrl || undefined,
-      });
+      await onSave(payload);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -67,7 +87,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
         className={`relative flex h-full w-full max-w-md flex-col bg-white shadow-xl transition-transform duration-200 ease-out ${isVisible ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-neutral-200 p-5">
-          <h2 className="text-lg font-semibold text-neutral-900">Add Property</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Edit Auction</h2>
           <button type="button" onClick={handleClose} aria-label="Close" className="text-neutral-400 hover:text-neutral-600">
             <X size={20} />
           </button>
@@ -76,38 +96,23 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto p-5">
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
-                Title <span className="text-danger-500">*</span>
-              </label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Property</label>
               <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Modern Downtown Family Home"
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                value={`${auction.title} — ${auction.address}`}
+                disabled
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3 text-sm text-neutral-500"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
-                Address <span className="text-danger-500">*</span>
+                Ends At <span className="text-danger-500">*</span>
               </label>
               <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. 142 Maple Grove Ave, Austin TX"
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
                 className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Category</label>
-              <Select
-                value={category}
-                onChange={(v) => setCategory(v as PropertyCategory)}
-                options={[
-                  { value: "residential", label: "Residential" },
-                  { value: "commercial", label: "Commercial" },
-                ]}
               />
             </div>
 
@@ -124,23 +129,31 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Image URL (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Quick-Bid Increments ($)</label>
               <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="/images/properties/example.jpg"
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                value={increments}
+                onChange={(e) => setIncrements(e.target.value)}
+                disabled={!isUpcoming}
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Room Access</label>
+              <Select
+                value={roomAccess}
+                onChange={(v) => setRoomAccess(v as RoomAccess)}
+                disabled={!isUpcoming}
+                options={[
+                  { value: "open", label: "Open to Everyone" },
+                  { value: "invite_only", label: "Invite Only" },
+                ]}
               />
+              {!isUpcoming ? (
+                <p className="mt-1 text-xs text-neutral-400">
+                  Increments and room access can only be changed while the auction is upcoming.
+                </p>
+              ) : null}
             </div>
 
             {error ? <p className="text-sm text-danger-600">{error}</p> : null}
@@ -159,7 +172,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               disabled={isSubmitting}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isSubmitting ? "Creating..." : "Add Property"}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

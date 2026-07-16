@@ -17,8 +17,9 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<DemoPaymentResult | null>(null);
 
-  const tokenAmount = Math.round(property.price * TOKEN_PERCENTAGE);
-  const amount = method === "token" ? tokenAmount : property.price;
+  const price = Number(property.reserve_price);
+  const tokenAmount = Math.round(price * TOKEN_PERCENTAGE);
+  const amount = method === "token" ? tokenAmount : price;
 
   function handleConfirm() {
     setIsProcessing(true);
@@ -47,7 +48,8 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
               </button>
             </div>
 
-            <p className="mt-1 text-sm text-neutral-500">{property.address}</p>
+            <p className="mt-1 text-sm text-neutral-500">{property.title}</p>
+            <p className="text-xs text-neutral-400">{property.address}</p>
             <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
               Demo mode — no real payment is processed. This simulates the checkout flow only.
             </p>
@@ -79,7 +81,7 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
                 <CreditCard size={18} className={method === "full" ? "text-brand-600" : "text-neutral-400"} />
                 <div>
                   <p className="text-sm font-medium text-neutral-900">Full Payment</p>
-                  <p className="text-xs text-neutral-500">Pay the full price now — ${property.price.toLocaleString()}</p>
+                  <p className="text-xs text-neutral-500">Pay the full price now — ${price.toLocaleString()}</p>
                 </div>
               </button>
             </div>
@@ -108,7 +110,7 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
             <p className="text-sm text-neutral-500">
               {result.method === "token" ? "Reservation deposit" : "Full payment"} of{" "}
               <span className="font-medium text-neutral-900">${result.amount.toLocaleString()}</span> received for{" "}
-              {property.address}.
+              {property.title}.
             </p>
             <button
               type="button"

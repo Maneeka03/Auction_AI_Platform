@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { Select } from "@/components/ui/Select";
 import type { WeeklyPoint } from "@/types/dashboard";
 import { useWheelZoom } from "@/lib/hooks/useWheelZoom";
 
 const CEILING = 22;
 
 export function WeeklySignupsChart({ data, changePercent }: { data: WeeklyPoint[]; changePercent: number }) {
+  const [range, setRange] = useState("week");
   const { containerRef, scale, origin } = useWheelZoom({ min: 1, max: 2.2, step: 0.06 });
   const chartData = data.map((point) => ({
     ...point,
@@ -17,13 +20,16 @@ export function WeeklySignupsChart({ data, changePercent }: { data: WeeklyPoint[
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
         <h3 className="text-base font-semibold text-neutral-900">New Signups</h3>
-        <select
-          defaultValue="week"
-          className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600"
-        >
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-        </select>
+        <Select
+          value={range}
+          onChange={setRange}
+          size="sm"
+          className="w-32"
+          options={[
+            { value: "week", label: "This Week" },
+            { value: "month", label: "This Month" },
+          ]}
+        />
       </div>
       <div ref={containerRef} className="mt-8 h-56 overflow-hidden">
         <div

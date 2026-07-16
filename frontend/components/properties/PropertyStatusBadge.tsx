@@ -1,14 +1,14 @@
 import type { PropertyStatus } from "@/types/property";
 
 const styles: Record<PropertyStatus, string> = {
-  available: "bg-success-500/10 text-success-500",
-  pending: "bg-amber-500/10 text-amber-600",
-  sold: "bg-neutral-100 text-neutral-500",
+  draft: "bg-neutral-100 text-neutral-500",
+  published: "bg-success-500/10 text-success-500",
+  sold: "bg-brand-500/10 text-brand-600",
 };
 
 const labels: Record<PropertyStatus, string> = {
-  available: "Available",
-  pending: "Pending",
+  draft: "Draft",
+  published: "Published",
   sold: "Sold",
 };
 

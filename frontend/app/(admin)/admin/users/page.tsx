@@ -3,6 +3,7 @@
 import { Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Select } from "@/components/ui/Select";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AddUserDrawer } from "@/components/admin-users/AddUserDrawer";
 import { EditUserDrawer } from "@/components/admin-users/EditUserDrawer";
@@ -90,8 +91,8 @@ export default function UserManagementPage() {
 
   return (
     <AdminShell>
-         <RequirePermission module="user_management" need="full">
-      <div className="space-y-5 p-6">
+      <RequirePermission module="user_management" need="full">
+        <div className="space-y-5 p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -125,35 +126,35 @@ export default function UserManagementPage() {
             />
           </div>
 
-          <select
+          <Select
             value={roleFilter}
-            onChange={(e) => {
+            onChange={(v) => {
               setPage(1);
-              setRoleFilter(e.target.value as StaffRole | "");
+              setRoleFilter(v as StaffRole | "");
             }}
-            className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-600"
-          >
-            <option value="">All roles</option>
-            {STAFF_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role.replace("_", " ")}
-              </option>
-            ))}
-          </select>
+            placeholder="All roles"
+            className="w-44"
+            options={[
+              { value: "", label: "All roles" },
+              ...STAFF_ROLES.map((role) => ({ value: role, label: role.replace("_", " ") })),
+            ]}
+          />
 
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) => {
+            onChange={(v) => {
               setPage(1);
-              setStatusFilter(e.target.value as UserStatus | "");
+              setStatusFilter(v as UserStatus | "");
             }}
-            className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-600"
-          >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending_verification">Pending Verification</option>
-          </select>
+            placeholder="All statuses"
+            className="w-44"
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "active", label: "Active" },
+              { value: "suspended", label: "Suspended" },
+              { value: "pending_verification", label: "Pending Verification" },
+            ]}
+          />
 
           <button
             type="button"
@@ -174,7 +175,7 @@ export default function UserManagementPage() {
                 <th className="px-4 py-3 font-medium">Roles</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Last Login</th>
-                 <th className="w-20 px-4 py-3 text-right font-medium">Actions</th>
+                <th className="w-20 px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -256,7 +257,7 @@ export default function UserManagementPage() {
         ) : null}
       </div>
 
-     {showAddDrawer ? <AddUserDrawer onClose={() => setShowAddDrawer(false)} onCreate={handleCreate} /> : null}
+        {showAddDrawer ? <AddUserDrawer onClose={() => setShowAddDrawer(false)} onCreate={handleCreate} /> : null}
         {editingUser ? (
           <EditUserDrawer user={editingUser} onClose={() => setEditingUser(null)} onSave={handleUpdate} />
         ) : null}

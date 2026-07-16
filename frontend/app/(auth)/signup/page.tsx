@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Select } from "@/components/ui/Select";
 import { register } from "@/lib/api/auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { resolveErrorMessage } from "@/lib/api/errorMessages";
@@ -70,6 +72,7 @@ export default function SignupPage() {
           <span className="font-medium text-neutral-900">{registeredEmail}</span>. Confirm your email to
           activate your account, then log in.
         </p>
+        <ResendVerificationForm initialEmail={registeredEmail} />
         <Link href="/login" className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
           Back to log in
         </Link>
@@ -126,17 +129,15 @@ export default function SignupPage() {
 
         <div>
           <Label htmlFor="role">I want to</Label>
-          <select
+          <Select
             id="role"
             value={values.role}
-            onChange={(event) =>
-              setValues((prev) => ({ ...prev, role: event.target.value as RegisterPayload["role"] }))
-            }
-            className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-900 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-          >
-            <option value="buyer">Buy items</option>
-            <option value="seller">Sell items</option>
-          </select>
+            onChange={(v) => setValues((prev) => ({ ...prev, role: v as RegisterPayload["role"] }))}
+            options={[
+              { value: "buyer", label: "Buy items" },
+              { value: "seller", label: "Sell items" },
+            ]}
+          />
           <FormError id="role-error" message={fieldErrors.role} />
         </div>
 

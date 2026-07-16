@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Select } from "@/components/ui/Select";
 import type { MonthlyRevenuePoint } from "@/types/dashboard";
 import { useWheelZoom } from "@/lib/hooks/useWheelZoom";
 
@@ -14,6 +16,7 @@ const CEILING = 400;
 
 export function RevenueBarChart({ data, totalLabel, changePercent }: RevenueBarChartProps) {
   const isPositive = changePercent >= 0;
+  const [year, setYear] = useState("2026");
   const { containerRef, scale, origin } = useWheelZoom({ min: 1, max: 2.2, step: 0.06 });
   const chartData = data.map((point) => ({
     ...point,
@@ -24,13 +27,16 @@ export function RevenueBarChart({ data, totalLabel, changePercent }: RevenueBarC
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
         <h3 className="text-base font-semibold text-neutral-900">Revenue</h3>
-        <select
-          defaultValue="2026"
-          className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600"
-        >
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
-        </select>
+        <Select
+          value={year}
+          onChange={setYear}
+          size="sm"
+          className="w-24"
+          options={[
+            { value: "2026", label: "2026" },
+            { value: "2025", label: "2025" },
+          ]}
+        />
       </div>
 
       <p className="mt-3 text-1xl font-semibold text-neutral-900">$89,878,58</p>

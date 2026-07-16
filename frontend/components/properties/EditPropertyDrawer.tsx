@@ -2,19 +2,23 @@
 
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Property, PropertyStatus } from "@/types/property";
+import { Select } from "@/components/ui/Select";
+import type { Property, UpdatePropertyRequest } from "@/types/property";
 
 interface EditPropertyDrawerProps {
   property: Property;
   onClose: () => void;
-  onSave: (updates: Partial<Property>) => void;
+  onSave: (updates: UpdatePropertyRequest) => Promise<void>;
 }
 
 export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDrawerProps) {
-  const [price, setPrice] = useState(String(property.price));
-  const [status, setStatus] = useState<PropertyStatus>(property.status);
-  const [description, setDescription] = useState(property.description);
+  const [reservePrice, setReservePrice] = useState(property.reserve_price);
+  const [status, setStatus] = useState<"draft" | "published">(
+    property.status === "sold" ? "published" : property.status,
+  );
+  const [description, setDescription] = useState(property.description ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -27,18 +31,26 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
     setTimeout(onClose, 200);
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
 
-    const priceNumber = Number(price);
-    if (!price || Number.isNaN(priceNumber)) {
-      setError("A valid price is required.");
+    if (!reservePrice) {
+      setError("A reserve price is required.");
       return;
     }
 
-    onSave({ price: priceNumber, status, description });
+    setIsSubmitting(true);
+    try {
+      await onSave({ reserve_price: reservePrice, status, description });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  const isSold = property.status === "sold";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -70,27 +82,32 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
-                Price ($) <span className="text-danger-500">*</span>
+                Reserve Price ($) <span className="text-danger-500">*</span>
               </label>
               <input
                 type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={reservePrice}
+                onChange={(e) => setReservePrice(e.target.value)}
                 className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as PropertyStatus)}
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="available">Available</option>
-                <option value="pending">Pending</option>
-                <option value="sold">Sold</option>
-              </select>
+              {isSold ? (
+                <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+                  Sold — set only by an award, cannot be edited here.
+                </p>
+              ) : (
+                <Select
+                  value={status}
+                  onChange={(v) => setStatus(v as "draft" | "published")}
+                  options={[
+                    { value: "draft", label: "Draft" },
+                    { value: "published", label: "Published" },
+                  ]}
+                />
+              )}
             </div>
 
             <div>
@@ -99,7 +116,8 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                disabled={isSold}
+                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
             </div>
 
@@ -116,9 +134,10 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+              disabled={isSubmitting || isSold}
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              Save Changes
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
