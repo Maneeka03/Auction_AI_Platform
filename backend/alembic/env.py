@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from app.core.config import settings
 from app.db.base import Base
-from app.models import user as _user  # noqa: F401  (registers tables on Base.metadata)
+
+# Registers every table on Base.metadata. user must stay - the others carry foreign keys to it.
+from app.models import auction as _auction  # noqa: F401
+from app.models import property as _property  # noqa: F401
+from app.models import user as _user  # noqa: F401
+from app.models import wallet as _wallet  # noqa: F401
 
 config = context.config
 if config.config_file_name:

@@ -1,11 +1,14 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, dev, users
+from app.api.v1 import auctions, auth, dev, properties, users, wallet
 from app.core.config import settings
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
 api_router.include_router(users.router)
+api_router.include_router(properties.router)
+api_router.include_router(auctions.router)
+api_router.include_router(wallet.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)
