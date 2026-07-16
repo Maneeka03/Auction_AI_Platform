@@ -3,13 +3,31 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { superAdminNav } from "@/lib/navigation/superAdminNav";
+import { useAuth } from "@/lib/auth/session-context";
 
 interface AdminSidebarProps {
   isOpen: boolean;
 }
 
+const STAFF_ROLES = new Set([
+  "super_admin",
+  "auction_manager",
+  "marketing",
+  "legal",
+  "finance",
+  "gemologist",
+  "executive",
+]);
+
 export function AdminSidebar({ isOpen }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { session, isLoading } = useAuth();
+
+  const isStaff = !isLoading && session ? session.roles.some((role) => STAFF_ROLES.has(role)) : false;
+
+  if (!isStaff) {
+    return null;
+  }
 
   return (
     <aside
@@ -41,7 +59,7 @@ export function AdminSidebar({ isOpen }: AdminSidebarProps) {
                       className={`flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                         isActive
                           ? "bg-brand-50 text-brand-700"
-                          : "text-neutral-600 hover:bg-brand-50 hover:text-brand-700"
+                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                       } ${isOpen ? "" : "justify-center"}`}
                     >
                       <item.icon size={18} className="shrink-0" />

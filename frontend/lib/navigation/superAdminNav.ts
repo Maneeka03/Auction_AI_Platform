@@ -10,17 +10,11 @@ import {
   UserCog,
   Users,
   UserSquare2,
+  Home,
+  Wallet,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
 
-// Scoped from:
-// - Sam's doc: Director/Executive KPI list (Revenue, Active Auctions, Buyer
-//   Activity, Seller Performance, Marketing Performance, AI Insights) and the
-//   2-of-3 approval workflow.
-// - Real backend permission modules from AUTH_API.md (buyer_crm, seller_crm,
-//   lead_management, asset_management, auction_management,
-//   marketing_campaigns, reports, user_management, system_settings).
-// - The original planned folder tree's (admin) route group.
 export const superAdminNav: NavSection[] = [
   {
     title: "Overview",
@@ -31,6 +25,8 @@ export const superAdminNav: NavSection[] = [
     items: [
       { label: "Approvals", href: "/approvals", icon: BadgeCheck },
       { label: "Listings", href: "/listings", icon: PackageSearch },
+      { label: "Browse Properties", href: "/properties", icon: Home },
+      { label: "Wallet", href: "/wallet", icon: Wallet },
       { label: "Live Auctions", href: "/auctions", icon: Gavel },
     ],
   },
