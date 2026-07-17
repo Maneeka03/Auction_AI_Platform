@@ -1,4 +1,4 @@
-import { CalendarPlus, Gavel, Lock, Pencil, Users, XCircle } from "lucide-react";
+import { CalendarPlus, Gavel, Lock, Pencil, Trash2, Users, XCircle } from "lucide-react";
 import type { Auction } from "@/types/auction";
 import { buildGoogleCalendarUrl } from "@/lib/utils/googleCalendar";
 
@@ -32,9 +32,10 @@ interface AuctionCardProps {
   canManage?: boolean;
   onEdit?: (auction: Auction) => void;
   onEndAuction?: (auction: Auction) => void;
+  onDelete?: (auction: Auction) => void;
 }
 
-export function AuctionCard({ auction, canManage, onEdit, onEndAuction }: AuctionCardProps) {
+export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete }: AuctionCardProps) {
   const calendarUrl = buildGoogleCalendarUrl({
     title: auction.title,
     description: `Auction for ${auction.title} (${auction.category}). Reserve price: ${formatMoney(auction.reserve_price)}.`,
@@ -73,7 +74,7 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction }: Auctio
         {formatDateTime(auction.starts_at)} – {formatDateTime(auction.ends_at)}
       </p>
 
-    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <span
           className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
             auction.room_access === "invite_only"
@@ -95,7 +96,7 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction }: Auctio
       </div>
 
       
-      <a href={calendarUrl}
+       <a href={calendarUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
@@ -120,6 +121,16 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction }: Auctio
             <XCircle size={14} /> End Auction
           </button>
         </div>
+      ) : null}
+
+      {canManage && auction.bidder_count === 0 ? (
+        <button
+          type="button"
+          onClick={() => onDelete?.(auction)}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-danger-200 py-2 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
+        >
+          <Trash2 size={14} /> Delete Auction
+        </button>
       ) : null}
     </div>
   );

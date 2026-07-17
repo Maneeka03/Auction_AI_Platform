@@ -129,7 +129,6 @@ async def purchase(
     await session.commit()
     return listing
 
-
 async def locked(session: AsyncSession, property_id: uuid.UUID) -> Property:
     """Fetch a listing FOR UPDATE, so two buyers cannot both win the same Buy Now."""
     result = await session.execute(
@@ -157,3 +156,29 @@ async def update(
 
     await session.commit()
     return listing
+
+async def delete(session: AsyncSession, property_id: uuid.UUID) -> None:
+    """Remove a listing that never sold and was never auctioned.
+
+    Blocked once sold (a paid transaction must survive) or once any auction
+    has ever been created against it (that auction's history must survive) -
+    the same principle as auctions refusing to delete once bids exist.
+    """
+    listing = await get(session, property_id)
+    if listing.status is PropertyStatus.SOLD:
+        raise AppError(
+            status.HTTP_409_CONFLICT, "property_sold", "A sold property cannot be deleted."
+        )
+
+    has_auction = await session.scalar(
+        select(func.count()).select_from(Auction).where(Auction.property_id == property_id)
+    )
+    if has_auction:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "property_has_auction",
+            "This property has an associated auction and cannot be deleted.",
+        )
+
+    await session.delete(listing)
+    await session.commit()

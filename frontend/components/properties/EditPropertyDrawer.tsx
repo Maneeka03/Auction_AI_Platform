@@ -14,7 +14,7 @@ interface EditPropertyDrawerProps {
 export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDrawerProps) {
   const [reservePrice, setReservePrice] = useState(property.reserve_price);
   const [status, setStatus] = useState<"draft" | "published">(
-    property.status === "sold" ? "published" : property.status,
+    property.status === "draft" || property.status === "published" ? property.status : "draft",
   );
   const [description, setDescription] = useState(property.description ?? "");
   const [error, setError] = useState<string | null>(null);

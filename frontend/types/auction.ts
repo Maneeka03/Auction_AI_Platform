@@ -54,3 +54,10 @@ export interface ListAuctionsParams {
   size?: number;
   status?: AuctionStatus;
 }
+
+export type AuctionSocketMessageType = "snapshot" | "bid" | "updated" | "ended";
+
+export interface AuctionSocketMessage {
+  type: AuctionSocketMessageType;
+  auction: Auction;
+}

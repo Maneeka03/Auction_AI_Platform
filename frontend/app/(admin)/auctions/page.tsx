@@ -7,7 +7,7 @@ import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
 import { CreateAuctionDrawer } from "@/components/auctions/CreateAuctionDrawer";
 import { EditAuctionDrawer } from "@/components/auctions/EditAuctionDrawer";
-import { createAuction, endAuction, listAuctions, updateAuction } from "@/lib/api/auctions";
+import { createAuction, deleteAuction, endAuction, listAuctions, updateAuction } from "@/lib/api/auctions";
 import { ApiRequestError } from "@/lib/api/client";
 import { can } from "@/lib/auth/permissions";
 import { useAuth } from "@/lib/auth/session-context";
@@ -28,6 +28,7 @@ export default function LiveAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showCreateDrawer, setShowCreateDrawer] = useState(false);
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
 
@@ -79,6 +80,19 @@ export default function LiveAuctionsPage() {
     void fetchAuctions();
   }
 
+  async function handleDeleteAuction(auction: Auction) {
+    if (!accessToken) return;
+    const confirmed = window.confirm(`Delete "${auction.title}"? This can't be undone.`);
+    if (!confirmed) return;
+    setActionError(null);
+    try {
+      await deleteAuction(accessToken, auction.id);
+      void fetchAuctions();
+    } catch (err) {
+      setActionError(err instanceof ApiRequestError ? err.message : "Failed to delete auction.");
+    }
+  }
+
   return (
     <AdminShell>
       <RequirePermission module="auction_management" need="view">
@@ -126,6 +140,8 @@ export default function LiveAuctionsPage() {
             ))}
           </div>
 
+          {actionError ? <p className="text-sm text-danger-600">{actionError}</p> : null}
+
           {isLoading ? (
             <p className="text-sm text-neutral-500">Loading auctions...</p>
           ) : error ? (
@@ -143,6 +159,7 @@ export default function LiveAuctionsPage() {
                   canManage={canCreate}
                   onEdit={setEditingAuction}
                   onEndAuction={handleEndAuction}
+                  onDelete={handleDeleteAuction}
                 />
               ))}
             </div>

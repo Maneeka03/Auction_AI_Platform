@@ -11,7 +11,7 @@ export function PropertyThumbnail({ imageUrl, category }: PropertyThumbnailProps
   if (imageUrl) {
     return (
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-        <Image src={imageUrl} alt="" fill sizes="36px" className="object-cover" />
+        <Image src={imageUrl} alt="" fill sizes="36px" unoptimized className="object-cover" />
       </span>
     );
   }
