@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -88,15 +88,25 @@ export default function LiveAuctionsPage() {
               <h1 className="text-2xl font-semibold text-neutral-900">Live Auctions</h1>
               <p className="mt-1 text-sm text-neutral-600">All auctions across every stage.</p>
             </div>
-            {canCreate ? (
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setShowCreateDrawer(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+                onClick={() => void fetchAuctions()}
+                aria-label="Refresh"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
               >
-                <Plus size={16} /> Create Auction
+                <RefreshCw size={16} />
               </button>
-            ) : null}
+              {canCreate ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateDrawer(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+                >
+                  <Plus size={16} /> Create Auction
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Download, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Select } from "@/components/ui/Select";
@@ -13,6 +13,7 @@ import { UserRowMenu } from "@/components/admin-users/UserRowMenu";
 import { createUser, deleteUser, listUsers, updateUser } from "@/lib/api/admin";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
+import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { STAFF_ROLES, type AdminUserListItem, type StaffRole } from "@/types/adminUsers";
 import type { UserStatus } from "@/types/auth";
 
@@ -79,6 +80,20 @@ export default function UserManagementPage() {
     void fetchUsers();
   }
 
+  function handleExport() {
+    exportToExcel(
+      users.map((u) => ({
+        Name: u.full_name,
+        Email: u.email,
+        Roles: u.roles.join(", "),
+        Status: u.status,
+        "Last Login": u.last_login_at ? new Date(u.last_login_at).toLocaleString() : "Never",
+      })),
+      "manage-users",
+      "Users",
+    );
+  }
+
   async function handleDelete(user: AdminUserListItem) {
     if (!accessToken) return;
     const confirmed = window.confirm(`Delete ${user.full_name}? This can't be undone from here.`);
@@ -103,13 +118,22 @@ export default function UserManagementPage() {
             </div>
             <p className="mt-1 text-sm text-neutral-600">Staff accounts and permissions.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowAddDrawer(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
-          >
-            <Plus size={16} /> Add User
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            >
+              <Download size={16} /> Export
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddDrawer(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+            >
+              <Plus size={16} /> Add User
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
