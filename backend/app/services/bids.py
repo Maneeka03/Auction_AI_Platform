@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.models.auction import AuctionInvite, AuctionStatus, Bid, RoomAccess
 from app.models.user import User
+from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
 from app.services import auctions, wallets
 
@@ -51,7 +52,9 @@ async def place(session: AsyncSession, user: User, auction_id: uuid.UUID, amount
 
     bid = Bid(auction_id=auction_id, bidder_id=user.id, amount=amount)
     session.add(bid)
+    wallets.log(session, user.id, WalletEntryKind.BID_HOLD, -hold, auction_id)
     await session.commit()
+    await auctions.broadcast(session, auction_id, "bid")
     return bid
 
 

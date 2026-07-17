@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from fastapi import status
 from sqlalchemy import func, or_, select
@@ -41,6 +42,8 @@ async def paginate(
     search: str | None,
     category: PropertyCategory | None,
     property_status: PropertyStatus | None,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
 ) -> tuple[list[Property], int]:
     query = select(Property)
     if search:
@@ -54,6 +57,10 @@ async def paginate(
         query = query.where(Property.category == category)
     if property_status:
         query = query.where(Property.status == property_status)
+    if min_price is not None:
+        query = query.where(Property.reserve_price >= min_price)
+    if max_price is not None:
+        query = query.where(Property.reserve_price <= max_price)
 
     total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
     rows = await session.scalars(
