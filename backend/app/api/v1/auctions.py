@@ -1,11 +1,15 @@
+import asyncio
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 
-from app.api.deps import DbSession, requires
+from app.api.deps import DbSession, requires, socket_user
+from app.core import events
+from app.core.errors import AppError
+from app.db.session import SessionFactory
 from app.models.auction import AuctionStatus
 from app.models.user import User
-from app.rbac.permissions import Access, Module
+from app.rbac.permissions import Access, Module, can
 from app.schemas.auction import (
     AuctionOut,
     AuctionPage,
@@ -67,6 +71,11 @@ async def update_auction(
     return AuctionOut.of(*await auctions.detail(session, auction_id))
 
 
+@router.delete("/{auction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_auction(auction_id: uuid.UUID, session: DbSession, _: User = Manager) -> None:
+    await auctions.remove(session, auction_id)
+
+
 @router.post("/{auction_id}/invites", status_code=status.HTTP_204_NO_CONTENT)
 async def invite_bidders(
     auction_id: uuid.UUID, payload: InviteRequest, session: DbSession, _: User = Manager
@@ -109,3 +118,41 @@ async def place_bid(
 @router.get("/{auction_id}/bids", response_model=list[BidOut])
 async def list_bids(auction_id: uuid.UUID, session: DbSession, _: User = BidViewer) -> list[BidOut]:
     return [BidOut.model_validate(bid) for bid in await bids.history(session, auction_id)]
+
+
+async def _relay(websocket: WebSocket, channel: str) -> None:
+    async for event in events.subscribe(channel):
+        await websocket.send_json(event)
+
+
+@router.websocket("/{auction_id}/ws")
+async def auction_room(websocket: WebSocket, auction_id: uuid.UUID, token: str) -> None:
+    """Live auction room: a snapshot on connect, then every change as it happens.
+
+    Messages are {"type": "snapshot" | "bid" | "updated" | "ended", "auction": AuctionOut}. The
+    auction is always sent whole, so a client renders the latest message and never merges deltas.
+    """
+    await websocket.accept()
+
+    # Scoped tightly: an open room must not hold a database connection while it idles.
+    async with SessionFactory() as session:
+        user = await socket_user(session, token)
+        if user is None or not can(user.roles, Module.AUCTION_MANAGEMENT, Access.VIEW):
+            await websocket.close(code=4401)
+            return
+        try:
+            snapshot = AuctionOut.of(*await auctions.detail(session, auction_id))
+        except AppError:
+            await websocket.close(code=4404)
+            return
+
+    await websocket.send_json({"type": "snapshot", "auction": snapshot.model_dump(mode="json")})
+    relay = asyncio.create_task(_relay(websocket, events.auction_channel(auction_id)))
+    try:
+        # The client sends nothing; this exists purely to notice the socket closing.
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        relay.cancel()

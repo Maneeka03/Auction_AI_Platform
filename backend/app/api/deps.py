@@ -46,6 +46,25 @@ async def get_current_user(payload: TokenPayload, session: DbSession) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+async def socket_user(session: AsyncSession, token: str) -> User | None:
+    """Authenticate a WebSocket from its query-string token.
+
+    Browsers cannot set an Authorization header on a WebSocket handshake, so the access token
+    arrives as a query parameter. The checks are the same as the HTTP path; only the way failure is
+    reported differs - a socket gets a close code, not a JSON body.
+    """
+    try:
+        payload = decode_jwt(token, ACCESS)
+        user_id = uuid.UUID(payload["sub"])
+    except (jwt.PyJWTError, KeyError, ValueError):
+        return None
+    if await is_denied(payload["jti"]):
+        return None
+
+    user = await session.get(User, user_id)
+    return user if user is not None and user.status is UserStatus.ACTIVE else None
+
+
 def requires(module: Module, level: Access = Access.FULL) -> Callable[..., Awaitable[User]]:
     async def guard(user: CurrentUser) -> User:
         if not can(user.roles, module, level):
