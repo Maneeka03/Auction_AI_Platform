@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import DbSession, requires
+from app.api.deps import CurrentUser, DbSession, requires
 from app.models.property import PropertyCategory, PropertyStatus
 from app.models.user import User
 from app.rbac.permissions import Access, Module
@@ -11,14 +11,17 @@ from app.schemas.property import (
     CreatePropertyRequest,
     PropertyOut,
     PropertyPage,
+    PurchaseRequest,
     UpdatePropertyRequest,
+    VoteRequest,
 )
-from app.services import properties
+from app.services import approvals, properties
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
 Reader = Depends(requires(Module.ASSET_MANAGEMENT, Access.VIEW))
 Manager = Depends(requires(Module.ASSET_MANAGEMENT, Access.FULL))
+Buyer = Depends(requires(Module.PAYMENT_ESCROW, Access.FULL))
 
 
 @router.post("", response_model=PropertyOut, status_code=status.HTTP_201_CREATED)
@@ -64,3 +67,24 @@ async def update_property(
     _: User = Manager,
 ) -> PropertyOut:
     return PropertyOut.of(await properties.update(session, property_id, payload))
+
+
+@router.post("/{property_id}/purchase", response_model=PropertyOut)
+async def purchase_property(
+    property_id: uuid.UUID,
+    payload: PurchaseRequest,
+    session: DbSession,
+    actor: User = Buyer,
+) -> PropertyOut:
+    return PropertyOut.of(await properties.purchase(session, actor, property_id, payload.method))
+
+
+@router.post("/{property_id}/votes", response_model=PropertyOut)
+async def vote_on_property(
+    property_id: uuid.UUID,
+    payload: VoteRequest,
+    session: DbSession,
+    actor: CurrentUser,
+) -> PropertyOut:
+    """Cast this approver's seat on a draft listing. Two matching votes settle it."""
+    return PropertyOut.of(await approvals.cast(session, actor, property_id, payload.approved))

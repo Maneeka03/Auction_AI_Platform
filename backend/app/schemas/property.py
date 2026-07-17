@@ -5,7 +5,14 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from app.models.property import Property, PropertyCategory, PropertyStatus
+from app.models.property import (
+    ApproverRole,
+    PaymentMethod,
+    Property,
+    PropertyCategory,
+    PropertyStatus,
+    PropertyVote,
+)
 from app.schemas.money import Money
 
 # SOLD is owned by the award flow, never by an edit.
@@ -41,6 +48,31 @@ class UpdatePropertyRequest(BaseModel):
     area_sqft: Area | None = None
 
 
+class PurchaseRequest(BaseModel):
+    # Full payment is the default; a token reserves the property with a deposit instead.
+    method: PaymentMethod = PaymentMethod.FULL
+
+
+class VoteRequest(BaseModel):
+    approved: bool
+
+
+class VoteOut(BaseModel):
+    seat: ApproverRole
+    voter_name: str
+    approved: bool
+    decided_at: datetime
+
+    @classmethod
+    def of(cls, vote: PropertyVote) -> "VoteOut":
+        return cls(
+            seat=vote.seat,
+            voter_name=vote.voter.full_name,
+            approved=vote.approved,
+            decided_at=vote.decided_at,
+        )
+
+
 class PropertyOut(BaseModel):
     id: uuid.UUID
     title: str
@@ -55,6 +87,11 @@ class PropertyOut(BaseModel):
     area_sqft: int | None
     seller_id: uuid.UUID | None
     seller_name: str | None
+    buyer_id: uuid.UUID | None
+    payment_method: PaymentMethod | None
+    paid_amount: Decimal | None
+    purchased_at: datetime | None
+    votes: list[VoteOut]
     created_at: datetime
 
     @classmethod
@@ -73,6 +110,11 @@ class PropertyOut(BaseModel):
             area_sqft=listing.area_sqft,
             seller_id=listing.seller_id,
             seller_name=listing.seller.full_name if listing.seller else None,
+            buyer_id=listing.buyer_id,
+            payment_method=listing.payment_method,
+            paid_amount=listing.paid_amount,
+            purchased_at=listing.purchased_at,
+            votes=[VoteOut.of(vote) for vote in listing.votes],
             created_at=listing.created_at,
         )
 

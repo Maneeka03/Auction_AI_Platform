@@ -13,11 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import events
 from app.core.errors import UNPROCESSABLE, AppError
 from app.models.auction import Auction, AuctionInvite, AuctionStatus, Bid
+from app.models.notification import NotificationKind
 from app.models.property import PropertyStatus
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionRequest
-from app.services import properties, wallets
+from app.services import notifications, properties, wallets
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +80,13 @@ async def broadcast(session: AsyncSession, auction_id: uuid.UUID, event: str) ->
         logger.warning("auction %s: %s broadcast failed", auction_id, event)
 
 
-async def release_holds(session: AsyncSession, auction: Auction) -> None:
-    """Log every bidder's hold coming back. Settling the auction is what frees the money itself."""
+async def release_holds(
+    session: AsyncSession, auction: Auction, winner_id: uuid.UUID | None
+) -> None:
+    """Log every bidder's hold coming back, and tell them how it went.
+
+    Settling the auction is what frees the money itself - see services/wallets.held.
+    """
     rows = await session.execute(
         select(Bid.bidder_id, func.max(Bid.amount))
         .where(Bid.auction_id == auction.id)
@@ -94,6 +100,34 @@ async def release_holds(session: AsyncSession, auction: Auction) -> None:
             wallets.hold_for(auction, top_bid),
             auction.id,
         )
+        won = bidder_id == winner_id
+        notifications.push(
+            session,
+            bidder_id,
+            NotificationKind.AUCTION_WON if won else NotificationKind.AUCTION_LOST,
+            f"You {'won' if won else 'did not win'} {auction.listing.title}.",
+            auction_id=auction.id,
+        )
+
+
+async def remove(session: AsyncSession, auction_id: uuid.UUID) -> None:
+    """Delete an auction created by mistake.
+
+    Only before anyone has bid: once money is committed the record has to survive, and End is the
+    honest way to close it.
+    """
+    auction = await locked(session, auction_id)
+    if await session.scalar(
+        select(func.count()).select_from(Bid).where(Bid.auction_id == auction_id)
+    ):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "auction_has_bids",
+            "This auction has bids and cannot be deleted. End it instead.",
+        )
+
+    await session.delete(auction)
+    await session.commit()
 
 
 async def locked(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
@@ -277,7 +311,7 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
 
     # Every hold closes, including the winner's, then the winner is charged - so the log nets to
     # zero for a loser and to the price for the winner.
-    await release_holds(session, auction)
+    await release_holds(session, auction, bidder_id)
     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
     await session.commit()
     await broadcast(session, auction_id, "ended")
@@ -291,7 +325,7 @@ async def end(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
         raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
 
     auction.ended_at = datetime.now(UTC)
-    await release_holds(session, auction)
+    await release_holds(session, auction, None)
     await session.commit()
     await broadcast(session, auction_id, "ended")
     return auction
