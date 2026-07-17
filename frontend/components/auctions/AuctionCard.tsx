@@ -73,12 +73,22 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction }: Auctio
         {formatDateTime(auction.starts_at)} – {formatDateTime(auction.ends_at)}
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <span
+          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
+            auction.room_access === "invite_only"
+              ? "bg-amber-500/10 text-amber-700"
+              : "bg-sky-500/10 text-sky-700"
+          }`}
+        >
           {auction.room_access === "invite_only" ? <Lock size={11} /> : <Users size={11} />}
           {auction.room_access === "invite_only" ? "Invite Only" : "Open to Everyone"}
         </span>
-        <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
+        <span
+          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
+            auction.bidder_count > 0 ? "bg-success-500/10 text-success-500" : "bg-neutral-100 text-neutral-600"
+          }`}
+        >
           <Gavel size={11} />
           {auction.bidder_count} bidders
         </span>

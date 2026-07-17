@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Download, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -10,6 +10,7 @@ import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
 import { createProperty, listProperties, updateProperty } from "@/lib/api/properties";
+import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
@@ -58,6 +59,21 @@ export default function ListingsPage() {
     void fetchProperties();
   }
 
+  function handleExport() {
+    exportToExcel(
+      properties.map((p) => ({
+        Title: p.title,
+        Address: p.address,
+        Category: p.category,
+        "Reserve Price": Number(p.reserve_price),
+        Status: p.status,
+        Created: new Date(p.created_at).toLocaleDateString(),
+      })),
+      "listings",
+      "Listings",
+    );
+  }
+
   return (
     <AdminShell>
       <RequirePermission module="asset_management" need="full">
@@ -67,13 +83,30 @@ export default function ListingsPage() {
               <h1 className="text-2xl font-semibold text-neutral-900">Listings</h1>
               <p className="mt-1 text-sm text-neutral-600">Properties available for direct purchase.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddDrawer(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
-            >
-              <Plus size={16} /> Add Property
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => void fetchProperties()}
+                aria-label="Refresh"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+              >
+                <RefreshCw size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={handleExport}
+                className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+              >
+                <Download size={16} /> Export
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddDrawer(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+              >
+                <Plus size={16} /> Add Property
+              </button>
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
@@ -119,7 +152,7 @@ export default function ListingsPage() {
                           </div>
                         </div>
                       </td>
-                       <td className="px-4 py-3">
+                      <td className="px-4 py-3">
                         <CategoryBadge category={property.category} />
                       </td>
                       <td className="px-4 py-3 text-neutral-600">{formatPrice(property.reserve_price)}</td>

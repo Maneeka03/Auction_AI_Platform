@@ -1,5 +1,6 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -128,12 +129,22 @@ export default function ApprovalsPage() {
     <AdminShell>
       <RequirePermission module="asset_management" need="full">
         <div className="space-y-5 p-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">Approvals</h1>
-            <p className="mt-1 text-sm text-neutral-600">
-              Draft properties require 2 of 3 sign-offs — Director, Appraiser, Legal &amp; Finance — before going
-              live. Approving publishes the property immediately.
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold text-neutral-900">Approvals</h1>
+              <p className="mt-1 text-sm text-neutral-600">
+                Draft properties require 2 of 3 sign-offs — Director, Appraiser, Legal &amp; Finance — before going
+                live. Approving publishes the property immediately.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchDraftProperties()}
+              aria-label="Refresh"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+            >
+              <RefreshCw size={16} />
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-2">
