@@ -160,6 +160,77 @@ price for the winner.
 Withdrawal is capped at `available`, never `balance`: money behind a live bid is already committed
 to it.
 
+## Sign-off (2 of 3)
+
+    POST /api/v1/properties/{id}/votes   { approved }
+
+A draft listing goes live only on the client's 2-of-3 quorum. Three seats, one vote each - your seat
+comes from your role, you never name it:
+
+| Seat | Held by |
+|---|---|
+| `director` | `super_admin` |
+| `appraiser` | `gemologist` |
+| `legal_finance` | `legal` **or** `finance` |
+
+The second matching vote settles it: two approvals publish the listing, two rejections set it
+`rejected`. Until then it stays `draft`. Voting again replaces your seat's earlier vote. `PropertyOut`
+carries `votes[]` with `seat`, `voter_name`, `approved` and `decided_at`, so the queue renders the
+panel without extra calls. 403 `not_an_approver` if you hold no seat; 409 `already_decided` once it
+has settled.
+
+The approvals queue is `GET /api/v1/properties?status=draft`.
+
+## Buy Now
+
+    POST /api/v1/properties/{id}/purchase   { method: "full" | "token" }
+
+Buys a `published` listing outright, charged against the wallet. `full` (the default) pays
+`reserve_price`; `token` reserves it for `PROVENIX_PURCHASE_TOKEN_PERCENT` of the price (10% by
+default). The listing becomes `sold` and carries `buyer_id`, `payment_method`, `paid_amount` and
+`purchased_at`.
+
+Buyers only, and never while an auction on that property is unsettled - 409 `auction_running`. This
+is separate from `token_percent` on an auction, which is a **bid deposit**, not a purchase.
+
+## Notifications
+
+    GET  /api/v1/notifications        ?limit&unread_only   -> { items, unread }
+    POST /api/v1/notifications/read   { ids? }             omit ids to mark all read
+
+`kind` is `outbid | auction_won | auction_lost | property_approved | property_rejected |
+kyc_reviewed`, with `auction_id` / `property_id` to link from. Written when you are outbid, when an
+auction settles (winner and losers both), when a listing is signed off, and when KYC is reviewed.
+
+## Uploads
+
+    POST /api/v1/uploads/presign   { content_type, purpose: "property" | "kyc" }
+
+Returns `{ key, upload_url, content_type, expires_in }`. **PUT the file straight to `upload_url`**
+with exactly that `Content-Type` - bytes never touch this API - then send `key` back on the create or
+update. `property` keys are publicly readable; `kyc` keys are not. Accepts jpeg, png, webp, avif and
+pdf. Needs the `minio` service from the compose file.
+
+## KYC
+
+    POST  /api/v1/kyc                      { legal_name, document_keys[] }
+    GET   /api/v1/kyc/me                   204 when never submitted
+    GET   /api/v1/admin/kyc                ?page&size&status
+    PATCH /api/v1/admin/kyc/{id}           { approved, notes? }
+
+`document_keys` are keys from `/uploads/presign`, not URLs. One live submission per user; a rejected
+applicant resubmits onto the same row, an approved one is final. The review queue needs
+`user_management` full access and returns `full_name` and `email` alongside each pack.
+
+## Dashboard
+
+    GET /api/v1/reports/dashboard
+
+Every headline number in one call: `total_buyers`, `total_sellers`, `active_auctions`,
+`total_listings`, `published_listings`, `sold_listings`, `pending_approvals`, `total_revenue`,
+`category_mix[]` and `weekly_signups[]` (last 8 weeks). Needs `reports` view access. Revenue counts
+awarded auctions plus direct Buy Now payments.
+
 ## Google Calendar
 
 No endpoint needed. `AuctionOut` returns `title`, `starts_at` and `ends_at`; the existing

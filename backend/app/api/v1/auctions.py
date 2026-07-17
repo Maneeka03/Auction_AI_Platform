@@ -71,6 +71,11 @@ async def update_auction(
     return AuctionOut.of(*await auctions.detail(session, auction_id))
 
 
+@router.delete("/{auction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_auction(auction_id: uuid.UUID, session: DbSession, _: User = Manager) -> None:
+    await auctions.remove(session, auction_id)
+
+
 @router.post("/{auction_id}/invites", status_code=status.HTTP_204_NO_CONTENT)
 async def invite_bidders(
     auction_id: uuid.UUID, payload: InviteRequest, session: DbSession, _: User = Manager
