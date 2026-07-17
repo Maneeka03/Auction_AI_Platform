@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.models.auction import AuctionInvite, AuctionStatus, Bid, RoomAccess
+from app.models.notification import NotificationKind
 from app.models.user import User
+from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
-from app.services import auctions, wallets
+from app.services import auctions, notifications, wallets
 
 
 async def place(session: AsyncSession, user: User, auction_id: uuid.UUID, amount: Decimal) -> Bid:
@@ -49,10 +51,32 @@ async def place(session: AsyncSession, user: User, auction_id: uuid.UUID, amount
             "Your wallet does not cover this bid. Add funds and try again.",
         )
 
+    leader = await _leader(session, auction_id)
     bid = Bid(auction_id=auction_id, bidder_id=user.id, amount=amount)
     session.add(bid)
+    wallets.log(session, user.id, WalletEntryKind.BID_HOLD, -hold, auction_id)
+    if leader is not None and leader != user.id:
+        notifications.push(
+            session,
+            leader,
+            NotificationKind.OUTBID,
+            f"You were outbid on {auction.listing.title}.",
+            auction_id=auction_id,
+        )
+
     await session.commit()
+    await auctions.broadcast(session, auction_id, "bid")
     return bid
+
+
+async def _leader(session: AsyncSession, auction_id: uuid.UUID) -> uuid.UUID | None:
+    """Who is winning right now. Read before the new bid lands, so it is who gets outbid."""
+    return await session.scalar(
+        select(Bid.bidder_id)
+        .where(Bid.auction_id == auction_id)
+        .order_by(Bid.amount.desc())
+        .limit(1)
+    )
 
 
 async def history(session: AsyncSession, auction_id: uuid.UUID) -> list[Bid]:

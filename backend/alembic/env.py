@@ -10,6 +10,8 @@ from app.db.base import Base
 
 # Registers every table on Base.metadata. user must stay - the others carry foreign keys to it.
 from app.models import auction as _auction  # noqa: F401
+from app.models import kyc as _kyc  # noqa: F401
+from app.models import notification as _notification  # noqa: F401
 from app.models import property as _property  # noqa: F401
 from app.models import user as _user  # noqa: F401
 from app.models import wallet as _wallet  # noqa: F401

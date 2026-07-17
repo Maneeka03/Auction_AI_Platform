@@ -1,3 +1,4 @@
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
@@ -34,6 +35,19 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000"]
     app_url: str = "http://localhost:3000"
+
+    # MinIO in development, any S3-compatible store in production. The browser uploads straight to
+    # it with a presigned URL, so file bytes never pass through this API.
+    s3_endpoint: str = "http://localhost:9000"
+    s3_access_key: str = "minioadmin"
+    # MinIO's well-known development credential, overridden by PROVENIX_S3_SECRET_KEY anywhere real.
+    s3_secret_key: str = "minioadmin"  # noqa: S105
+    s3_bucket: str = "provenix"
+    s3_region: str = "us-east-1"
+    s3_url_ttl: int = 900
+
+    # Share of the price a Buy Now token payment reserves the property with.
+    purchase_token_percent: Decimal = Decimal(10)
 
     @property
     def is_production(self) -> bool:
