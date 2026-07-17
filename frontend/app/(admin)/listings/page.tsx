@@ -12,6 +12,7 @@ import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
 import { createProperty, deleteProperty, listProperties, updateProperty } from "@/lib/api/properties";
 import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { ApiRequestError } from "@/lib/api/client";
+import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
 
@@ -140,7 +141,7 @@ export default function ListingsPage() {
                   <th className="px-4 py-3 font-medium">Reserve Price</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Created</th>
-                  <th className="w-28 px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="w-16 px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -198,21 +199,11 @@ export default function ListingsPage() {
                         {new Date(property.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setEditingProperty(property)}
-                            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(property)}
-                            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
-                          >
-                            Delete
-                          </button>
+                        <div className="flex justify-end">
+                          <PropertyRowMenu
+                            onEdit={() => setEditingProperty(property)}
+                            onDelete={() => void handleDelete(property)}
+                          />
                         </div>
                       </td>
                     </tr>

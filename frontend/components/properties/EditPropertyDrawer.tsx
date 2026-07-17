@@ -1,9 +1,11 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ImagePlus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import type { Property, UpdatePropertyRequest } from "@/types/property";
+import { useAuth } from "@/lib/auth/session-context";
+import { uploadImage } from "@/lib/utils/uploadImage";
+import type { Property, PropertyCategory, UpdatePropertyRequest } from "@/types/property";
 
 interface EditPropertyDrawerProps {
   property: Property;
@@ -12,45 +14,95 @@ interface EditPropertyDrawerProps {
 }
 
 export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDrawerProps) {
+  const { accessToken } = useAuth();
+  const [title, setTitle] = useState(property.title);
+  const [address, setAddress] = useState(property.address);
+  const [category, setCategory] = useState<PropertyCategory>(property.category);
   const [reservePrice, setReservePrice] = useState(property.reserve_price);
   const [status, setStatus] = useState<"draft" | "published">(
     property.status === "draft" || property.status === "published" ? property.status : "draft",
   );
   const [description, setDescription] = useState(property.description ?? "");
+  const [bedrooms, setBedrooms] = useState(property.bedrooms?.toString() ?? "");
+  const [bathrooms, setBathrooms] = useState(property.bathrooms?.toString() ?? "");
+  const [areaSqft, setAreaSqft] = useState(property.area_sqft?.toString() ?? "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(property.image_url);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isSold = property.status === "sold";
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  useEffect(() => {
+    if (!imageFile) return;
+    const url = URL.createObjectURL(imageFile);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
   function handleClose() {
     setIsVisible(false);
     setTimeout(onClose, 200);
+  }
+
+  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) setImageFile(file);
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
 
-    if (!reservePrice) {
-      setError("A reserve price is required.");
+    if (!title.trim() || !address.trim() || !reservePrice) {
+      setError("Title, address, and reserve price are required.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSave({ reserve_price: reservePrice, status, description });
+      let imageUrl: string | undefined;
+
+      if (imageFile) {
+        if (!accessToken) {
+          setError("You must be signed in to upload an image.");
+          setIsSubmitting(false);
+          return;
+        }
+        setIsUploadingImage(true);
+        try {
+          imageUrl = await uploadImage(accessToken, imageFile, "property");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
+      await onSave({
+        title,
+        address,
+        category,
+        reserve_price: reservePrice,
+        status,
+        description,
+        image_url: imageUrl,
+        bedrooms: category === "residential" && bedrooms ? Number(bedrooms) : undefined,
+        bathrooms: category === "residential" && bathrooms ? Number(bathrooms) : undefined,
+        area_sqft: areaSqft ? Number(areaSqft) : undefined,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);
     }
   }
-
-  const isSold = property.status === "sold";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -71,13 +123,81 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto p-5">
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Address</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Photo</label>
               <input
-                value={property.address}
-                disabled
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3 text-sm text-neutral-500"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                disabled={isSold}
+                className="hidden"
               />
-              <p className="mt-1 text-xs text-neutral-400">Address cannot be changed here.</p>
+              {imagePreview ? (
+                <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+                  {!isSold ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                      className="absolute right-2 top-2 rounded-full bg-neutral-900/60 p-1 text-white hover:bg-neutral-900/80"
+                      aria-label="Remove photo"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSold}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-36 w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 text-neutral-400 hover:border-brand-300 hover:text-brand-500 disabled:opacity-60"
+                >
+                  <ImagePlus size={22} />
+                  <span className="text-xs">Click to upload a photo</span>
+                </button>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Title <span className="text-danger-500">*</span>
+              </label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isSold}
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Address <span className="text-danger-500">*</span>
+              </label>
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                disabled={isSold}
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Category</label>
+              <Select
+                value={category}
+                onChange={(v) => setCategory(v as PropertyCategory)}
+                disabled={isSold}
+                options={[
+                  { value: "residential", label: "Residential" },
+                  { value: "commercial", label: "Commercial" },
+                ]}
+              />
             </div>
 
             <div>
@@ -88,7 +208,44 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
                 type="number"
                 value={reservePrice}
                 onChange={(e) => setReservePrice(e.target.value)}
-                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                disabled={isSold}
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+              />
+            </div>
+
+            {category === "residential" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bedrooms</label>
+                  <input
+                    type="number"
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    disabled={isSold}
+                    className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bathrooms</label>
+                  <input
+                    type="number"
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                    disabled={isSold}
+                    className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Square Feet</label>
+              <input
+                type="number"
+                value={areaSqft}
+                onChange={(e) => setAreaSqft(e.target.value)}
+                disabled={isSold}
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
             </div>
 
@@ -96,7 +253,7 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">Status</label>
               {isSold ? (
                 <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
-                  Sold — set only by an award, cannot be edited here.
+                  Sold — set only by a purchase, cannot be edited here.
                 </p>
               ) : (
                 <Select
@@ -137,7 +294,7 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               disabled={isSubmitting || isSold}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {isUploadingImage ? "Uploading photo..." : isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
