@@ -42,3 +42,7 @@ export function endAuction(accessToken: string, auctionId: string): Promise<Auct
 export function awardAuction(accessToken: string, auctionId: string, bidderId: string): Promise<Auction> {
   return apiClient.post<Auction>(`${BASE}/${auctionId}/award`, { bidder_id: bidderId }, { accessToken });
 }
+
+export function deleteAuction(accessToken: string, auctionId: string): Promise<void> {
+  return apiClient.delete<void>(`${BASE}/${auctionId}`, { accessToken });
+}

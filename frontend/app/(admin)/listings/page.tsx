@@ -9,7 +9,7 @@ import { EditPropertyDrawer } from "@/components/properties/EditPropertyDrawer";
 import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
-import { createProperty, listProperties, updateProperty } from "@/lib/api/properties";
+import { createProperty, deleteProperty, listProperties, updateProperty } from "@/lib/api/properties";
 import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -24,6 +24,7 @@ export default function ListingsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
@@ -57,6 +58,21 @@ export default function ListingsPage() {
     await updateProperty(accessToken, editingProperty.id, updates);
     setEditingProperty(null);
     void fetchProperties();
+  }
+
+  async function handleDelete(property: Property) {
+    if (!accessToken) return;
+    const confirmed = window.confirm(`Delete "${property.title}"? This can't be undone.`);
+    if (!confirmed) return;
+    setActionError(null);
+    try {
+      await deleteProperty(accessToken, property.id);
+      void fetchProperties();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiRequestError ? err.message : "Failed to delete property.",
+      );
+    }
   }
 
   function handleExport() {
@@ -109,34 +125,40 @@ export default function ListingsPage() {
             </div>
           </div>
 
+          {actionError ? (
+            <p className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-600">{actionError}</p>
+          ) : null}
+
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
                   <th className="px-4 py-3 font-medium">Title / Address</th>
                   <th className="px-4 py-3 font-medium">Category</th>
+                  <th className="px-4 py-3 font-medium">Details</th>
+                  <th className="px-4 py-3 font-medium">Seller</th>
                   <th className="px-4 py-3 font-medium">Reserve Price</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Created</th>
-                  <th className="w-20 px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="w-28 px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
                       Loading properties...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-danger-600">
+                    <td colSpan={8} className="px-4 py-8 text-center text-danger-600">
                       {error}
                     </td>
                   </tr>
                 ) : properties.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-neutral-500">
                       No properties listed yet.
                     </td>
                   </tr>
@@ -155,6 +177,19 @@ export default function ListingsPage() {
                       <td className="px-4 py-3">
                         <CategoryBadge category={property.category} />
                       </td>
+                      <td className="px-4 py-3 text-neutral-500">
+                        {property.category === "residential" ? (
+                          <>
+                            {property.bedrooms ?? "—"} bd · {property.bathrooms ?? "—"} ba
+                            {property.area_sqft ? ` · ${property.area_sqft.toLocaleString()} sqft` : ""}
+                          </>
+                        ) : property.area_sqft ? (
+                          `${property.area_sqft.toLocaleString()} sqft`
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500">{property.seller_name ?? "—"}</td>
                       <td className="px-4 py-3 text-neutral-600">{formatPrice(property.reserve_price)}</td>
                       <td className="px-4 py-3">
                         <PropertyStatusBadge status={property.status} />
@@ -163,13 +198,22 @@ export default function ListingsPage() {
                         {new Date(property.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setEditingProperty(property)}
-                          className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditingProperty(property)}
+                            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(property)}
+                            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

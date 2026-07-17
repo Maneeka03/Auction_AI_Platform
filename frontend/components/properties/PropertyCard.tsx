@@ -13,7 +13,7 @@ export function PropertyCard({ property, onBuyNow }: PropertyCardProps) {
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
       <div className="relative h-40 bg-neutral-100">
         {property.image_url ? (
-          <Image src={property.image_url} alt={property.title} fill sizes="400px" className="object-cover" />
+          <Image src={property.image_url} alt={property.title} fill sizes="400px" unoptimized className="object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-neutral-400 capitalize">
             {property.category} photo

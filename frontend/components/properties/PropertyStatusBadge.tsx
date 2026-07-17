@@ -4,12 +4,14 @@ const styles: Record<PropertyStatus, string> = {
   draft: "bg-neutral-100 text-neutral-500",
   published: "bg-success-500/10 text-success-500",
   sold: "bg-brand-500/10 text-brand-600",
+  rejected: "bg-danger-500/10 text-danger-600",
 };
 
 const labels: Record<PropertyStatus, string> = {
   draft: "Draft",
   published: "Published",
   sold: "Sold",
+  rejected: "Rejected",
 };
 
 export function PropertyStatusBadge({ status }: { status: PropertyStatus }) {

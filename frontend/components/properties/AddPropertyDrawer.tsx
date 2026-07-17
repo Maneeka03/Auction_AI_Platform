@@ -1,8 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ImagePlus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
+import { useAuth } from "@/lib/auth/session-context";
+import { uploadImage } from "@/lib/utils/uploadImage";
 import type { CreatePropertyRequest, PropertyCategory } from "@/types/property";
 
 interface AddPropertyDrawerProps {
@@ -11,24 +13,46 @@ interface AddPropertyDrawerProps {
 }
 
 export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps) {
+  const { accessToken } = useAuth();
   const [title, setTitle] = useState("");
   const [address, setAddress] = useState("");
   const [category, setCategory] = useState<PropertyCategory>("residential");
   const [reservePrice, setReservePrice] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
+  const [areaSqft, setAreaSqft] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(imageFile);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
   function handleClose() {
     setIsVisible(false);
     setTimeout(onClose, 200);
+  }
+
+  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) setImageFile(file);
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -42,13 +66,32 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
 
     setIsSubmitting(true);
     try {
+      let imageUrl: string | undefined;
+
+      if (imageFile) {
+        if (!accessToken) {
+          setError("You must be signed in to upload an image.");
+          setIsSubmitting(false);
+          return;
+        }
+        setIsUploadingImage(true);
+        try {
+          imageUrl = await uploadImage(accessToken, imageFile, "property");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
       await onCreate({
         title,
         address,
         category,
         reserve_price: reservePrice,
         description: description || undefined,
-        image_url: imageUrl || undefined,
+        image_url: imageUrl,
+        bedrooms: category === "residential" && bedrooms ? Number(bedrooms) : undefined,
+        bathrooms: category === "residential" && bathrooms ? Number(bathrooms) : undefined,
+        area_sqft: areaSqft ? Number(areaSqft) : undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -75,6 +118,40 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto p-5">
           <div className="space-y-5">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Photo</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              {imagePreview ? (
+                <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImageFile(null)}
+                    className="absolute right-2 top-2 rounded-full bg-neutral-900/60 p-1 text-white hover:bg-neutral-900/80"
+                    aria-label="Remove photo"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-36 w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 text-neutral-400 hover:border-brand-300 hover:text-brand-500"
+                >
+                  <ImagePlus size={22} />
+                  <span className="text-xs">Click to upload a photo</span>
+                </button>
+              )}
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
                 Title <span className="text-danger-500">*</span>
@@ -123,12 +200,35 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               />
             </div>
 
+            {category === "residential" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bedrooms</label>
+                  <input
+                    type="number"
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bathrooms</label>
+                  <input
+                    type="number"
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                    className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  />
+                </div>
+              </div>
+            ) : null}
+
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Image URL (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Square Feet</label>
               <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="/images/properties/example.jpg"
+                type="number"
+                value={areaSqft}
+                onChange={(e) => setAreaSqft(e.target.value)}
                 className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>
@@ -159,7 +259,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               disabled={isSubmitting}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isSubmitting ? "Creating..." : "Add Property"}
+              {isUploadingImage ? "Uploading photo..." : isSubmitting ? "Creating..." : "Add Property"}
             </button>
           </div>
         </form>

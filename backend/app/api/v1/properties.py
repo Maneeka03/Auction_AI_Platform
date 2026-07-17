@@ -88,3 +88,9 @@ async def vote_on_property(
 ) -> PropertyOut:
     """Cast this approver's seat on a draft listing. Two matching votes settle it."""
     return PropertyOut.of(await approvals.cast(session, actor, property_id, payload.approved))
+
+@router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_property(
+    property_id: uuid.UUID, session: DbSession, _: User = Manager
+) -> None:
+    await properties.delete(session, property_id)
