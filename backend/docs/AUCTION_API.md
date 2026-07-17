@@ -32,14 +32,24 @@ presentation vocabulary - the server authorises off the matrix, as every other r
 
 ## Properties
 
-    POST   /api/v1/properties            title, address, category, reserve_price, description?, image_url?
-    GET    /api/v1/properties            ?page&size&search&category&status
+    POST   /api/v1/properties            title, address, category, reserve_price, description?,
+                                         image_url?, bedrooms?, bathrooms?, area_sqft?
+    GET    /api/v1/properties            ?page&size&search&category&status&min_price&max_price
     GET    /api/v1/properties/{id}
     PATCH  /api/v1/properties/{id}       any of the above, plus status: draft | published
 
 `category` is `residential | commercial`. `status` is `draft | published | sold`; **`sold` is set only
 by an award** and a sold property can no longer be edited. Only a `published` property can be
-auctioned. A property created by a seller records their id in `seller_id`.
+auctioned.
+
+`bedrooms`, `bathrooms` and `area_sqft` are optional whole numbers - null on commercial lots, where
+they do not apply. Half-baths are not modelled.
+
+`PropertyOut` returns `seller_name` alongside `seller_id`, so an approvals queue never has to show a
+bare UUID. Both are null for a staff-created listing; a property created by a seller records them.
+
+`search` matches title and address. `min_price`/`max_price` filter on `reserve_price`. There is no
+location/radius search - that needs geocoding and is not built.
 
 ## Auctions
 
@@ -103,13 +113,52 @@ difference. Losing needs no refund step - once the auction is awarded or ended, 
 counting against the wallet. This is why an expired auction still holds funds until an admin calls
 award or end: otherwise a winner could spend what they owe before being picked.
 
-## Real time
+## Real time (WebSocket)
 
-There is no websocket. The server is the source of truth for the clock (`ends_at`) and the price
-(`current_bid`), and `GET /api/v1/auctions/{id}` returns both in one call - poll it while a room is
-open and count the timer down locally between polls. That is enough for a live room and costs no
-extra moving parts. If the demo needs push instead of poll, a Redis pub/sub broadcast is the upgrade
-path, and nothing above has to change.
+    ws://localhost:8000/api/v1/auctions/{id}/ws?token=<access_token>
+
+A browser cannot set an `Authorization` header on a WebSocket handshake, so the access token goes in
+the query string. Same rules as the REST routes: `auction_management` view access. Close codes:
+**4401** not authenticated or not allowed, **4404** no such auction.
+
+Every message is the same shape - a type and **the whole auction**:
+
+    { "type": "snapshot" | "bid" | "updated" | "ended", "auction": AuctionOut }
+
+- `snapshot` - sent once, immediately on connect, so you start in sync
+- `bid` - someone bid; `current_bid`, `minimum_bid` and `bidder_count` are already updated
+- `updated` - an admin changed the timer, reserve, or room settings
+- `ended` - awarded or closed; read `winner_id` and `status`
+
+The auction is always sent whole, never as a delta, so **render the latest message and drop your old
+state** - there is nothing to merge, and a reconnect is instantly correct. Count the clock down
+locally against `ends_at`; the server never streams ticks.
+
+Broadcasting is best-effort: if Redis drops a message the write still succeeded. Reconnect to get a
+fresh `snapshot`. Polling `GET /auctions/{id}` still works and remains a fine fallback.
+
+Bidder *names* are never pushed - the room only carries `bidder_count`. Admins read
+`/participants` over REST for identities.
+
+## Wallet transactions
+
+    GET  /api/v1/wallet/transactions   ?limit=50
+    POST /api/v1/wallet/withdraw       { amount }
+
+`kind` is `deposit | withdrawal | bid_hold | refund | purchase`. `amount` is signed the way a user
+reads it - money in positive, money out negative - and `related_to` carries the property title when
+the entry belongs to an auction.
+
+**This list is an activity log, not a ledger: do not sum it to get a balance.** `bid_hold` and
+`refund` are encumbrances rather than balance movements, so they deliberately do not add up. Read
+`balance`, `held` and `available` from `GET /api/v1/wallet`.
+
+Placing a bid writes `bid_hold`. Settling writes `refund` for **every** bidder (the winner included,
+closing their hold), plus `purchase` for the winner - so the log nets to zero for a loser and to the
+price for the winner.
+
+Withdrawal is capped at `available`, never `balance`: money behind a live bid is already committed
+to it.
 
 ## Google Calendar
 

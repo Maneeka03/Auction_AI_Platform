@@ -1,12 +1,15 @@
 import uuid
 from decimal import ROUND_HALF_UP, Decimal
 
+from fastapi import status
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import AppError
 from app.models.auction import Auction, Bid
-from app.models.wallet import Wallet
+from app.models.property import Property
+from app.models.wallet import Wallet, WalletEntry, WalletEntryKind
 
 CENTS = Decimal("0.01")
 
@@ -14,6 +17,17 @@ CENTS = Decimal("0.01")
 def hold_for(auction: Auction, amount: Decimal) -> Decimal:
     """The slice of a bid that has to be free in the wallet to place it."""
     return (amount * auction.token_percent / 100).quantize(CENTS, rounding=ROUND_HALF_UP)
+
+
+def log(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    kind: WalletEntryKind,
+    amount: Decimal,
+    auction_id: uuid.UUID | None = None,
+) -> None:
+    """Record activity for the user to read. Never read back to compute a balance."""
+    session.add(WalletEntry(user_id=user_id, kind=kind, amount=amount, auction_id=auction_id))
 
 
 async def locked(session: AsyncSession, user_id: uuid.UUID) -> Wallet:
@@ -81,5 +95,37 @@ async def read(session: AsyncSession, user_id: uuid.UUID) -> tuple[Wallet, Decim
 async def top_up(session: AsyncSession, user_id: uuid.UUID, amount: Decimal) -> Wallet:
     wallet = await locked(session, user_id)
     wallet.balance += amount
+    log(session, user_id, WalletEntryKind.DEPOSIT, amount)
     await session.commit()
     return wallet
+
+
+async def withdraw(session: AsyncSession, user_id: uuid.UUID, amount: Decimal) -> Wallet:
+    wallet = await locked(session, user_id)
+    # Only unlocked money can leave: funds behind a live bid are already committed to it.
+    if amount > await spendable(session, wallet):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "insufficient_funds",
+            "You cannot withdraw more than your available balance.",
+        )
+
+    wallet.balance -= amount
+    log(session, user_id, WalletEntryKind.WITHDRAWAL, -amount)
+    await session.commit()
+    return wallet
+
+
+async def history(
+    session: AsyncSession, user_id: uuid.UUID, limit: int
+) -> list[tuple[WalletEntry, str | None]]:
+    """Newest first, each entry paired with the property title it relates to, when it has one."""
+    rows = await session.execute(
+        select(WalletEntry, Property.title)
+        .outerjoin(Auction, Auction.id == WalletEntry.auction_id)
+        .outerjoin(Property, Property.id == Auction.property_id)
+        .where(WalletEntry.user_id == user_id)
+        .order_by(WalletEntry.created_at.desc())
+        .limit(limit)
+    )
+    return [(row[0], row[1]) for row in rows.all()]

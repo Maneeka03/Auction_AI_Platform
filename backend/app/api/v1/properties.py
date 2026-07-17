@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, status
 
@@ -24,7 +25,7 @@ Manager = Depends(requires(Module.ASSET_MANAGEMENT, Access.FULL))
 async def create_property(
     payload: CreatePropertyRequest, session: DbSession, actor: User = Manager
 ) -> PropertyOut:
-    return PropertyOut.model_validate(await properties.create(session, actor, payload))
+    return PropertyOut.of(await properties.create(session, actor, payload))
 
 
 @router.get("", response_model=PropertyPage)
@@ -35,11 +36,15 @@ async def list_properties(
     search: str | None = Query(None, max_length=120),
     category: PropertyCategory | None = None,
     status_filter: PropertyStatus | None = Query(None, alias="status"),
+    min_price: Decimal | None = Query(None, gt=0),
+    max_price: Decimal | None = Query(None, gt=0),
     _: User = Reader,
 ) -> PropertyPage:
-    items, total = await properties.paginate(session, page, size, search, category, status_filter)
+    items, total = await properties.paginate(
+        session, page, size, search, category, status_filter, min_price, max_price
+    )
     return PropertyPage(
-        items=[PropertyOut.model_validate(item) for item in items],
+        items=[PropertyOut.of(item) for item in items],
         total=total,
         page=page,
         size=size,
@@ -48,7 +53,7 @@ async def list_properties(
 
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(property_id: uuid.UUID, session: DbSession, _: User = Reader) -> PropertyOut:
-    return PropertyOut.model_validate(await properties.get(session, property_id))
+    return PropertyOut.of(await properties.get(session, property_id))
 
 
 @router.patch("/{property_id}", response_model=PropertyOut)
@@ -58,4 +63,4 @@ async def update_property(
     session: DbSession,
     _: User = Manager,
 ) -> PropertyOut:
-    return PropertyOut.model_validate(await properties.update(session, property_id, payload))
+    return PropertyOut.of(await properties.update(session, property_id, payload))

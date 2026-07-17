@@ -1,19 +1,25 @@
+import logging
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import status
+from redis.exceptions import RedisError
 from sqlalchemy import ColumnElement, Row, Select, and_, func, not_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import events
 from app.core.errors import UNPROCESSABLE, AppError
 from app.models.auction import Auction, AuctionInvite, AuctionStatus, Bid
 from app.models.property import PropertyStatus
 from app.models.user import User
-from app.schemas.auction import CreateAuctionRequest, UpdateAuctionRequest
+from app.models.wallet import WalletEntryKind
+from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionRequest
 from app.services import properties, wallets
+
+logger = logging.getLogger(__name__)
 
 # Fields an admin may no longer touch once bidding has opened. The client's rule is that the room
 # filters are decided before the auction starts; the closing time stays editable throughout.
@@ -53,6 +59,41 @@ def _with_totals() -> Select[AuctionRow]:
         _BIDS.c.current_bid,
         func.coalesce(_BIDS.c.bidder_count, 0),
     ).outerjoin(_BIDS, _BIDS.c.auction_id == Auction.id)
+
+
+async def broadcast(session: AsyncSession, auction_id: uuid.UUID, event: str) -> None:
+    """Push the whole room state to every listener.
+
+    Sending the full auction rather than a delta means a client never has to merge partial updates,
+    and a reconnecting one is instantly correct. Call only after the change is committed.
+    """
+    auction = AuctionOut.of(*await detail(session, auction_id))
+    try:
+        await events.publish(
+            events.auction_channel(auction_id),
+            {"type": event, "auction": auction.model_dump(mode="json")},
+        )
+    except RedisError:
+        # The write is already committed. Failing the caller here would report a placed bid as an
+        # error and invite a retry; a room that misses a push re-syncs on its next snapshot.
+        logger.warning("auction %s: %s broadcast failed", auction_id, event)
+
+
+async def release_holds(session: AsyncSession, auction: Auction) -> None:
+    """Log every bidder's hold coming back. Settling the auction is what frees the money itself."""
+    rows = await session.execute(
+        select(Bid.bidder_id, func.max(Bid.amount))
+        .where(Bid.auction_id == auction.id)
+        .group_by(Bid.bidder_id)
+    )
+    for bidder_id, top_bid in rows.all():
+        wallets.log(
+            session,
+            bidder_id,
+            WalletEntryKind.REFUND,
+            wallets.hold_for(auction, top_bid),
+            auction.id,
+        )
 
 
 async def locked(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
@@ -160,6 +201,7 @@ async def update(
         setattr(auction, field, value)
 
     await session.commit()
+    await broadcast(session, auction_id, "updated")
     return auction
 
 
@@ -232,7 +274,13 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
     auction.winner_id = bidder_id
     auction.ended_at = datetime.now(UTC)
     auction.listing.status = PropertyStatus.SOLD
+
+    # Every hold closes, including the winner's, then the winner is charged - so the log nets to
+    # zero for a loser and to the price for the winner.
+    await release_holds(session, auction)
+    wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
     await session.commit()
+    await broadcast(session, auction_id, "ended")
     return auction
 
 
@@ -243,5 +291,7 @@ async def end(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
         raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
 
     auction.ended_at = datetime.now(UTC)
+    await release_holds(session, auction)
     await session.commit()
+    await broadcast(session, auction_id, "ended")
     return auction
