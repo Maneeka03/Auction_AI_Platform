@@ -11,9 +11,7 @@ router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 
 
 @router.post("", status_code=status.HTTP_204_NO_CONTENT)
-async def save_property(
-    payload: WatchlistRequest, session: DbSession, actor: CurrentUser
-) -> None:
+async def save_property(payload: WatchlistRequest, session: DbSession, actor: CurrentUser) -> None:
     await watchlist.add(session, actor.id, payload.property_id)
 
 
@@ -23,7 +21,5 @@ async def my_watchlist(session: DbSession, actor: CurrentUser) -> list[PropertyO
 
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_property(
-    property_id: uuid.UUID, session: DbSession, actor: CurrentUser
-) -> None:
+async def remove_property(property_id: uuid.UUID, session: DbSession, actor: CurrentUser) -> None:
     await watchlist.remove(session, actor.id, property_id)

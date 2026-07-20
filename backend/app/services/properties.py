@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import status
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -14,7 +14,22 @@ from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
 from app.schemas.property import CreatePropertyRequest, UpdatePropertyRequest
-from app.services import kyc, wallets
+from app.services import escrow, kyc, wallets
+
+EARTH_KM = 6371
+
+
+def _within(lat: Decimal, lng: Decimal, radius_km: float) -> ColumnElement[bool]:
+    """Haversine filter: listings that have coordinates and sit within radius_km of (lat, lng)."""
+    distance = EARTH_KM * func.acos(
+        func.cos(func.radians(lat))
+        * func.cos(func.radians(Property.latitude))
+        * func.cos(func.radians(Property.longitude) - func.radians(lng))
+        + func.sin(func.radians(lat)) * func.sin(func.radians(Property.latitude))
+    )
+    return and_(
+        Property.latitude.is_not(None), Property.longitude.is_not(None), distance <= radius_km
+    )
 
 
 async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest) -> Property:
@@ -28,6 +43,8 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
         bedrooms=data.bedrooms,
         bathrooms=data.bathrooms,
         area_sqft=data.area_sqft,
+        latitude=data.latitude,
+        longitude=data.longitude,
         # A seller listing their own asset owns it; staff list on behalf of nobody in particular.
         # Assigned by object, not id: that leaves both relationships loaded, so serialising the
         # result cannot trigger a lazy load on a greenlet-less async path.
@@ -55,6 +72,7 @@ async def paginate(
     property_status: PropertyStatus | None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
+    near: tuple[Decimal, Decimal, float] | None = None,
 ) -> tuple[list[Property], int]:
     query = select(Property)
     if search:
@@ -72,6 +90,8 @@ async def paginate(
         query = query.where(Property.reserve_price >= min_price)
     if max_price is not None:
         query = query.where(Property.reserve_price <= max_price)
+    if near is not None:
+        query = query.where(_within(*near))
 
     total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
     rows = await session.scalars(
@@ -127,11 +147,13 @@ async def purchase(
     listing.paid_amount = price
     listing.purchased_at = datetime.now(UTC)
     wallets.log(session, buyer.id, WalletEntryKind.PURCHASE, -price)
-    # The seller is paid what the buyer paid. A staff-listed property has no seller to credit.
+    # The money is held in escrow until staff release it to the seller (services/escrow). A
+    # staff-listed property has no seller, so its funds simply stay with the platform.
     if listing.seller_id is not None:
-        await wallets.credit(session, listing.seller_id, price, WalletEntryKind.PAYOUT)
+        escrow.open_for(session, listing, buyer.id, price)
     await session.commit()
     return listing
+
 
 async def by_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[Property]:
     """A seller's own listings, newest first. Votes ride along, so they see approval progress."""
@@ -168,6 +190,7 @@ async def update(
 
     await session.commit()
     return listing
+
 
 async def delete(session: AsyncSession, property_id: uuid.UUID) -> None:
     """Remove a listing that never sold and was never auctioned.

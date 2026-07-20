@@ -18,7 +18,7 @@ from app.models.property import PropertyStatus
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionRequest
-from app.services import notifications, properties, wallets
+from app.services import escrow, notifications, properties, wallets
 
 logger = logging.getLogger(__name__)
 
@@ -341,11 +341,9 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
     # zero for a loser and to the price for the winner.
     await release_holds(session, auction, bidder_id)
     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
-    # The seller is paid the same amount the winner was charged.
+    # The winner's payment is held in escrow and released to the seller by staff (services/escrow).
     if auction.listing.seller_id is not None:
-        await wallets.credit(
-            session, auction.listing.seller_id, charge, WalletEntryKind.PAYOUT, auction_id
-        )
+        escrow.open_for(session, auction.listing, bidder_id, charge, auction_id)
     await session.commit()
     await broadcast(session, auction_id, "ended")
     return auction
