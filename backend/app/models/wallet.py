@@ -29,6 +29,7 @@ class WalletEntryKind(StrEnum):
     BID_HOLD = "bid_hold"
     REFUND = "refund"
     PURCHASE = "purchase"
+    PAYOUT = "payout"  # a seller being paid for a listing that sold
 
 
 class WalletEntry(Base):

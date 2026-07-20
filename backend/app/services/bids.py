@@ -11,12 +11,13 @@ from app.models.notification import NotificationKind
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
-from app.services import auctions, notifications, wallets
+from app.services import auctions, kyc, notifications, wallets
 
 
 async def place(session: AsyncSession, user: User, auction_id: uuid.UUID, amount: Decimal) -> Bid:
     if Role.BUYER not in user.roles:
         raise AppError(status.HTTP_403_FORBIDDEN, "forbidden", "Only buyers can place bids.")
+    await kyc.require_verified(session, user.id)
 
     auction = await auctions.locked(session, auction_id)
     if auction.status is not AuctionStatus.LIVE:

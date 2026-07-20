@@ -278,6 +278,34 @@ async def participants(session: AsyncSession, auction_id: uuid.UUID) -> list[Row
     return list(rows.all())
 
 
+async def by_bidder(session: AsyncSession, user_id: uuid.UUID) -> list[tuple[AuctionRow, Decimal]]:
+    """Every auction this user has bid on, each paired with their own highest bid on it."""
+    mine = (
+        select(Bid.auction_id.label("auction_id"), func.max(Bid.amount).label("my_bid"))
+        .where(Bid.bidder_id == user_id)
+        .group_by(Bid.auction_id)
+        .subquery()
+    )
+    rows = await session.execute(
+        _with_totals()
+        .join(mine, mine.c.auction_id == Auction.id)
+        .add_columns(mine.c.my_bid)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [((row[0], row[1], row[2]), row[3]) for row in rows.all()]
+
+
+async def invited(session: AsyncSession, user_id: uuid.UUID) -> list[AuctionRow]:
+    """Private auctions this user has been invited to bid in."""
+    rows = await session.execute(
+        _with_totals()
+        .join(AuctionInvite, AuctionInvite.auction_id == Auction.id)
+        .where(AuctionInvite.user_id == user_id)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()]
+
+
 async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UUID) -> Auction:
     """Sell to a bidder of the admin's choosing - not necessarily the highest one."""
     auction = await locked(session, auction_id)
@@ -313,6 +341,11 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
     # zero for a loser and to the price for the winner.
     await release_holds(session, auction, bidder_id)
     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
+    # The seller is paid the same amount the winner was charged.
+    if auction.listing.seller_id is not None:
+        await wallets.credit(
+            session, auction.listing.seller_id, charge, WalletEntryKind.PAYOUT, auction_id
+        )
     await session.commit()
     await broadcast(session, auction_id, "ended")
     return auction

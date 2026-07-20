@@ -5,12 +5,14 @@ from app.api.v1 import (
     auth,
     dev,
     kyc,
+    me,
     notifications,
     properties,
     reports,
     uploads,
     users,
     wallet,
+    watchlist,
 )
 from app.core.config import settings
 
@@ -24,6 +26,8 @@ api_router.include_router(notifications.router)
 api_router.include_router(reports.router)
 api_router.include_router(uploads.router)
 api_router.include_router(kyc.router)
+api_router.include_router(watchlist.router)
+api_router.include_router(me.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)
