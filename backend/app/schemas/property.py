@@ -21,6 +21,8 @@ EditableStatus = Literal[PropertyStatus.DRAFT, PropertyStatus.PUBLISHED]
 
 Bedrooms = Annotated[int, Field(ge=0, le=100)]
 Area = Annotated[int, Field(ge=1, le=10_000_000)]
+Latitude = Annotated[Decimal, Field(ge=-90, le=90, max_digits=9, decimal_places=6)]
+Longitude = Annotated[Decimal, Field(ge=-180, le=180, max_digits=9, decimal_places=6)]
 
 
 class CreatePropertyRequest(BaseModel):
@@ -33,6 +35,8 @@ class CreatePropertyRequest(BaseModel):
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
+    latitude: Latitude | None = None
+    longitude: Longitude | None = None
 
 
 class UpdatePropertyRequest(BaseModel):
@@ -46,6 +50,8 @@ class UpdatePropertyRequest(BaseModel):
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
+    latitude: Latitude | None = None
+    longitude: Longitude | None = None
 
 
 class PurchaseRequest(BaseModel):
@@ -85,6 +91,8 @@ class PropertyOut(BaseModel):
     bedrooms: int | None
     bathrooms: int | None
     area_sqft: int | None
+    latitude: Decimal | None
+    longitude: Decimal | None
     seller_id: uuid.UUID | None
     seller_name: str | None
     buyer_id: uuid.UUID | None
@@ -108,6 +116,8 @@ class PropertyOut(BaseModel):
             bedrooms=listing.bedrooms,
             bathrooms=listing.bathrooms,
             area_sqft=listing.area_sqft,
+            latitude=listing.latitude,
+            longitude=listing.longitude,
             seller_id=listing.seller_id,
             seller_name=listing.seller.full_name if listing.seller else None,
             buyer_id=listing.buyer_id,

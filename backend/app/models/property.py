@@ -75,6 +75,9 @@ class Property(Base, TimestampMixin):
     bedrooms: Mapped[int | None] = mapped_column(Integer, default=None)
     bathrooms: Mapped[int | None] = mapped_column(Integer, default=None)
     area_sqft: Mapped[int | None] = mapped_column(Integer, default=None)
+    # Coordinates for map/radius search. Null until geocoded or set by the lister.
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), default=None)
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), default=None)
     seller_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
     )
