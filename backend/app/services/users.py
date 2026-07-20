@@ -93,6 +93,18 @@ async def soft_delete(session: AsyncSession, actor: User, user_id: uuid.UUID) ->
     await session.commit()
 
 
+async def hard_delete(session: AsyncSession, actor: User, user_id: uuid.UUID) -> None:
+    """Remove the account outright, including one already soft-deleted. Rows that reference the
+    user fall away or null out through their own foreign keys."""
+    user = await session.get(User, user_id)
+    if user is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "user_not_found", "User not found.")
+    _assert_not_self(actor, user, "You cannot delete your own account.")
+
+    await session.delete(user)
+    await session.commit()
+
+
 def _assert_not_self(actor: User, target: User, message: str) -> None:
     if actor.id == target.id:
         raise AppError(status.HTTP_409_CONFLICT, "self_modification", message)

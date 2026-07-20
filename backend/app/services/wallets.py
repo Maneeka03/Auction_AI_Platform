@@ -2,7 +2,7 @@ import uuid
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -114,6 +114,27 @@ async def withdraw(session: AsyncSession, user_id: uuid.UUID, amount: Decimal) -
     log(session, user_id, WalletEntryKind.WITHDRAWAL, -amount)
     await session.commit()
     return wallet
+
+
+async def credit(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    amount: Decimal,
+    kind: WalletEntryKind,
+    auction_id: uuid.UUID | None = None,
+) -> None:
+    """Pay money into a user's wallet with a single atomic UPDATE, taking no row lock.
+
+    A settlement that already holds the buyer's wallet locked can credit the seller through this
+    without risking a lock-ordering deadlock. The wallet is created first if the seller had none.
+    """
+    await session.execute(
+        pg_insert(Wallet).values(user_id=user_id).on_conflict_do_nothing(index_elements=["user_id"])
+    )
+    await session.execute(
+        update(Wallet).where(Wallet.user_id == user_id).values(balance=Wallet.balance + amount)
+    )
+    log(session, user_id, kind, amount, auction_id)
 
 
 async def history(

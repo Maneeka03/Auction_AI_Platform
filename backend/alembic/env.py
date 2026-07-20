@@ -15,6 +15,7 @@ from app.models import notification as _notification  # noqa: F401
 from app.models import property as _property  # noqa: F401
 from app.models import user as _user  # noqa: F401
 from app.models import wallet as _wallet  # noqa: F401
+from app.models import watchlist as _watchlist  # noqa: F401
 
 config = context.config
 if config.config_file_name:

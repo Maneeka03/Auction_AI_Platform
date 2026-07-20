@@ -14,7 +14,7 @@ from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
 from app.schemas.property import CreatePropertyRequest, UpdatePropertyRequest
-from app.services import wallets
+from app.services import kyc, wallets
 
 
 async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest) -> Property:
@@ -86,6 +86,7 @@ async def purchase(
     """Buy a published listing outright, paying in full or reserving it with a token deposit."""
     if Role.BUYER not in buyer.roles:
         raise AppError(status.HTTP_403_FORBIDDEN, "forbidden", "Only buyers can purchase.")
+    await kyc.require_verified(session, buyer.id)
 
     listing = await locked(session, property_id)
     if listing.status is not PropertyStatus.PUBLISHED:
@@ -126,8 +127,19 @@ async def purchase(
     listing.paid_amount = price
     listing.purchased_at = datetime.now(UTC)
     wallets.log(session, buyer.id, WalletEntryKind.PURCHASE, -price)
+    # The seller is paid what the buyer paid. A staff-listed property has no seller to credit.
+    if listing.seller_id is not None:
+        await wallets.credit(session, listing.seller_id, price, WalletEntryKind.PAYOUT)
     await session.commit()
     return listing
+
+async def by_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[Property]:
+    """A seller's own listings, newest first. Votes ride along, so they see approval progress."""
+    rows = await session.scalars(
+        select(Property).where(Property.seller_id == seller_id).order_by(Property.created_at.desc())
+    )
+    return list(rows)
+
 
 async def locked(session: AsyncSession, property_id: uuid.UUID) -> Property:
     """Fetch a listing FOR UPDATE, so two buyers cannot both win the same Buy Now."""

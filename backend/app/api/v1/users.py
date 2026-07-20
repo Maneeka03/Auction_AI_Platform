@@ -56,5 +56,14 @@ async def update_user(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: uuid.UUID, session: DbSession, actor: User = Manager) -> None:
-    await users.soft_delete(session, actor, user_id)
+async def delete_user(
+    user_id: uuid.UUID,
+    session: DbSession,
+    hard: bool = Query(False),
+    actor: User = Manager,
+) -> None:
+    """Soft-delete by default (kept as a deleted account); hard=true removes it for good."""
+    if hard:
+        await users.hard_delete(session, actor, user_id)
+    else:
+        await users.soft_delete(session, actor, user_id)

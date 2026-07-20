@@ -39,6 +39,19 @@ async def mine(session: AsyncSession, user_id: uuid.UUID) -> KycSubmission | Non
     return await session.scalar(select(KycSubmission).where(KycSubmission.user_id == user_id))
 
 
+async def require_verified(session: AsyncSession, user_id: uuid.UUID) -> None:
+    """Gate a money-moving action on an approved identity pack. Raises 403 otherwise."""
+    verified = await session.scalar(
+        select(KycSubmission.status).where(KycSubmission.user_id == user_id)
+    )
+    if verified is not KycStatus.APPROVED:
+        raise AppError(
+            status.HTTP_403_FORBIDDEN,
+            "kyc_required",
+            "Verify your identity before bidding or buying.",
+        )
+
+
 async def paginate(
     session: AsyncSession, page: int, size: int, kyc_status: KycStatus | None
 ) -> tuple[list[KycSubmission], int]:

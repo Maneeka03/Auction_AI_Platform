@@ -16,6 +16,29 @@ class WeeklyCount(BaseModel):
     count: int
 
 
+class MonthlyAmount(BaseModel):
+    month: datetime
+    amount: Decimal
+
+
+class RevenueOut(BaseModel):
+    total_revenue: Decimal
+    auction_revenue: Decimal
+    direct_sales_revenue: Decimal
+    sales_count: int
+    monthly: list[MonthlyAmount]
+
+
+class AuctionActivityOut(BaseModel):
+    total: int
+    upcoming: int
+    live: int
+    ended: int
+    awarded: int
+    total_bids: int
+    weekly: list[WeeklyCount]
+
+
 class DashboardOut(BaseModel):
     total_buyers: int
     total_sellers: int
