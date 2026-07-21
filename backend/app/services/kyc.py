@@ -9,7 +9,7 @@ from app.core.errors import AppError
 from app.models.kyc import KycStatus, KycSubmission
 from app.models.notification import NotificationKind
 from app.models.user import User
-from app.services import notifications
+from app.services import notifications, uploads
 
 
 async def submit(
@@ -95,3 +95,16 @@ async def review(
     )
     await session.commit()
     return submission
+
+
+async def document_url(session: AsyncSession, submission_id: uuid.UUID, key: str) -> str:
+    """A signed link to one uploaded document, scoped to its own submission.
+
+    Checking the key against this submission's own document_keys (rather than
+    trusting any key an admin might type) keeps this from becoming a way to
+    read arbitrary private objects.
+    """
+    submission = await session.get(KycSubmission, submission_id)
+    if submission is None or key not in submission.document_keys:
+        raise AppError(status.HTTP_404_NOT_FOUND, "document_not_found", "Document not found.")
+    return uploads.presign_get(key)
