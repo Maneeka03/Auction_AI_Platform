@@ -43,7 +43,9 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
     except IntegrityError:
         await session.rollback()
         raise AppError(
-            status.HTTP_409_CONFLICT, "category_exists", "A category with this name already exists."
+            status.HTTP_409_CONFLICT,
+            "category_exists",
+            "A category with this name already exists at this level.",
         ) from None
     return category
 
@@ -83,7 +85,9 @@ async def update(
     except IntegrityError:
         await session.rollback()
         raise AppError(
-            status.HTTP_409_CONFLICT, "category_exists", "A category with this name already exists."
+            status.HTTP_409_CONFLICT,
+            "category_exists",
+            "A category with this name already exists at this level.",
         ) from None
     return category
 

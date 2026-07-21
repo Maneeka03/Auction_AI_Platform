@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,9 +16,28 @@ class Category(Base, TimestampMixin):
 
     __tablename__ = "categories"
 
+    # A name only has to be unique among its siblings, so "Antique" can sit under both Jewellery and
+    # Furniture. Two partial indexes rather than one on (parent_id, slug): in a plain unique index
+    # NULLs compare as distinct, which would let duplicate main categories through.
+    __table_args__ = (
+        Index(
+            "uq_categories_main_slug",
+            "slug",
+            unique=True,
+            postgresql_where=text("parent_id IS NULL"),
+        ),
+        Index(
+            "uq_categories_sub_slug",
+            "parent_id",
+            "slug",
+            unique=True,
+            postgresql_where=text("parent_id IS NOT NULL"),
+        ),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(120))
-    slug: Mapped[str] = mapped_column(String(140), unique=True, index=True)
+    slug: Mapped[str] = mapped_column(String(140))
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("categories.id", ondelete="CASCADE"), default=None, index=True
     )
