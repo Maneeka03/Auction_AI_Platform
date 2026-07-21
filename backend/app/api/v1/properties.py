@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import CurrentUser, DbSession, requires
 from app.core.errors import AppError
-from app.models.property import PropertyCategory, PropertyStatus
+from app.models.property import PropertyStatus
 from app.models.user import User
 from app.rbac.permissions import Access, Module, can
 from app.schemas.crm import PropertyAnalyticsOut
@@ -39,7 +39,7 @@ async def list_properties(
     page: int = Query(1, ge=1),
     size: int = Query(25, ge=1, le=100),
     search: str | None = Query(None, max_length=120),
-    category: PropertyCategory | None = None,
+    category_id: uuid.UUID | None = None,
     status_filter: PropertyStatus | None = Query(None, alias="status"),
     min_price: Decimal | None = Query(None, gt=0),
     max_price: Decimal | None = Query(None, gt=0),
@@ -51,7 +51,7 @@ async def list_properties(
     # Radius search needs all three of lat, lng and radius_km together, or none of them.
     near = (lat, lng, radius_km) if None not in (lat, lng, radius_km) else None
     items, total = await properties.paginate(
-        session, page, size, search, category, status_filter, min_price, max_price, near
+        session, page, size, search, category_id, status_filter, min_price, max_price, near
     )
     return PropertyPage(
         items=[PropertyOut.of(item) for item in items],

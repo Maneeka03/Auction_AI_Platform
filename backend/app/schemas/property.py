@@ -9,7 +9,6 @@ from app.models.property import (
     ApproverRole,
     PaymentMethod,
     Property,
-    PropertyCategory,
     PropertyStatus,
     PropertyVote,
 )
@@ -28,7 +27,7 @@ Longitude = Annotated[Decimal, Field(ge=-180, le=180, max_digits=9, decimal_plac
 class CreatePropertyRequest(BaseModel):
     title: str = Field(min_length=2, max_length=200)
     address: str = Field(min_length=2, max_length=300)
-    category: PropertyCategory
+    category_id: uuid.UUID
     reserve_price: Money
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=500)
@@ -42,7 +41,7 @@ class CreatePropertyRequest(BaseModel):
 class UpdatePropertyRequest(BaseModel):
     title: str | None = Field(default=None, min_length=2, max_length=200)
     address: str | None = Field(default=None, min_length=2, max_length=300)
-    category: PropertyCategory | None = None
+    category_id: uuid.UUID | None = None
     status: EditableStatus | None = None
     reserve_price: Money | None = None
     description: str | None = Field(default=None, max_length=5000)
@@ -83,7 +82,8 @@ class PropertyOut(BaseModel):
     id: uuid.UUID
     title: str
     address: str
-    category: PropertyCategory
+    category_id: uuid.UUID
+    category_name: str
     status: PropertyStatus
     reserve_price: Decimal
     description: str | None
@@ -108,7 +108,8 @@ class PropertyOut(BaseModel):
             id=listing.id,
             title=listing.title,
             address=listing.address,
-            category=listing.category,
+            category_id=listing.category_id,
+            category_name=listing.category.name,
             status=listing.status,
             reserve_price=listing.reserve_price,
             description=listing.description,

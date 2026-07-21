@@ -3,8 +3,8 @@
 **Running context file. Read this first to understand where the backend is today.**
 Update the Daily Log at the bottom whenever meaningful backend work ships.
 
-- **Last updated:** 2026-07-20
-- **Active branch:** `feature/future-apis` (two commits ahead of `main`, pushed to origin)
+- **Last updated:** 2026-07-21
+- **Active branch:** `feature/future-apis` (ahead of `main`, pushed to origin; `main` merged in)
 - **Companion docs:** `PROJECT_CONTEXT.txt` (business + product context), `AUTH_API.md` and
   `AUCTION_API.md` (frontend contracts for the earlier work).
 
@@ -64,6 +64,10 @@ Migration chain, newest last:
 - `0005_future_apis` — `watchlist_items` table + `payout` wallet-ledger kind.
 - `0006_crm_messaging_escrow` — `messages`, `leads`, `campaigns`, `property_views`, `escrows`
   tables; their enums; and `latitude` / `longitude` columns on `properties`.
+- `0007_categories` — `categories` table; replaces the hardcoded `property_category` enum with a
+  `category_id` foreign key on `properties`. **Data-migrating:** it seeds `Residential` and
+  `Commercial`, moves every existing listing onto them, then drops the old column and enum type. No
+  listing data is lost.
 
 **When you add a model or column yourself:**
 1. Write/change the model under `app/models/`.
@@ -94,6 +98,23 @@ Migration chain, newest last:
 
 Everything below needs `Authorization: Bearer <access_token>`. "Own data" routes work for any
 signed-in user; staff routes gate on the permission matrix.
+
+**Auction categories (staff write via `asset_management` full, read via view)**
+
+- `POST /api/v1/categories` — create, body `{ name, parent_id? }`. Omit `parent_id` for a main
+  category; pass one to create a subcategory under it. `slug` is generated from the name.
+- `GET /api/v1/categories` — every main category with its subcategories nested in `children`. One
+  call fills a browse filter.
+- `GET /api/v1/categories/{id}` — one category with its children.
+- `PATCH /api/v1/categories/{id}` — rename (re-slugs) or re-parent.
+- `DELETE /api/v1/categories/{id}` — removes it and its subcategories. `409 category_in_use` while
+  any listing still references it.
+- Filter listings with `GET /api/v1/properties?category_id=<uuid>`. Passing a **main** category also
+  returns everything in its subcategories.
+
+Rules the service enforces: the tree is exactly two levels deep (`422 nested_too_deep` if you try to
+nest under a subcategory, or to re-parent a category that has children), names are unique
+(`409 category_exists`), and a category cannot become its own parent.
 
 **Buyer self-service**
 
@@ -163,6 +184,17 @@ signed-in user; staff routes gate on the permission matrix.
 
 ## 6. Important behaviour changes to know about
 
+- **BREAKING — categories replaced the hardcoded enum.** `category` (`"residential" | "commercial"`)
+  is gone from the property contract. The platform is no longer real-estate-only: any category, in
+  any domain, can be created at runtime. What changed for the frontend:
+  - `POST /properties` and `PATCH /properties/{id}` now take **`category_id`** (a UUID), not
+    `category`.
+  - `PropertyOut` and `AuctionOut` now return **`category_id` + `category_name`** instead of
+    `category`.
+  - `GET /properties?category=` is now **`?category_id=`**.
+  - `GET /reports/dashboard` → `category_mix[].category` is now a **category name string**, and only
+    categories that actually have listings appear.
+  - Populate any category dropdown from `GET /categories`.
 - **KYC is now enforced.** `POST /auctions/{id}/bids` and `POST /properties/{id}/purchase` require the
   user to have an **approved** KYC submission, else `403 kyc_required`. Approve test buyers via
   `PATCH /admin/kyc/{submission_id}` (they must submit `POST /kyc` first).
@@ -199,6 +231,23 @@ signed-in user; staff routes gate on the permission matrix.
 ---
 
 ## Daily Log
+
+### 2026-07-21 — auction categories (any domain, not just real estate)
+
+Merged the teammate's `main` (KYC/live-auction/wallet/notification frontend, plus their
+`GET /admin/kyc/{id}/documents/{key}` backend endpoint) into the branch — no conflicts.
+
+Replaced the hardcoded `property_category` enum with a real, CRUDable **two-level category tree**, so
+the platform can auction anything — real estate, jewellery, any domain — instead of two fixed
+property types. Main categories and subcategories share one table and one set of endpoints.
+
+- New `categories` table (self-referencing `parent_id`), full CRUD at `/api/v1/categories`.
+- `properties.category_id` foreign key replaces the enum column; migration `0007` seeds the two old
+  values and moves existing listings across, so nothing is lost.
+- Browse filter `?category_id=` rolls a main category up to include its subcategories.
+- Reports, `PropertyOut` and `AuctionOut` all updated to carry `category_id` + `category_name`.
+
+**This is a breaking API change for the frontend** — see the first bullet in section 6.
 
 ### 2026-07-20 — future-APIs backend pass
 

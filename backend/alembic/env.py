@@ -12,6 +12,7 @@ from app.db.base import Base
 from app.models import analytics as _analytics  # noqa: F401
 from app.models import auction as _auction  # noqa: F401
 from app.models import campaign as _campaign  # noqa: F401
+from app.models import category as _category  # noqa: F401
 from app.models import escrow as _escrow  # noqa: F401
 from app.models import kyc as _kyc  # noqa: F401
 from app.models import lead as _lead  # noqa: F401

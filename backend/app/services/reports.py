@@ -5,7 +5,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.auction import Auction, Bid
-from app.models.property import Property, PropertyCategory, PropertyStatus
+from app.models.category import Category
+from app.models.property import Property, PropertyStatus
 from app.models.user import User, UserRole, UserStatus
 from app.rbac.permissions import Role
 from app.schemas.report import (
@@ -52,9 +53,11 @@ async def dashboard(session: AsyncSession) -> DashboardOut:
     )
 
     categories = await session.execute(
-        select(Property.category, func.count()).group_by(Property.category)
+        select(Category.name, func.count())
+        .join(Property, Property.category_id == Category.id)
+        .group_by(Category.name)
+        .order_by(Category.name)
     )
-    mix = {row[0]: row[1] for row in categories.all()}
 
     signups = await session.execute(
         select(func.date_trunc("week", User.created_at).label("week"), func.count())
@@ -73,8 +76,7 @@ async def dashboard(session: AsyncSession) -> DashboardOut:
         pending_approvals=await _count(session, Property.status == PropertyStatus.DRAFT),
         total_revenue=Decimal(awarded or 0) + Decimal(bought or 0),
         category_mix=[
-            CategoryCount(category=category, count=mix.get(category, 0))
-            for category in PropertyCategory
+            CategoryCount(category=name, count=count) for name, count in categories.all()
         ],
         weekly_signups=[WeeklyCount(week=row[0], count=row[1]) for row in signups.all()],
     )

@@ -9,12 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.errors import AppError
 from app.models.auction import Auction
-from app.models.property import PaymentMethod, Property, PropertyCategory, PropertyStatus
+from app.models.category import Category
+from app.models.property import PaymentMethod, Property, PropertyStatus
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.rbac.permissions import Role
 from app.schemas.property import CreatePropertyRequest, UpdatePropertyRequest
-from app.services import escrow, kyc, wallets
+from app.services import categories, escrow, kyc, wallets
 
 EARTH_KM = 6371
 
@@ -33,10 +34,12 @@ def _within(lat: Decimal, lng: Decimal, radius_km: float) -> ColumnElement[bool]
 
 
 async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest) -> Property:
+    # Assigned by object so the category is loaded for serialising, as with the seller below.
+    category = await categories.get(session, data.category_id)
     listing = Property(
         title=data.title,
         address=data.address,
-        category=data.category,
+        category=category,
         description=data.description,
         image_url=data.image_url,
         reserve_price=data.reserve_price,
@@ -68,7 +71,7 @@ async def paginate(
     page: int,
     size: int,
     search: str | None,
-    category: PropertyCategory | None,
+    category_id: uuid.UUID | None,
     property_status: PropertyStatus | None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
@@ -82,8 +85,16 @@ async def paginate(
                 func.lower(Property.title).like(pattern), func.lower(Property.address).like(pattern)
             )
         )
-    if category:
-        query = query.where(Property.category == category)
+    if category_id:
+        # Filtering on a main category also returns everything in its subcategories.
+        query = query.where(
+            or_(
+                Property.category_id == category_id,
+                Property.category_id.in_(
+                    select(Category.id).where(Category.parent_id == category_id)
+                ),
+            )
+        )
     if property_status:
         query = query.where(Property.status == property_status)
     if min_price is not None:
