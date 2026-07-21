@@ -68,6 +68,8 @@ Migration chain, newest last:
   `category_id` foreign key on `properties`. **Data-migrating:** it seeds `Residential` and
   `Commercial`, moves every existing listing onto them, then drops the old column and enum type. No
   listing data is lost.
+- `0008_category_sibling_slugs` — scopes category name uniqueness to siblings, so the same
+  subcategory name can be reused under different parents.
 
 **When you add a model or column yourself:**
 1. Write/change the model under `app/models/`.
@@ -112,9 +114,16 @@ signed-in user; staff routes gate on the permission matrix.
 - Filter listings with `GET /api/v1/properties?category_id=<uuid>`. Passing a **main** category also
   returns everything in its subcategories.
 
-Rules the service enforces: the tree is exactly two levels deep (`422 nested_too_deep` if you try to
-nest under a subcategory, or to re-parent a category that has children), names are unique
-(`409 category_exists`), and a category cannot become its own parent.
+Rules the service enforces:
+
+- The tree is exactly two levels deep — `422 nested_too_deep` if you nest under a subcategory, or
+  re-parent a category that already has children.
+- **A name only has to be unique among its siblings** (`409 category_exists`). So `Antique` can exist
+  under both Jewellery and Furniture, and every main category can have its own `Other`. Two main
+  categories still cannot share a name. Enforced by two partial unique indexes rather than one on
+  `(parent_id, slug)`, because NULLs compare as distinct in a plain unique index and duplicate main
+  categories would slip through.
+- A category cannot become its own parent.
 
 **Buyer self-service**
 
@@ -248,6 +257,10 @@ property types. Main categories and subcategories share one table and one set of
 - Reports, `PropertyOut` and `AuctionOut` all updated to carry `category_id` + `category_name`.
 
 **This is a breaking API change for the frontend** — see the first bullet in section 6.
+
+Follow-up the same day: category names were globally unique, which blocked reusing a common
+subcategory name (`Antique`, `Other`, `Vintage`) under more than one parent. Migration `0008` scopes
+uniqueness to siblings via two partial unique indexes.
 
 ### 2026-07-20 — future-APIs backend pass
 
