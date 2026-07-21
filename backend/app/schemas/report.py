@@ -3,11 +3,9 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from app.models.property import PropertyCategory
-
 
 class CategoryCount(BaseModel):
-    category: PropertyCategory
+    category: str
     count: int
 
 

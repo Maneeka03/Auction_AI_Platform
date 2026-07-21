@@ -6,7 +6,6 @@ from typing import Annotated
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 from app.models.auction import Auction, AuctionStatus, RoomAccess
-from app.models.property import PropertyCategory
 from app.schemas.money import Money
 
 # 100 = the bidder must have the whole bid free in their wallet; lower takes a token deposit.
@@ -53,7 +52,8 @@ class AuctionOut(BaseModel):
     property_id: uuid.UUID
     title: str
     address: str
-    category: PropertyCategory
+    category_id: uuid.UUID
+    category_name: str
     image_url: str | None
     status: AuctionStatus
     starts_at: datetime
@@ -76,7 +76,8 @@ class AuctionOut(BaseModel):
             property_id=auction.property_id,
             title=auction.listing.title,
             address=auction.listing.address,
-            category=auction.listing.category,
+            category_id=auction.listing.category_id,
+            category_name=auction.listing.category.name,
             image_url=auction.listing.image_url,
             status=auction.status,
             starts_at=auction.starts_at,

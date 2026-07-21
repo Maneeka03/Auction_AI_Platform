@@ -7,8 +7,8 @@ from app.models.kyc import KycStatus
 from app.models.user import User
 from app.rbac.permissions import Access, Module
 from app.schemas.kyc import KycOut, KycPage, KycReviewOut, ReviewKycRequest, SubmitKycRequest
-from app.services import kyc
 from app.schemas.upload import DocumentUrlOut
+from app.services import kyc
 
 router = APIRouter(tags=["kyc"])
 
@@ -55,6 +55,7 @@ async def review_kyc(
 ) -> KycOut:
     submission = await kyc.review(session, actor, submission_id, payload.approved, payload.notes)
     return KycOut.model_validate(submission)
+
 
 @router.get("/admin/kyc/{submission_id}/documents/{key:path}", response_model=DocumentUrlOut)
 async def get_kyc_document_url(

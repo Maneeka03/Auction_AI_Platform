@@ -25,5 +25,6 @@ class PresignOut(BaseModel):
     content_type: str
     expires_in: int
 
+
 class DocumentUrlOut(BaseModel):
     url: str
