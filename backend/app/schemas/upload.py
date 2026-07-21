@@ -24,3 +24,6 @@ class PresignOut(BaseModel):
     # PUT the file to upload_url with exactly this Content-Type, then send key back to the API.
     content_type: str
     expires_in: int
+
+class DocumentUrlOut(BaseModel):
+    url: str

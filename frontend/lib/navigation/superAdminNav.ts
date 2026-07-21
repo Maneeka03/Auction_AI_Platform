@@ -1,16 +1,17 @@
 import {
   BadgeCheck,
   Gavel,
+  Home,
   LayoutDashboard,
   Megaphone,
   PackageSearch,
   Settings,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   UserCog,
   Users,
   UserSquare2,
-  Home,
   Wallet,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
@@ -54,6 +55,7 @@ export const superAdminNav: NavSection[] = [
     title: "Administration",
     items: [
       { label: "User Management", href: "/admin/users", icon: UserCog },
+      { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
