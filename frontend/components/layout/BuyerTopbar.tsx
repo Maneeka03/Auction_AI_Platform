@@ -1,13 +1,16 @@
 "use client";
 
-import { Home, LogOut, Wallet } from "lucide-react";
+import { Gavel, Home, LogOut, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/lib/auth/session-context";
 
 const navLinks = [
   { label: "Browse Properties", href: "/properties", icon: Home },
+  { label: "Live Auctions", href: "/live-auctions", icon: Gavel },
   { label: "Wallet", href: "/wallet", icon: Wallet },
+  { label: "Verify ID", href: "/kyc", icon: ShieldCheck },
 ];
 
 function initialsFromName(name: string): string {
@@ -39,7 +42,7 @@ export function BuyerTopbar() {
 
         <nav className="flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
@@ -57,6 +60,7 @@ export function BuyerTopbar() {
       </div>
 
       <div className="flex items-center gap-3">
+        <NotificationBell />
         {session ? (
           <span
             className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"

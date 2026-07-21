@@ -1,6 +1,6 @@
 "use client";
 
-import {Bell,
+import {
   FileBarChart,
   Gavel,
   HelpCircle,
@@ -9,6 +9,7 @@ import {Bell,
   Maximize2,
   Minimize2,
   MessageSquare,
+  Moon,
   PackageSearch,
   PanelLeftClose,
   PanelLeftOpen,
@@ -22,6 +23,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/lib/auth/session-context";
 
 type MenuKey = "apps" | "help" | "reports" | "messages" | "notifications" | "profile";
@@ -31,33 +33,6 @@ const appLinks = [
   { label: "Listings", description: "Review submitted items", href: "/dashboard", icon: PackageSearch },
   { label: "Buyers", description: "Buyer directory", href: "/dashboard", icon: Users },
   { label: "Sellers", description: "Seller directory", href: "/dashboard", icon: UserCircle },
-];
-
-const initialNotifications = [
-  {
-    id: "notif-1",
-    name: "John Doe",
-    detail: "left 6 comments on the Q3 provenance report",
-    time: "4 min ago",
-    color: "bg-sky-100 text-sky-700",
-    avatarSrc: "/images/avatars/john-doe.avif",
-  },
-  {
-    id: "notif-2",
-    name: "Thomas William",
-    detail: "flagged a listing for review",
-    time: "8 min ago",
-    color: "bg-amber-100 text-amber-700",
-    avatarSrc: "/images/avatars/thomas-william.avif",
-  },
-  {
-    id: "notif-3",
-    name: "Sarah Anderson",
-    detail: "attached a certificate to Lot #142",
-    time: "15 min ago",
-    color: "bg-brand-100 text-brand-700",
-    avatarSrc: "/images/avatars/sarah-anderson.avif",
-  },
 ];
 
 const initialMessages = [
@@ -116,13 +91,8 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
   const [isDark, setIsDark] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [notifications, setNotifications] = useState(initialNotifications);
   const [messages, setMessages] = useState(initialMessages);
   const containerRef = useRef<HTMLElement>(null);
-
-  function dismissNotification(id: string) {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
-  }
 
   function dismissMessage(id: string) {
     setMessages((prev) => prev.filter((message) => message.id !== id));
@@ -179,7 +149,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
       ref={containerRef}
       className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-4 sm:px-6"
     >
-    <button
+      <button
         type="button"
         onClick={onToggleSidebar}
         aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
@@ -198,14 +168,14 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
           {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
         </button>
 
-        {/* <button
+        <button
           type="button"
           onClick={toggleDarkMode}
           aria-label="Toggle dark mode"
           className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
         >
           {isDark ? <Sun size={17} /> : <Moon size={17} />}
-        </button> */}
+        </button>
 
         {/* Apps quick-nav */}
         <div className="relative">
@@ -342,61 +312,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
         </div>
 
         {/* Notifications */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => toggleMenu("notifications")}
-            aria-label="Notifications"
-            aria-expanded={openMenu === "notifications"}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
-          >
-            <Bell size={17} />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger-500" />
-          </button>
-          {openMenu === "notifications" ? (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-neutral-200 bg-white shadow-lg">
-              <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-900">
-                Notifications
-              </div>
-              {notifications.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-neutral-500">No new notifications</p>
-              ) : (
-                <ul>
-                  {notifications.map((notification) => (
-                    <li
-                      key={notification.id}
-                      className="group relative flex items-start gap-3 border-b border-neutral-50 px-4 py-3 last:border-0 hover:bg-neutral-50"
-                    >
-                      <PersonAvatar name={notification.name} color={notification.color} avatarSrc={notification.avatarSrc} />
-                      <div className="pr-5">
-                        <p className="text-sm text-neutral-900">
-                          <span className="font-medium">{notification.name}</span>{" "}
-                          <span className="text-neutral-600">{notification.detail}</span>
-                        </p>
-                        <p className="mt-0.5 text-xs text-neutral-400">{notification.time}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => dismissNotification(notification.id)}
-                        aria-label={`Dismiss notification from ${notification.name}`}
-                        className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-neutral-400 opacity-0 transition-opacity hover:bg-neutral-200 hover:text-neutral-700 group-hover:opacity-100"
-                      >
-                        <X size={13} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                href="/notifications"
-                onClick={() => setOpenMenu(null)}
-                className="block px-4 py-2.5 text-center text-sm font-medium text-brand-600 hover:bg-neutral-50"
-              >
-                View all notifications
-              </Link>
-            </div>
-          ) : null}
-        </div>
+        <NotificationBell />
 
         {/* Profile */}
         <div className="relative ml-1.5">
