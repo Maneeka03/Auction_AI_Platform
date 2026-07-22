@@ -66,14 +66,14 @@ export default function CategoriesAdminPage() {
     <AdminShell>
       <RequirePermission module="asset_management" need="full">
         <div className="space-y-5 p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">Categories</h1>
               <p className="mt-1 text-sm text-neutral-600">
                 Main categories and their subcategories, for any domain the platform auctions.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void refetch()}
@@ -109,20 +109,15 @@ export default function CategoriesAdminPage() {
               <ul className="divide-y divide-neutral-100">
                 {categories.map((main) => (
                   <li key={main.id} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-neutral-900">{main.name}</p>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setDrawer({ mode: "create-sub", parent: main })}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="min-w-0 truncate font-medium text-neutral-900">{main.name}</p>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button type="button" onClick={() => setDrawer({ mode: "create-sub", parent: main })}
                           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
                         >
-                          <FolderPlus size={14} /> Add Subcategory
+                          <FolderPlus size={14} /> <span className="hidden sm:inline">Add Subcategory</span>
                         </button>
-                        <PropertyRowMenu
-                          onEdit={() => setDrawer({ mode: "edit", category: main })}
-                          onDelete={() => void handleDelete(main)}
-                        />
+                        <PropertyRowMenu onEdit={() => setDrawer({ mode: "edit", category: main })} onDelete={() => void handleDelete(main)}/>
                       </div>
                     </div>
 

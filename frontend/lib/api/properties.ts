@@ -4,6 +4,7 @@ import type {
   ListPropertiesParams,
   Property,
   PropertyPage,
+  PurchaseRequest,
   UpdatePropertyRequest,
   VoteRequest,
 } from "@/types/property";
@@ -38,6 +39,14 @@ export function updateProperty(
   payload: UpdatePropertyRequest,
 ): Promise<Property> {
   return apiClient.patch<Property>(`${BASE}/${propertyId}`, payload, { accessToken });
+}
+
+export function purchaseProperty(
+  accessToken: string,
+  propertyId: string,
+  payload: PurchaseRequest,
+): Promise<Property> {
+  return apiClient.post<Property>(`${BASE}/${propertyId}/purchase`, payload, { accessToken });
 }
 
 

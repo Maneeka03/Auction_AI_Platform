@@ -96,12 +96,12 @@ export default function ListingsPage() {
     <AdminShell>
       <RequirePermission module="asset_management" need="full">
         <div className="space-y-5 p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">Listings</h1>
               <p className="mt-1 text-sm text-neutral-600">Properties available for direct purchase.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void fetchProperties()}
@@ -131,8 +131,8 @@ export default function ListingsPage() {
             <p className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-600">{actionError}</p>
           ) : null}
 
-          <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full min-w-[860px] text-left text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
                   <th className="px-4 py-3 font-medium">Title / Address</th>

@@ -6,12 +6,21 @@ import { AdminTopbar } from "@/components/layout/AdminTopbar";
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
     <div className="flex">
-      <AdminSidebar isOpen={isSidebarOpen} />
+      <AdminSidebar
+        isOpen={isSidebarOpen}
+        isMobileOpen={isMobileNavOpen}
+        onCloseMobile={() => setIsMobileNavOpen(false)}
+      />
       <div className="min-w-0 flex-1">
-        <AdminTopbar isSidebarOpen={isSidebarOpen} onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
+        <AdminTopbar
+          isSidebarOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onOpenMobileNav={() => setIsMobileNavOpen(true)}
+        />
         {children}
       </div>
     </div>

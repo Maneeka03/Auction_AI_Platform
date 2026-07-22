@@ -74,8 +74,3 @@ export interface ListPropertiesParams {
   min_price?: number;
   max_price?: number;
 }
-export interface DemoPaymentResult {
-  method: PaymentMethod;
-  amount: number;
-  confirmedAt: string;
-}

@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   LogOut,
   Maximize2,
+  Menu,
   Minimize2,
   MessageSquare,
   Moon,
@@ -83,9 +84,10 @@ function initialsFromName(name: string): string {
 interface AdminTopbarProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  onOpenMobileNav: () => void;
 }
 
-export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps) {
+export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }: AdminTopbarProps) {
   const router = useRouter();
   const { session, logout } = useAuth();
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
@@ -151,19 +153,28 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
     >
       <button
         type="button"
+        onClick={onOpenMobileNav}
+        aria-label="Open menu"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 lg:hidden"
+      >
+        <Menu size={19} />
+      </button>
+
+      <button
+        type="button"
         onClick={onToggleSidebar}
         aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100"
+        className="hidden h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 lg:flex"
       >
         {isSidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
       </button>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 sm:gap-1.5">
         <button
           type="button"
           onClick={toggleFullscreen}
           aria-label="Toggle fullscreen"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
+          className="hidden h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 md:flex"
         >
           {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
         </button>
@@ -172,13 +183,13 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
           type="button"
           onClick={toggleDarkMode}
           aria-label="Toggle dark mode"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
+          className="hidden h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 md:flex"
         >
           {isDark ? <Sun size={17} /> : <Moon size={17} />}
         </button>
 
         {/* Apps quick-nav */}
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <button
             type="button"
             onClick={() => toggleMenu("apps")}
@@ -189,7 +200,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
             <LayoutGrid size={17} />
           </button>
           {openMenu === "apps" ? (
-            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+            <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
               <div className="grid grid-cols-2 gap-1">
                 {appLinks.map((app) => (
                   <Link
@@ -209,7 +220,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
         </div>
 
         {/* Help */}
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <button
             type="button"
             onClick={() => toggleMenu("help")}
@@ -220,7 +231,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
             <HelpCircle size={17} />
           </button>
           {openMenu === "help" ? (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
+            <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
               <Link href="/help/faq" onClick={() => setOpenMenu(null)} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
                 FAQ
               </Link>
@@ -232,7 +243,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
         </div>
 
         {/* Reports */}
-        <div className="relative">
+        <div className="relative hidden md:block">
           <button
             type="button"
             onClick={() => toggleMenu("reports")}
@@ -243,7 +254,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
             <FileBarChart size={17} />
           </button>
           {openMenu === "reports" ? (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
+            <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
               <Link href="/reports/leads" onClick={() => setOpenMenu(null)} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
                 Lead Reports
               </Link>
@@ -255,7 +266,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
         </div>
 
         {/* Messages */}
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <button
             type="button"
             onClick={() => toggleMenu("messages")}
@@ -267,7 +278,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger-500" />
           </button>
           {openMenu === "messages" ? (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-neutral-200 bg-white shadow-lg">
+            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white shadow-lg">
               <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-900">
                 Messages
               </div>
@@ -327,7 +338,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar }: AdminTopbarProps
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success-500" />
           </button>
           {openMenu === "profile" ? (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
+            <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
               <div className="px-3 py-2">
                 <p className="text-sm font-medium text-neutral-900">{userName}</p>
                 <p className="text-xs text-neutral-500">{session?.email}</p>

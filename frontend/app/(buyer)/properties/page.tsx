@@ -9,7 +9,7 @@ import { listProperties } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import { useCategories } from "@/lib/hooks/useCategories";
-import type { DemoPaymentResult, Property } from "@/types/property";
+import type { Property } from "@/types/property";
 
 export default function BrowsePropertiesPage() {
   const { accessToken } = useAuth();
@@ -43,7 +43,10 @@ export default function BrowsePropertiesPage() {
     void fetchProperties();
   }, [fetchProperties]);
 
-  function handleConfirmPayment(_result: DemoPaymentResult) {}
+  function handleConfirmPayment(_updatedProperty: Property) {
+    // Property is now sold — refresh so it drops out of the published list.
+    void fetchProperties();
+  }
 
   return (
     <RequirePermission module="asset_management" need="view">
@@ -56,6 +59,8 @@ export default function BrowsePropertiesPage() {
             <p className="mt-1 text-sm text-neutral-600">Buy properties across every category directly.</p>
           </div>
 
+          {/* Category filter, built from the live category tree. Selecting a main category also
+              includes everything in its subcategories, since the backend rolls those up. */}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
