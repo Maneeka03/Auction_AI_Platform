@@ -108,7 +108,7 @@ export default function UserManagementPage() {
     <AdminShell>
       <RequirePermission module="user_management" need="full">
         <div className="space-y-5 p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold text-neutral-900">Manage Users</h1>
@@ -118,7 +118,7 @@ export default function UserManagementPage() {
             </div>
             <p className="mt-1 text-sm text-neutral-600">Staff accounts and permissions.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleExport}
@@ -190,8 +190,8 @@ export default function UserManagementPage() {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full min-w-[860px] text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
                 <th className="px-4 py-3 font-medium">Name</th>
@@ -259,7 +259,7 @@ export default function UserManagementPage() {
             <span>
               Page {page} of {totalPages} · {total} total
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={page <= 1}

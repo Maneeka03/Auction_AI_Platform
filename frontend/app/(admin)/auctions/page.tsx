@@ -97,12 +97,12 @@ export default function LiveAuctionsPage() {
     <AdminShell>
       <RequirePermission module="auction_management" need="view">
         <div className="space-y-5 p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">Live Auctions</h1>
               <p className="mt-1 text-sm text-neutral-600">All auctions across every stage.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void fetchAuctions()}
@@ -123,7 +123,7 @@ export default function LiveAuctionsPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.key}

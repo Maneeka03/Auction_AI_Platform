@@ -92,7 +92,7 @@ export default function AdminKycReviewPage() {
     <AdminShell>
       <RequirePermission module="user_management" need="full">
         <div className="space-y-5 p-6">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">KYC Review</h1>
               <p className="mt-1 text-sm text-neutral-600">Approve or reject identity verification submissions.</p>

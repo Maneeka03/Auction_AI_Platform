@@ -1,38 +1,53 @@
 "use client";
 
-import { CheckCircle2, Coins, CreditCard, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Coins, CreditCard, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
-import type { DemoPaymentResult, PaymentMethod, Property } from "@/types/property";
+import { purchaseProperty } from "@/lib/api/properties";
+import { ApiRequestError } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/session-context";
+import type { PaymentMethod, Property } from "@/types/property";
 
 const TOKEN_PERCENTAGE = 0.05;
 
 interface PaymentModalProps {
   property: Property;
   onClose: () => void;
-  onConfirm: (result: DemoPaymentResult) => void;
+  /** Called with the updated (now-sold) property once the real purchase succeeds. */
+  onConfirm: (updatedProperty: Property) => void;
 }
 
 export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps) {
+  const { accessToken } = useAuth();
   const [method, setMethod] = useState<PaymentMethod>("token");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<DemoPaymentResult | null>(null);
+  const [error, setError] = useState<{ code: string; message: string } | null>(null);
+  const [result, setResult] = useState<Property | null>(null);
 
   const price = Number(property.reserve_price);
   const tokenAmount = Math.round(price * TOKEN_PERCENTAGE);
   const amount = method === "token" ? tokenAmount : price;
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    if (!accessToken) {
+      setError({ code: "unauthenticated", message: "You must be signed in to purchase." });
+      return;
+    }
+    setError(null);
     setIsProcessing(true);
-    setTimeout(() => {
-      const paymentResult: DemoPaymentResult = {
-        method,
-        amount,
-        confirmedAt: new Date().toLocaleString(),
-      };
-      setResult(paymentResult);
+    try {
+      const updated = await purchaseProperty(accessToken, property.id, { method });
+      setResult(updated);
+      onConfirm(updated);
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? { code: err.code, message: err.message }
+          : { code: "unknown_error", message: "Something went wrong. Please try again." },
+      );
+    } finally {
       setIsProcessing(false);
-      onConfirm(paymentResult);
-    }, 900);
+    }
   }
 
   return (
@@ -50,9 +65,6 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
 
             <p className="mt-1 text-sm text-neutral-500">{property.title}</p>
             <p className="text-xs text-neutral-400">{property.address}</p>
-            <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-              Demo mode — no real payment is processed. This simulates the checkout flow only.
-            </p>
 
             <div className="mt-4 space-y-2">
               <button
@@ -86,6 +98,22 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
               </button>
             </div>
 
+            {error ? (
+              error.code === "kyc_required" ? (
+                <p className="mt-3 flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2.5 text-sm text-amber-700">
+                  <AlertCircle size={15} />
+                  Verify your identity before buying.{" "}
+                  <Link href="/kyc" className="font-medium underline underline-offset-2">
+                    Complete KYC
+                  </Link>
+                </p>
+              ) : (
+                <p className="mt-3 rounded-lg bg-danger-500/10 px-3 py-2.5 text-sm text-danger-600">
+                  {error.message}
+                </p>
+              )
+            ) : null}
+
             <div className="mt-5 flex items-center justify-between border-t border-neutral-100 pt-4">
               <div>
                 <p className="text-xs text-neutral-500">Total due</p>
@@ -108,9 +136,11 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
             </span>
             <h2 className="text-lg font-semibold text-neutral-900">Payment Confirmed</h2>
             <p className="text-sm text-neutral-500">
-              {result.method === "token" ? "Reservation deposit" : "Full payment"} of{" "}
-              <span className="font-medium text-neutral-900">${result.amount.toLocaleString()}</span> received for{" "}
-              {property.title}.
+              {result.payment_method === "token" ? "Reservation deposit" : "Full payment"} of{" "}
+              <span className="font-medium text-neutral-900">
+                ${Number(result.paid_amount).toLocaleString()}
+              </span>{" "}
+              received for {property.title}.
             </p>
             <button
               type="button"

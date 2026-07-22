@@ -41,17 +41,19 @@ export default function LiveBiddingRoomPage() {
   }, [accessToken, auctionId, lastEvent]);
 
   async function submitBid(amount: string) {
-    if (!accessToken) return;
-    setBidError(null);
-    setIsBidding(true);
-    try {
-      await placeBid(accessToken, auctionId, { amount });
-      setCustomAmount("");
-    } catch (err) {
-      setBidError( err instanceof ApiRequestError ? { code: err.code, message: err.message }
+  if (!accessToken) return;
+  setBidError(null);
+  setIsBidding(true);
+  try {
+    await placeBid(accessToken, auctionId, { amount });
+    setCustomAmount("");
+  } catch (err) {
+    setBidError(
+      err instanceof ApiRequestError
+        ? { code: err.code, message: err.message }
         : { code: "unknown_error", message: "Failed to place bid." },
-      );
-    } finally {
+    );
+  } finally {
       setIsBidding(false);
     }
   }
@@ -172,10 +174,7 @@ export default function LiveBiddingRoomPage() {
                     <AlertCircle size={15} />Verify your identity before bidding.{" "}
                     <Link href="/kyc" className="font-medium underline underline-offset-2">Complete KYC</Link>
                   </p>
-                ) : (
-                <p className="text-sm text-danger-600">{bidError.message}</p>
-  )
-) : null}
+                ) : (<p className="text-sm text-danger-600">{bidError.message}</p>)) : null}
               </div>
             )}
           </div>
