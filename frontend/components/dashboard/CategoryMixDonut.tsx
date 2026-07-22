@@ -1,27 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { Select } from "@/components/ui/Select";
 import type { CategoryMixDatum } from "@/types/dashboard";
 
 export function CategoryMixDonut({ data }: { data: CategoryMixDatum[] }) {
-  const [range, setRange] = useState("30");
-
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
         <h3 className="text-base font-semibold text-neutral-900">Category Mix</h3>
-        <Select
-          value={range}
-          onChange={setRange}
-          size="sm"
-          className="w-36"
-          options={[
-            { value: "30", label: "Last 30 Days" },
-            { value: "90", label: "Last 90 Days" },
-          ]}
-        />
       </div>
 
       <div className="mt-2 h-40">

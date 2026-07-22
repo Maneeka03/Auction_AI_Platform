@@ -14,7 +14,6 @@ export function listNotifications(
   return apiClient.get<NotificationPage>(`${BASE}${queryString ? `?${queryString}` : ""}`, { accessToken });
 }
 
-// Omit ids to mark every unread notification read.
 export function markNotificationsRead(accessToken: string, payload: MarkReadRequest = {}): Promise<void> {
   return apiClient.post<void>(`${BASE}/read`, payload, { accessToken });
 }

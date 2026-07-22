@@ -5,8 +5,6 @@ export function submitKyc(accessToken: string, payload: SubmitKycRequest): Promi
   return apiClient.post<KycSubmission>("/api/v1/kyc", payload, { accessToken });
 }
 
-// Resolves to undefined (204) when the user has never submitted — that's a
-// normal state, not an error.
 export function getMyKyc(accessToken: string): Promise<KycSubmission | undefined> {
   return apiClient.get<KycSubmission | undefined>("/api/v1/kyc/me", { accessToken });
 }
@@ -31,8 +29,6 @@ export function reviewKyc(
   return apiClient.patch<KycSubmission>(`/api/v1/admin/kyc/${submissionId}`, payload, { accessToken });
 }
 
-// Requires the backend addition described alongside this — presign_get()
-// exists server-side but isn't exposed by any route without it.
 export function getKycDocumentUrl(accessToken: string, submissionId: string, key: string): Promise<{ url: string }> {
   return apiClient.get<{ url: string }>(
     `/api/v1/admin/kyc/${submissionId}/documents/${encodeURIComponent(key)}`,

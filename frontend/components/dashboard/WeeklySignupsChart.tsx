@@ -1,35 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { Select } from "@/components/ui/Select";
 import type { WeeklyPoint } from "@/types/dashboard";
 import { useWheelZoom } from "@/lib/hooks/useWheelZoom";
 
-const CEILING = 22;
-
 export function WeeklySignupsChart({ data, changePercent }: { data: WeeklyPoint[]; changePercent: number }) {
-  const [range, setRange] = useState("week");
   const { containerRef, scale, origin } = useWheelZoom({ min: 1, max: 2.2, step: 0.06 });
+  const ceiling = Math.max(...data.map((point) => point.value), 1) * 1.2;
   const chartData = data.map((point) => ({
     ...point,
-    remainder: Math.max(CEILING - point.value, 0),
+    remainder: Math.max(ceiling - point.value, 0),
   }));
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
         <h3 className="text-base font-semibold text-neutral-900">New Signups</h3>
-        <Select
-          value={range}
-          onChange={setRange}
-          size="sm"
-          className="w-32"
-          options={[
-            { value: "week", label: "This Week" },
-            { value: "month", label: "This Month" },
-          ]}
-        />
+        <span className="rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-500">
+          Last Months
+        </span>
       </div>
       <div ref={containerRef} className="mt-8 h-56 overflow-hidden">
         <div
@@ -41,7 +30,8 @@ export function WeeklySignupsChart({ data, changePercent }: { data: WeeklyPoint[
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-neutral-200)" />
               <XAxis
                 dataKey="day"
-                tick={{ fontSize: 12, fill: "var(--color-neutral-500)" }}
+                interval={0}
+                tick={{ fontSize: 10, fill: "var(--color-neutral-500)" }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -60,7 +50,7 @@ export function WeeklySignupsChart({ data, changePercent }: { data: WeeklyPoint[
         <span className={changePercent >= 0 ? "font-medium text-success-500" : "font-medium text-danger-500"}>
           {changePercent >= 0 ? "↑" : "↓"} {Math.abs(changePercent)}%
         </span>{" "}
-        <span className="text-neutral-500">from last week</span>
+        <span className="text-neutral-500">vs the first of the last months</span>
       </p>
     </div>
   );

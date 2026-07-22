@@ -55,9 +55,8 @@ export function NotificationBell() {
       const result = await listNotifications(accessToken, { limit: 20 });
       setNotifications(result.items);
       setUnread(result.unread);
-    } catch {
-      // Fail quietly — the bell just shows whatever it last had.
-    } finally {
+    } catch {} 
+    finally {
       setIsLoading(false);
     }
   }
@@ -66,7 +65,6 @@ export function NotificationBell() {
     void fetchNotifications();
     const interval = setInterval(() => void fetchNotifications(), 30000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
   function toggleOpen() {

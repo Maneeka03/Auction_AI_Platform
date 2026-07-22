@@ -2,10 +2,12 @@
 
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Select } from "@/components/ui/Select";
+import { CategorySelect } from "@/components/categories/CategorySelect";
 import { useAuth } from "@/lib/auth/session-context";
+import { useCategories } from "@/lib/hooks/useCategories";
+import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { uploadImage } from "@/lib/utils/uploadImage";
-import type { CreatePropertyRequest, PropertyCategory } from "@/types/property";
+import type { CreatePropertyRequest } from "@/types/property";
 
 interface AddPropertyDrawerProps {
   onClose: () => void;
@@ -14,9 +16,10 @@ interface AddPropertyDrawerProps {
 
 export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps) {
   const { accessToken } = useAuth();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const [title, setTitle] = useState("");
   const [address, setAddress] = useState("");
-  const [category, setCategory] = useState<PropertyCategory>("residential");
+  const [categoryId, setCategoryId] = useState("");
   const [reservePrice, setReservePrice] = useState("");
   const [description, setDescription] = useState("");
   const [bedrooms, setBedrooms] = useState("");
@@ -29,6 +32,11 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedMain = categories.find(
+    (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
+  );
+  const showResidentialFields = isRealEstateCategory(selectedMain?.name);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -59,8 +67,8 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     event.preventDefault();
     setError(null);
 
-    if (!title.trim() || !address.trim() || !reservePrice) {
-      setError("Title, address, and reserve price are required.");
+    if (!title.trim() || !address.trim() || !reservePrice || !categoryId) {
+      setError("Title, address, category, and reserve price are required.");
       return;
     }
 
@@ -85,12 +93,12 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
       await onCreate({
         title,
         address,
-        category,
+        category_id: categoryId,
         reserve_price: reservePrice,
         description: description || undefined,
         image_url: imageUrl,
-        bedrooms: category === "residential" && bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: category === "residential" && bathrooms ? Number(bathrooms) : undefined,
+        bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
+        bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
         area_sqft: areaSqft ? Number(areaSqft) : undefined,
       });
     } catch (err) {
@@ -129,7 +137,6 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               />
               {imagePreview ? (
                 <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imagePreview} alt="" className="h-full w-full object-cover" />
                   <button
                     type="button"
@@ -177,15 +184,14 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Category</label>
-              <Select
-                value={category}
-                onChange={(v) => setCategory(v as PropertyCategory)}
-                options={[
-                  { value: "residential", label: "Residential" },
-                  { value: "commercial", label: "Commercial" },
-                ]}
-              />
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Category <span className="text-danger-500">*</span>
+              </label>
+              {categoriesLoading ? (
+                <p className="text-xs text-neutral-500">Loading categories...</p>
+              ) : (
+                <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+              )}
             </div>
 
             <div>
@@ -200,7 +206,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               />
             </div>
 
-            {category === "residential" ? (
+            {showResidentialFields ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bedrooms</label>

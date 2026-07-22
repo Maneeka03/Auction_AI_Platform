@@ -33,7 +33,7 @@ export function PropertyApprovalCard({
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{property.category}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{property.category_name}</p>
           <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{property.title}</h3>
           <p className="text-xs text-neutral-500">{property.address}</p>
           <p className="mt-1 text-sm text-neutral-500">

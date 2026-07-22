@@ -31,7 +31,7 @@ export default function LiveBiddingRoomPage() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [customAmount, setCustomAmount] = useState("");
   const [isBidding, setIsBidding] = useState(false);
-  const [bidError, setBidError] = useState<string | null>(null);
+  const [bidError, setBidError] = useState<{ code: string; message: string } | null>(null);
 
   const canBid = session ? can(session.permissions, "bid_management", "full") && session.roles.includes("buyer") : false;
 
@@ -48,7 +48,9 @@ export default function LiveBiddingRoomPage() {
       await placeBid(accessToken, auctionId, { amount });
       setCustomAmount("");
     } catch (err) {
-      setBidError(err instanceof ApiRequestError ? err.message : "Failed to place bid.");
+      setBidError( err instanceof ApiRequestError ? { code: err.code, message: err.message }
+        : { code: "unknown_error", message: "Failed to place bid." },
+      );
     } finally {
       setIsBidding(false);
     }
@@ -86,7 +88,7 @@ export default function LiveBiddingRoomPage() {
         <div className="rounded-xl border border-neutral-200 bg-white p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
               <h1 className="mt-0.5 text-xl font-semibold text-neutral-900">{auction.title}</h1>
               <p className="text-sm text-neutral-500">{auction.address}</p>
             </div>
@@ -165,7 +167,15 @@ export default function LiveBiddingRoomPage() {
                   </button>
                 </form>
 
-                {bidError ? <p className="text-sm text-danger-600">{bidError}</p> : null}
+                {bidError ? (bidError.code === "kyc_required" ? (
+                  <p className="flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2.5 text-sm text-amber-700">
+                    <AlertCircle size={15} />Verify your identity before bidding.{" "}
+                    <Link href="/kyc" className="font-medium underline underline-offset-2">Complete KYC</Link>
+                  </p>
+                ) : (
+                <p className="text-sm text-danger-600">{bidError.message}</p>
+  )
+) : null}
               </div>
             )}
           </div>

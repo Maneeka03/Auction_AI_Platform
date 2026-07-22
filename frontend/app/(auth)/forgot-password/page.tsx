@@ -29,8 +29,6 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
     try {
       await forgotPassword(email);
-      // API always returns 202 with the same generic response, regardless of
-      // whether the account exists — this prevents email enumeration.
       setSubmitted(true);
     } catch (error) {
       if (error instanceof ApiRequestError) {

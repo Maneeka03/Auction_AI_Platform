@@ -39,8 +39,6 @@ export function WithdrawModal({ availableBalance, onClose, onSuccess }: Withdraw
       setSucceeded(true);
       onSuccess(summary);
     } catch (err) {
-      // The real backend returns "You cannot withdraw more than your
-      // available balance." for a 409 — surfaced here directly.
       setError(err instanceof ApiRequestError ? err.message : "Failed to withdraw funds.");
     } finally {
       setIsProcessing(false);

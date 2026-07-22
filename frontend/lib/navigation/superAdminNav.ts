@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  FolderTree,
   Gavel,
   Home,
   LayoutDashboard,
@@ -26,6 +27,7 @@ export const superAdminNav: NavSection[] = [
     items: [
       { label: "Approvals", href: "/approvals", icon: BadgeCheck },
       { label: "Listings", href: "/listings", icon: PackageSearch },
+      { label: "Categories", href: "/admin/categories", icon: FolderTree },
       { label: "Browse Properties", href: "/properties", icon: Home },
       { label: "Wallet", href: "/wallet", icon: Wallet },
       { label: "Live Auctions", href: "/auctions", icon: Gavel },

@@ -11,6 +11,7 @@ import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge
 import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
 import { createProperty, deleteProperty, listProperties, updateProperty } from "@/lib/api/properties";
 import { exportToExcel } from "@/lib/utils/exportToExcel";
+import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { ApiRequestError } from "@/lib/api/client";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { useAuth } from "@/lib/auth/session-context";
@@ -81,7 +82,7 @@ export default function ListingsPage() {
       properties.map((p) => ({
         Title: p.title,
         Address: p.address,
-        Category: p.category,
+        Category: p.category_name,
         "Reserve Price": Number(p.reserve_price),
         Status: p.status,
         Created: new Date(p.created_at).toLocaleDateString(),
@@ -168,7 +169,7 @@ export default function ListingsPage() {
                     <tr key={property.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <PropertyThumbnail imageUrl={property.image_url} category={property.category} />
+                          <PropertyThumbnail imageUrl={property.image_url} categoryName={property.category_name} />
                           <div>
                             <p className="font-medium text-neutral-900">{property.title}</p>
                             <p className="text-xs text-neutral-500">{property.address}</p>
@@ -176,10 +177,10 @@ export default function ListingsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <CategoryBadge category={property.category} />
+                        <CategoryBadge categoryName={property.category_name} />
                       </td>
                       <td className="px-4 py-3 text-neutral-500">
-                        {property.category === "residential" ? (
+                        {isRealEstateCategory(property.category_name) ? (
                           <>
                             {property.bedrooms ?? "—"} bd · {property.bathrooms ?? "—"} ba
                             {property.area_sqft ? ` · ${property.area_sqft.toLocaleString()} sqft` : ""}

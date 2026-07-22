@@ -23,13 +23,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// Module-level (not component-scoped) on purpose: React Strict Mode
-// double-invokes effects in development, which unmounts and remounts the
-// provider. A useRef guard resets on that remount and no longer prevents a
-// second concurrent /auth/refresh call — which the backend's reuse-detection
-// treats as token theft and revokes the whole session. A module-level
-// variable persists across remounts within the same page load, so it
-// actually prevents the duplicate call.
 let refreshInFlightPromise: Promise<string | null> | null = null;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -54,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void runRefresh();
       }, delayMs);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [clearRefreshTimer],
   );
 
@@ -80,14 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     refreshInFlightPromise = task;
     return task;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleRefresh]);
 
-  // App boot: try to resume a session from the httpOnly refresh cookie.
   useEffect(() => {
     void runRefresh().finally(() => setIsLoading(false));
     return clearRefreshTimer;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = useCallback(

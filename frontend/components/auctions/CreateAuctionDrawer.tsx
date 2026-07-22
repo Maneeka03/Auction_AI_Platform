@@ -44,7 +44,6 @@ export function CreateAuctionDrawer({ onClose, onCreate }: CreateAuctionDrawerPr
         const result = await listProperties(accessToken, { status: "published", size: 100 });
         setPublishedProperties(result.items);
       } catch {
-        // Non-fatal — the select just stays empty and the form shows a message.
       } finally {
         setIsLoadingProperties(false);
       }

@@ -8,6 +8,7 @@ interface ListPanelProps {
   items: ListItem[];
   viewAllHref: string;
   icon: LucideIcon;
+  isDemo?: boolean;
 }
 
 const chipPalette = [
@@ -33,11 +34,18 @@ function ItemThumbnail({ imageSrc, color, icon: Icon }: { imageSrc?: string; col
   );
 }
 
-export function ListPanel({ title, items, viewAllHref, icon: Icon }: ListPanelProps) {
+export function ListPanel({ title, items, viewAllHref, icon: Icon, isDemo }: ListPanelProps) {
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
+          {/* {isDemo ? (
+            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
+              Demo data
+            </span>
+          ) : null} */}
+        </div>
         <Link href={viewAllHref} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
           View All
         </Link>

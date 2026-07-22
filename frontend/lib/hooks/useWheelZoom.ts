@@ -9,8 +9,8 @@ interface UseWheelZoomOptions {
 }
 
 interface ZoomOrigin {
-  x: number; // percentage, 0-100
-  y: number; // percentage, 0-100
+  x: number; 
+  y: number; 
 }
 
 export function useWheelZoom({ min = 1, max = 2.2, step = 0.06 }: UseWheelZoomOptions = {}) {

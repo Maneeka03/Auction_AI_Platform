@@ -38,7 +38,7 @@ interface AuctionCardProps {
 export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete }: AuctionCardProps) {
   const calendarUrl = buildGoogleCalendarUrl({
     title: auction.title,
-    description: `Auction for ${auction.title} (${auction.category}). Reserve price: ${formatMoney(auction.reserve_price)}.`,
+    description: `Auction for ${auction.title} (${auction.category_name}). Reserve price: ${formatMoney(auction.reserve_price)}.`,
     startsAt: auction.starts_at,
     endsAt: auction.ends_at,
   });
@@ -47,7 +47,7 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
           <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{auction.title}</h3>
           <p className="text-xs text-neutral-500">{auction.address}</p>
         </div>

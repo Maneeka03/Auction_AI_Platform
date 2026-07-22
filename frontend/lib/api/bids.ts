@@ -9,7 +9,6 @@ export function listBids(accessToken: string, auctionId: string): Promise<Bid[]>
   return apiClient.get<Bid[]>(`/api/v1/auctions/${auctionId}/bids`, { accessToken });
 }
 
-// Admin/Supervisor only — 403 for anyone else.
 export function listParticipants(accessToken: string, auctionId: string): Promise<Participant[]> {
   return apiClient.get<Participant[]>(`/api/v1/auctions/${auctionId}/participants`, { accessToken });
 }

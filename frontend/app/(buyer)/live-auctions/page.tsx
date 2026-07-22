@@ -93,7 +93,7 @@ export default function BrowseAuctionsPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
                     <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{auction.title}</h3>
                     <p className="text-xs text-neutral-500">{auction.address}</p>
                   </div>
