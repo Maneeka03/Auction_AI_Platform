@@ -1,13 +1,12 @@
 import Image from "next/image";
-import { Building2, Home } from "lucide-react";
-import type { PropertyCategory } from "@/types/property";
+import { getCategoryIcon } from "@/lib/utils/categoryVisuals";
 
 interface PropertyThumbnailProps {
   imageUrl: string | null;
-  category: PropertyCategory;
+  categoryName: string;
 }
 
-export function PropertyThumbnail({ imageUrl, category }: PropertyThumbnailProps) {
+export function PropertyThumbnail({ imageUrl, categoryName }: PropertyThumbnailProps) {
   if (imageUrl) {
     return (
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
@@ -16,7 +15,7 @@ export function PropertyThumbnail({ imageUrl, category }: PropertyThumbnailProps
     );
   }
 
-  const Icon = category === "residential" ? Home : Building2;
+  const Icon = getCategoryIcon(categoryName);
 
   return (
     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600">

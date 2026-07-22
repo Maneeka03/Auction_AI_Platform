@@ -21,13 +21,14 @@ export const ribbonKpis: RibbonKpi[] = [
 ];
 
 export const weeklySignups: WeeklyPoint[] = [
-  { day: "M", value: 8 },
-  { day: "T", value: 14 },
-  { day: "W", value: 6 },
-  { day: "T", value: 20 },
-  { day: "F", value: 11 },
-  { day: "S", value: 9 },
-  { day: "S", value: 13 },
+  { day: "May", value: 34 },
+  { day: "Jun", value: 41 },
+  { day: "July", value: 38 },
+  { day: "Aug", value: 52 },
+  { day: "Sept", value: 47 },
+  { day: "Oct", value: 60 },
+  { day: "Nov", value: 55 },
+  { day: "Dec", value: 68 },
 ];
 
 export const monthlyRevenue: MonthlyRevenuePoint[] = [
@@ -46,10 +47,8 @@ export const monthlyRevenue: MonthlyRevenuePoint[] = [
 ];
 
 export const categoryMix: CategoryMixDatum[] = [
-  { name: "Residential", percent: 52, color: "var(--color-brand-500)" },
-  { name: "Commercial", percent: 31, color: "var(--color-amber-500)" },
-  { name: "Land/Plots", percent: 11, color: "var(--color-success-500)" },
-  { name: "Multi-Family", percent: 6, color: "var(--color-neutral-300)" },
+  { name: "Commercial", percent: 57, color: "var(--color-brand-500)" },
+  { name: "Residential", percent: 43, color: "var(--color-amber-500)" },
 ];
 
 export const recentSales: ListItem[] = [

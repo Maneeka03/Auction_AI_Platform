@@ -15,7 +15,7 @@ export function listProperties(accessToken: string, params: ListPropertiesParams
   if (params.page) query.set("page", String(params.page));
   if (params.size) query.set("size", String(params.size));
   if (params.search) query.set("search", params.search);
-  if (params.category) query.set("category", params.category);
+  if (params.category_id) query.set("category_id", params.category_id);
   if (params.status) query.set("status", params.status);
   if (params.min_price) query.set("min_price", String(params.min_price));
   if (params.max_price) query.set("max_price", String(params.max_price));

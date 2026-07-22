@@ -12,7 +12,6 @@ from app.services import kyc
 
 router = APIRouter(tags=["kyc"])
 
-# Reviewing identity is a back-office job, gated on the same module as the rest of user admin.
 Reviewer = Depends(requires(Module.USER_MANAGEMENT, Access.FULL))
 
 
@@ -26,7 +25,6 @@ async def submit_kyc(payload: SubmitKycRequest, session: DbSession, actor: Curre
 async def my_kyc(session: DbSession, actor: CurrentUser, response: Response) -> KycOut | None:
     submission = await kyc.mine(session, actor.id)
     if submission is None:
-        # Never submitted is a normal state, not an error - the client shows the empty form.
         response.status_code = status.HTTP_204_NO_CONTENT
         return None
     return KycOut.model_validate(submission)

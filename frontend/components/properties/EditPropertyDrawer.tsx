@@ -2,10 +2,13 @@
 
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { CategorySelect } from "@/components/categories/CategorySelect";
 import { Select } from "@/components/ui/Select";
 import { useAuth } from "@/lib/auth/session-context";
+import { useCategories } from "@/lib/hooks/useCategories";
+import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { uploadImage } from "@/lib/utils/uploadImage";
-import type { Property, PropertyCategory, UpdatePropertyRequest } from "@/types/property";
+import type { Property, UpdatePropertyRequest } from "@/types/property";
 
 interface EditPropertyDrawerProps {
   property: Property;
@@ -15,9 +18,10 @@ interface EditPropertyDrawerProps {
 
 export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDrawerProps) {
   const { accessToken } = useAuth();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const [title, setTitle] = useState(property.title);
   const [address, setAddress] = useState(property.address);
-  const [category, setCategory] = useState<PropertyCategory>(property.category);
+  const [categoryId, setCategoryId] = useState(property.category_id);
   const [reservePrice, setReservePrice] = useState(property.reserve_price);
   const [status, setStatus] = useState<"draft" | "published">(
     property.status === "draft" || property.status === "published" ? property.status : "draft",
@@ -35,6 +39,10 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isSold = property.status === "sold";
+  const selectedMain = categories.find(
+    (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
+  );
+  const showResidentialFields = isRealEstateCategory(selectedMain?.name ?? property.category_name);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -88,13 +96,13 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
       await onSave({
         title,
         address,
-        category,
+        category_id: categoryId,
         reserve_price: reservePrice,
         status,
         description,
         image_url: imageUrl,
-        bedrooms: category === "residential" && bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: category === "residential" && bathrooms ? Number(bathrooms) : undefined,
+        bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
+        bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
         area_sqft: areaSqft ? Number(areaSqft) : undefined,
       });
     } catch (err) {
@@ -134,7 +142,6 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               />
               {imagePreview ? (
                 <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imagePreview} alt="" className="h-full w-full object-cover" />
                   {!isSold ? (
                     <button
@@ -189,15 +196,11 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">Category</label>
-              <Select
-                value={category}
-                onChange={(v) => setCategory(v as PropertyCategory)}
-                disabled={isSold}
-                options={[
-                  { value: "residential", label: "Residential" },
-                  { value: "commercial", label: "Commercial" },
-                ]}
-              />
+              {categoriesLoading ? (
+                <p className="text-xs text-neutral-500">Loading categories...</p>
+              ) : (
+                <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} disabled={isSold} />
+              )}
             </div>
 
             <div>
@@ -213,7 +216,7 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               />
             </div>
 
-            {category === "residential" ? (
+            {showResidentialFields ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bedrooms</label>

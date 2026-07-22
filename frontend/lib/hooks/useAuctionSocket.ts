@@ -5,9 +5,6 @@ import type { Auction, AuctionSocketMessage } from "@/types/auction";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
 
-// Reconnect backoff — the doc says broadcasting is best-effort and a fresh
-// snapshot on reconnect is always correct, so we don't need anything fancier
-// than "try again shortly" on an unexpected close.
 const RECONNECT_DELAY_MS = 2000;
 const POLL_INTERVAL_MS = 4000;
 
@@ -39,7 +36,6 @@ export function useAuctionSocket(auctionId: string, accessToken: string | null):
         const latest = await getAuction(accessToken as string, auctionId);
         setAuction(latest);
       } catch {
-        // Keep showing the last known state; try again on the next tick.
       }
     }
     void poll();
@@ -79,15 +75,11 @@ export function useAuctionSocket(auctionId: string, accessToken: string | null):
           const message: AuctionSocketMessage = JSON.parse(event.data);
           setAuction(message.auction);
           setLastEvent(message.type);
-        } catch {
-          // Ignore a malformed frame — the next one will still be whole and correct.
-        }
+        } catch {}
       };
 
       socket.onclose = (event) => {
         if (cancelled) return;
-        // 4401 (not authorized) and 4404 (no such auction) are permanent —
-        // don't keep hammering a socket that will never succeed.
         if (event.code === 4401 || event.code === 4404) {
           startPolling();
           return;

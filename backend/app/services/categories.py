@@ -10,6 +10,7 @@ from app.core.errors import UNPROCESSABLE, AppError
 from app.models.category import Category
 from app.models.property import Property
 from app.schemas.category import CreateCategoryRequest, UpdateCategoryRequest
+from sqlalchemy.orm import selectinload
 
 
 def slugify(name: str) -> str:
@@ -17,7 +18,9 @@ def slugify(name: str) -> str:
 
 
 async def get(session: AsyncSession, category_id: uuid.UUID) -> Category:
-    category = await session.get(Category, category_id)
+    category = await session.scalar(
+        select(Category).where(Category.id == category_id).options(selectinload(Category.children))
+    )
     if category is None:
         raise AppError(status.HTTP_404_NOT_FOUND, "category_not_found", "Category not found.")
     return category
@@ -53,7 +56,10 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
 async def tree(session: AsyncSession) -> list[Category]:
     """Main categories, each carrying its subcategories."""
     rows = await session.scalars(
-        select(Category).where(Category.parent_id.is_(None)).order_by(Category.name)
+        select(Category)
+        .where(Category.parent_id.is_(None))
+        .options(selectinload(Category.children))
+        .order_by(Category.name)
     )
     return list(rows)
 

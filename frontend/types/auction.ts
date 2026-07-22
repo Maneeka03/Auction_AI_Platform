@@ -7,7 +7,8 @@ export interface Auction {
   property_id: string;
   title: string;
   address: string;
-  category: "residential" | "commercial";
+  category_id: string;
+  category_name: string;
   image_url: string | null;
   status: AuctionStatus;
   starts_at: string;
