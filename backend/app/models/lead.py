@@ -23,6 +23,7 @@ class Lead(Base, TimestampMixin):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(120))
+    company_name: Mapped[str | None] = mapped_column(String(160), default=None)
     email: Mapped[str | None] = mapped_column(String(320), default=None)
     phone: Mapped[str | None] = mapped_column(String(40), default=None)
     source: Mapped[str | None] = mapped_column(String(60), default=None)

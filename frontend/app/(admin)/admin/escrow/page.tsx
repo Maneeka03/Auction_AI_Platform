@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, Building2, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -199,7 +200,27 @@ export default function EscrowAdminPage() {
                     const next = NEXT_STATE[escrow.state];
                     return (
                       <tr key={escrow.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
-                        <td className="px-4 py-3 font-medium text-neutral-900">{escrow.property_title}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {escrow.property_image_url ? (
+                              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                                <Image
+                                  src={escrow.property_image_url}
+                                  alt=""
+                                  fill
+                                  sizes="36px"
+                                  unoptimized
+                                  className="object-cover"
+                                />
+                              </span>
+                            ) : (
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600">
+                                <Building2 size={16} />
+                              </span>
+                            )}
+                            <span className="font-medium text-neutral-900">{escrow.property_title}</span>
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-neutral-600">{formatMoney(escrow.amount)}</td>
                         <td className="px-4 py-3">
                           <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATE_BADGE[escrow.state]}`}>

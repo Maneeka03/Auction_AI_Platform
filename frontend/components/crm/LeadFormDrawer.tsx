@@ -7,6 +7,7 @@ import type { Lead, LeadStatus } from "@/types/crm";
 
 interface LeadFormValues {
   name: string;
+  companyName: string;
   email: string;
   phone: string;
   source: string;
@@ -17,6 +18,8 @@ interface LeadFormValues {
 interface LeadFormDrawerProps {
   /** Present when editing; absent when creating. */
   lead?: Lead;
+  /** Pre-fills status when creating from a specific Kanban column. Ignored when editing. */
+  initialStatus?: LeadStatus;
   onClose: () => void;
   onSubmit: (values: LeadFormValues) => Promise<void>;
 }
@@ -29,12 +32,13 @@ const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
   { value: "lost", label: "Lost" },
 ];
 
-export function LeadFormDrawer({ lead, onClose, onSubmit }: LeadFormDrawerProps) {
+export function LeadFormDrawer({ lead, initialStatus, onClose, onSubmit }: LeadFormDrawerProps) {
   const [name, setName] = useState(lead?.name ?? "");
+  const [companyName, setCompanyName] = useState(lead?.company_name ?? "");
   const [email, setEmail] = useState(lead?.email ?? "");
   const [phone, setPhone] = useState(lead?.phone ?? "");
   const [source, setSource] = useState(lead?.source ?? "");
-  const [status, setStatus] = useState<LeadStatus>(lead?.status ?? "new");
+  const [status, setStatus] = useState<LeadStatus>(lead?.status ?? initialStatus ?? "new");
   const [notes, setNotes] = useState(lead?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +67,7 @@ export function LeadFormDrawer({ lead, onClose, onSubmit }: LeadFormDrawerProps)
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ name: name.trim(), email, phone, source, status, notes });
+      await onSubmit({ name: name.trim(), companyName, email, phone, source, status, notes });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -97,6 +101,16 @@ export function LeadFormDrawer({ lead, onClose, onSubmit }: LeadFormDrawerProps)
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
+                className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Company Name</label>
+              <input
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. NovaWave LLC"
                 className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>

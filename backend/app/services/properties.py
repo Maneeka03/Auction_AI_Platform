@@ -56,6 +56,7 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
     )
     session.add(listing)
     await session.commit()
+    await session.refresh(listing)
     return listing
 
 
@@ -163,6 +164,7 @@ async def purchase(
     if listing.seller_id is not None:
         escrow.open_for(session, listing, buyer.id, price)
     await session.commit()
+    await session.refresh(listing)
     return listing
 
 
@@ -200,6 +202,7 @@ async def update(
         setattr(listing, field, value)
 
     await session.commit()
+    await session.refresh(listing)
     return listing
 
 

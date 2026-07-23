@@ -4,6 +4,7 @@ export const mockEscrows: Escrow[] = [
   {
     id: "mock-escrow-1",
     property_id: "mock-property-1",
+    property_image_url: null,
     property_title: "142 Maple Grove Ave, Austin TX",
     buyer_id: "mock-buyer-1",
     seller_id: "mock-seller-1",
@@ -16,6 +17,7 @@ export const mockEscrows: Escrow[] = [
   {
     id: "mock-escrow-2",
     property_id: "mock-property-2",
+    property_image_url: null,
     property_title: "38 Harborview Blvd, Miami FL",
     buyer_id: "mock-buyer-2",
     seller_id: "mock-seller-2",
@@ -28,6 +30,7 @@ export const mockEscrows: Escrow[] = [
   {
     id: "mock-escrow-3",
     property_id: "mock-property-3",
+    property_image_url: null,
     property_title: "Unit 12B, Skyline Towers, Chicago IL",
     buyer_id: "mock-buyer-3",
     seller_id: "mock-seller-3",
@@ -40,6 +43,7 @@ export const mockEscrows: Escrow[] = [
   {
     id: "mock-escrow-4",
     property_id: "mock-property-4",
+    property_image_url: null,
     property_title: "9 Oakwood Lane, Portland OR",
     buyer_id: "mock-buyer-4",
     seller_id: "mock-seller-4",
@@ -52,6 +56,7 @@ export const mockEscrows: Escrow[] = [
   {
     id: "mock-escrow-5",
     property_id: "mock-property-5",
+    property_image_url: null,
     property_title: "Riverside Commercial Plaza, Denver CO",
     buyer_id: "mock-buyer-5",
     seller_id: "mock-seller-5",

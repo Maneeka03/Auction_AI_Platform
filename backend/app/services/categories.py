@@ -5,12 +5,12 @@ from fastapi import status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.errors import UNPROCESSABLE, AppError
 from app.models.category import Category
 from app.models.property import Property
 from app.schemas.category import CreateCategoryRequest, UpdateCategoryRequest
-from sqlalchemy.orm import selectinload
 
 
 def slugify(name: str) -> str:
@@ -50,6 +50,7 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
             "category_exists",
             "A category with this name already exists at this level.",
         ) from None
+    await session.refresh(category)
     return category
 
 
@@ -95,6 +96,7 @@ async def update(
             "category_exists",
             "A category with this name already exists at this level.",
         ) from None
+    await session.refresh(category)
     return category
 
 

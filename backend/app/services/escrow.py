@@ -74,4 +74,5 @@ async def advance(session: AsyncSession, escrow_id: uuid.UUID) -> Escrow:
             session, escrow.seller_id, escrow.amount, WalletEntryKind.PAYOUT, escrow.auction_id
         )
     await session.commit()
+    await session.refresh(escrow)
     return escrow

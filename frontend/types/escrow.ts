@@ -4,6 +4,7 @@ export interface Escrow {
   id: string;
   property_id: string;
   property_title: string;
+  property_image_url: string | null;
   buyer_id: string | null;
   seller_id: string | null;
   auction_id: string | null;

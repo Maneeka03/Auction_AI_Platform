@@ -14,6 +14,7 @@ async def create(session: AsyncSession, actor: User, data: CreateLeadRequest) ->
     lead = Lead(**data.model_dump(), owner_id=actor.id)
     session.add(lead)
     await session.commit()
+    await session.refresh(lead)
     return lead
 
 
@@ -43,6 +44,7 @@ async def update(session: AsyncSession, lead_id: uuid.UUID, data: UpdateLeadRequ
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(lead, field, value)
     await session.commit()
+    await session.refresh(lead)
     return lead
 
 

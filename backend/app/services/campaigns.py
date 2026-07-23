@@ -14,6 +14,7 @@ async def create(session: AsyncSession, data: CreateCampaignRequest) -> Campaign
     campaign = Campaign(**data.model_dump())
     session.add(campaign)
     await session.commit()
+    await session.refresh(campaign)
     return campaign
 
 
@@ -45,6 +46,7 @@ async def update(
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(campaign, field, value)
     await session.commit()
+    await session.refresh(campaign)
     return campaign
 
 
@@ -59,6 +61,7 @@ async def send(session: AsyncSession, campaign_id: uuid.UUID) -> Campaign:
     campaign.status = CampaignStatus.SENT
     campaign.sent_at = datetime.now(UTC)
     await session.commit()
+    await session.refresh(campaign)
     return campaign
 
 
