@@ -41,6 +41,7 @@ export type LeadStatus = "new" | "contacted" | "qualified" | "won" | "lost";
 export interface Lead {
   id: string;
   name: string;
+  company_name: string | null;
   email: string | null;
   phone: string | null;
   source: string | null;
@@ -60,6 +61,7 @@ export interface LeadPage {
 
 export interface CreateLeadRequest {
   name: string;
+  company_name?: string | null;
   email?: string | null;
   phone?: string | null;
   source?: string | null;
@@ -69,6 +71,7 @@ export interface CreateLeadRequest {
 
 export interface UpdateLeadRequest {
   name?: string;
+  company_name?: string | null;
   email?: string | null;
   phone?: string | null;
   source?: string | null;

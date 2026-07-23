@@ -38,8 +38,6 @@ async def cast(
             "This listing has already been through sign-off.",
         )
 
-    # Assigned by object so the voter is loaded for serialising - an id alone would leave the
-    # relationship to lazy-load, which async cannot do.
     existing = next((vote for vote in listing.votes if vote.seat is seat), None)
     if existing is not None:
         existing.voter, existing.approved = actor, approved
@@ -61,4 +59,5 @@ async def cast(
         )
 
     await session.commit()
+    await session.refresh(listing)
     return listing

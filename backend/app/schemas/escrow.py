@@ -11,6 +11,7 @@ class EscrowOut(BaseModel):
     id: uuid.UUID
     property_id: uuid.UUID
     property_title: str
+    property_image_url: str | None
     buyer_id: uuid.UUID | None
     seller_id: uuid.UUID | None
     auction_id: uuid.UUID | None
@@ -25,6 +26,7 @@ class EscrowOut(BaseModel):
             id=escrow.id,
             property_id=escrow.property_id,
             property_title=escrow.listing.title,
+            property_image_url=escrow.listing.image_url,
             buyer_id=escrow.buyer_id,
             seller_id=escrow.seller_id,
             auction_id=escrow.auction_id,

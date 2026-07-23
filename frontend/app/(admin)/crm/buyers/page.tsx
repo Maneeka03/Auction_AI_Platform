@@ -18,6 +18,15 @@ const STATUS_BADGE: Record<UserStatus, string> = {
   deleted: "bg-neutral-100 text-neutral-500",
 };
 
+function initialsFromName(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export default function BuyersCrmPage() {
   const { accessToken } = useAuth();
   const [search, setSearch] = useState("");
@@ -137,8 +146,15 @@ export default function BuyersCrmPage() {
                   buyers.map((buyer) => (
                     <tr key={buyer.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-neutral-900">{buyer.full_name}</p>
-                        <p className="text-xs text-neutral-500">{buyer.email}</p>
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
+                            {initialsFromName(buyer.full_name)}
+                          </span>
+                          <div>
+                            <p className="font-medium text-neutral-900">{buyer.full_name}</p>
+                            <p className="text-xs text-neutral-500">{buyer.email}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[buyer.status]}`}>

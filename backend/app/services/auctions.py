@@ -186,6 +186,7 @@ async def create(session: AsyncSession, data: CreateAuctionRequest) -> Auction:
     )
     session.add(auction)
     await session.commit()
+    await session.refresh(auction)
     return auction
 
 

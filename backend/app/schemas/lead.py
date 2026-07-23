@@ -8,6 +8,7 @@ from app.models.lead import LeadStatus
 
 class CreateLeadRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    company_name: str | None = Field(default=None, max_length=160)
     email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=40)
     source: str | None = Field(default=None, max_length=60)
@@ -17,6 +18,7 @@ class CreateLeadRequest(BaseModel):
 
 class UpdateLeadRequest(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
+    company_name: str | None = Field(default=None, max_length=160)
     email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=40)
     source: str | None = Field(default=None, max_length=60)
@@ -29,6 +31,7 @@ class LeadOut(BaseModel):
 
     id: uuid.UUID
     name: str
+    company_name: str | None
     email: str | None
     phone: str | None
     source: str | None

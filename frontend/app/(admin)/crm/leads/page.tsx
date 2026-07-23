@@ -1,27 +1,22 @@
 "use client";
 
-import { Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Plus, RefreshCw, Search, StickyNote } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { LeadFormDrawer } from "@/components/crm/LeadFormDrawer";
+import { LeadBoard } from "@/components/crm/LeadBoard";
+import { SortByDropdown, type SortOrder } from "@/components/crm/SortByDropdown";
+import { DateRangeDropdown } from "@/components/crm/DateRangeDropdown";
+import { LeadFilterDropdown, EMPTY_LEAD_FILTERS, type LeadFilters } from "@/components/crm/LeadFilterDropdown";
+import { ViewToggle, type LeadViewMode } from "@/components/crm/ViewToggle";
 import { createLead, deleteLead, listLeads, updateLead } from "@/lib/api/crm";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import { can } from "@/lib/auth/permissions";
+import { isWithinRange, type DateRange } from "@/lib/utils/dateRangePresets";
 import type { Lead, LeadStatus } from "@/types/crm";
-
-type FilterTab = "all" | LeadStatus;
-
-const tabs: { key: FilterTab; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "new", label: "New" },
-  { key: "contacted", label: "Contacted" },
-  { key: "qualified", label: "Qualified" },
-  { key: "won", label: "Won" },
-  { key: "lost", label: "Lost" },
-];
 
 const STATUS_BADGE: Record<LeadStatus, string> = {
   new: "bg-sky-500/10 text-sky-700",
@@ -31,45 +26,104 @@ const STATUS_BADGE: Record<LeadStatus, string> = {
   lost: "bg-neutral-100 text-neutral-500",
 };
 
-type DrawerState = { mode: "create" } | { mode: "edit"; lead: Lead } | null;
+function initialsFromName(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+type DrawerState = { mode: "create"; initialStatus?: LeadStatus } | { mode: "edit"; lead: Lead } | null;
 
 export default function LeadsCrmPage() {
   const { accessToken, session } = useAuth();
-  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [openNotesFor, setOpenNotesFor] = useState<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
+  const [filters, setFilters] = useState<LeadFilters>(EMPTY_LEAD_FILTERS);
+  const [viewMode, setViewMode] = useState<LeadViewMode>("list");
 
   const canManage = session ? can(session.permissions, "lead_management", "full") : false;
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (tableRef.current && !tableRef.current.contains(event.target as Node)) {
+        setOpenNotesFor(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch everything once — all sorting/filtering below happens client-side.
   const fetchLeads = useCallback(async () => {
     if (!accessToken) return;
     setIsLoading(true);
     setError(null);
     try {
-      const result = await listLeads(accessToken, {
-        page: 1,
-        size: 100,
-        status: activeTab === "all" ? undefined : activeTab,
-      });
+      const result = await listLeads(accessToken, { page: 1, size: 100 });
       setLeads(result.items);
-      setTotal(result.total);
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to load leads.");
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, activeTab]);
+  }, [accessToken]);
 
   useEffect(() => {
     void fetchLeads();
   }, [fetchLeads]);
 
+  const visibleLeads = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    let result = leads.filter((lead) => {
+      const matchesSearch =
+        !query ||
+        lead.name.toLowerCase().includes(query) ||
+        (lead.company_name?.toLowerCase().includes(query) ?? false) ||
+        (lead.email?.toLowerCase().includes(query) ?? false) ||
+        (lead.phone?.toLowerCase().includes(query) ?? false);
+
+      const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(lead.status);
+
+      const matchesSource =
+        filters.sources.length === 0 || (lead.source ? filters.sources.includes(lead.source) : false);
+
+      const matchesDate = isWithinRange(lead.created_at, dateRange);
+
+      return matchesSearch && matchesStatus && matchesSource && matchesDate;
+    });
+
+    result = [...result].sort((a, b) => {
+      const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return sortOrder === "newest" ? -diff : diff;
+    });
+
+    return result;
+  }, [leads, search, filters, dateRange, sortOrder]);
+
+  // Grows automatically: any source typed on Add Lead shows up here on the next fetch.
+  const availableSources = useMemo(() => {
+    const sources = new Set<string>();
+    for (const lead of leads) {
+      if (lead.source) sources.add(lead.source);
+    }
+    return Array.from(sources).sort();
+  }, [leads]);
+
   async function handleSubmit(values: {
     name: string;
+    companyName: string;
     email: string;
     phone: string;
     source: string;
@@ -79,6 +133,7 @@ export default function LeadsCrmPage() {
     if (!accessToken || !drawer) return;
     const payload = {
       name: values.name,
+      company_name: values.companyName || null,
       email: values.email || null,
       phone: values.phone || null,
       source: values.source || null,
@@ -118,7 +173,8 @@ export default function LeadsCrmPage() {
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">Leads</h1>
               <p className="mt-1 text-sm text-neutral-600">
-                {total.toLocaleString()} lead{total === 1 ? "" : "s"} in the pipeline.
+                {visibleLeads.length.toLocaleString()} of {leads.length.toLocaleString()} lead
+                {leads.length === 1 ? "" : "s"} shown.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -142,92 +198,138 @@ export default function LeadsCrmPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === tab.key ? "bg-brand-500 text-white" : "bg-white text-neutral-600 hover:bg-neutral-100"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <SortByDropdown value={sortOrder} onChange={setSortOrder} />
+            <DateRangeDropdown range={dateRange} onChange={setDateRange} />
+            <LeadFilterDropdown filters={filters} availableSources={availableSources} onChange={setFilters} />
+            <div className="relative ml-auto w-full max-w-xs">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search leads..."
+                className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
           </div>
 
           {actionError ? (
             <p className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-600">{actionError}</p>
           ) : null}
 
-          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Contact</th>
-                  <th className="px-4 py-3 font-medium">Source</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Updated</th>
-                  {canManage ? <th className="w-16 px-4 py-3 text-right font-medium">Actions</th> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={canManage ? 6 : 5} className="px-4 py-8 text-center text-neutral-500">
-                      Loading leads...
-                    </td>
+          {viewMode === "kanban" ? (
+            isLoading ? (
+              <p className="text-sm text-neutral-500">Loading leads...</p>
+            ) : error ? (
+              <p className="text-sm text-danger-600">{error}</p>
+            ) : (
+              <LeadBoard
+                leads={visibleLeads}
+                canManage={canManage}
+                onEdit={(lead) => setDrawer({ mode: "edit", lead })}
+                onDelete={handleDelete}
+                onQuickAdd={(status) => setDrawer({ mode: "create", initialStatus: status })}
+              />
+            )
+          ) : (
+            <div ref={tableRef} className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+              <table className="w-full min-w-[960px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
+                    <th className="px-4 py-3 font-medium">Lead Name</th>
+                    <th className="px-4 py-3 font-medium">Company Name</th>
+                    <th className="px-4 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Mobile No.</th>
+                    <th className="px-4 py-3 font-medium">Source</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Updated</th>
+                    {canManage ? <th className="w-16 px-4 py-3 text-right font-medium">Actions</th> : null}
                   </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan={canManage ? 6 : 5} className="px-4 py-8 text-center text-danger-600">
-                      {error}
-                    </td>
-                  </tr>
-                ) : leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={canManage ? 6 : 5} className="px-4 py-8 text-center text-neutral-500">
-                      No leads in this stage yet.
-                    </td>
-                  </tr>
-                ) : (
-                  leads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
-                      <td className="px-4 py-3 font-medium text-neutral-900">{lead.name}</td>
-                      <td className="px-4 py-3 text-neutral-500">
-                        {lead.email ?? "—"}
-                        {lead.phone ? <span className="block text-xs text-neutral-400">{lead.phone}</span> : null}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={canManage ? 8 : 7} className="px-4 py-8 text-center text-neutral-500">
+                        Loading leads...
                       </td>
-                      <td className="px-4 py-3 text-neutral-500">{lead.source ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[lead.status]}`}>
-                          {lead.status}
-                        </span>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={canManage ? 8 : 7} className="px-4 py-8 text-center text-danger-600">
+                        {error}
                       </td>
-                      <td className="px-4 py-3 text-neutral-500">{new Date(lead.updated_at).toLocaleDateString()}</td>
-                      {canManage ? (
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end">
-                            <PropertyRowMenu
-                              onEdit={() => setDrawer({ mode: "edit", lead })}
-                              onDelete={() => void handleDelete(lead)}
-                            />
+                    </tr>
+                  ) : visibleLeads.length === 0 ? (
+                    <tr>
+                      <td colSpan={canManage ? 8 : 7} className="px-4 py-8 text-center text-neutral-500">
+                        No leads match these filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    visibleLeads.map((lead) => (
+                      <tr key={lead.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
+                              {initialsFromName(lead.name)}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-neutral-900">{lead.name}</span>
+                              {lead.notes ? (
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenNotesFor((prev) => (prev === lead.id ? null : lead.id))}
+                                    title={lead.notes}
+                                    aria-label={`View notes for ${lead.name}`}
+                                    className="flex h-5 w-5 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                                  >
+                                    <StickyNote size={14} />
+                                  </button>
+                                  {openNotesFor === lead.id ? (
+                                    <div className="absolute left-0 top-6 z-20 w-64 rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600 shadow-lg">
+                                      {lead.notes}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         </td>
-                      ) : null}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-4 py-3 text-neutral-500">{lead.company_name ?? "—"}</td>
+                        <td className="px-4 py-3 text-neutral-500">{lead.email ?? "—"}</td>
+                        <td className="px-4 py-3 text-neutral-500">{lead.phone ?? "—"}</td>
+                        <td className="px-4 py-3 text-neutral-500">{lead.source ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[lead.status]}`}>
+                            {lead.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-neutral-500">{new Date(lead.updated_at).toLocaleDateString()}</td>
+                        {canManage ? (
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex justify-end">
+                              <PropertyRowMenu
+                                onEdit={() => setDrawer({ mode: "edit", lead })}
+                                onDelete={() => void handleDelete(lead)}
+                              />
+                            </div>
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {drawer ? (
           <LeadFormDrawer
             lead={drawer.mode === "edit" ? drawer.lead : undefined}
+            initialStatus={drawer.mode === "create" ? drawer.initialStatus : undefined}
             onClose={() => setDrawer(null)}
             onSubmit={handleSubmit}
           />
