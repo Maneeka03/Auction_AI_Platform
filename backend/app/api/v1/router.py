@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    agency,
     auctions,
     auth,
     campaigns,
@@ -38,6 +39,7 @@ api_router.include_router(messages.router)
 api_router.include_router(crm.router)
 api_router.include_router(campaigns.router)
 api_router.include_router(escrow.router)
+api_router.include_router(agency.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)

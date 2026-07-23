@@ -3,8 +3,8 @@
 **Running context file. Read this first to understand where the backend is today.**
 Update the Daily Log at the bottom whenever meaningful backend work ships.
 
-- **Last updated:** 2026-07-21
-- **Active branch:** `feature/future-apis` (ahead of `main`, pushed to origin; `main` merged in)
+- **Last updated:** 2026-07-23
+- **Active branch:** `feature/agency-admin` (off latest `main`; pushed to origin)
 - **Companion docs:** `PROJECT_CONTEXT.txt` (business + product context), `AUTH_API.md` and
   `AUCTION_API.md` (frontend contracts for the earlier work).
 
@@ -70,6 +70,9 @@ Migration chain, newest last:
   listing data is lost.
 - `0008_category_sibling_slugs` — scopes category name uniqueness to siblings, so the same
   subcategory name can be reused under different parents.
+- `0009_lead_company_name` — adds `company_name` to leads (teammate).
+- `0010_agency_admin_sidebar` — adds the `agency_admin` role value, the `sidebar_items` catalogue
+  (seeded from the super-admin sidebar) and the `sidebar_preferences` table.
 
 **When you add a model or column yourself:**
 1. Write/change the model under `app/models/`.
@@ -100,6 +103,35 @@ Migration chain, newest last:
 
 Everything below needs `Authorization: Bearer <access_token>`. "Own data" routes work for any
 signed-in user; staff routes gate on the permission matrix.
+
+**Agency admin — super-admin management (`agency_administration` full, agency_admin role only)**
+
+A new `agency_admin` role sits **above** super admin. It manages super-admin accounts and its own
+sidebar, and has **no operational access** to anything else (all other matrix cells are `none`). No
+other role — super admin included — can reach these endpoints.
+
+- `POST /api/v1/agency/super-admins` — create a super admin, body `{ email, full_name, country? }`
+  (a set-password email is sent, same as staff creation).
+- `GET /api/v1/agency/super-admins` — paginated list, `?page&size&search&status`.
+- `GET /api/v1/agency/super-admins/{id}` — one super admin.
+- `PATCH /api/v1/agency/super-admins/{id}` — edit `full_name` and/or `status`. **`status` is the
+  activate/deactivate toggle** (`active` | `suspended`); suspending revokes their sessions at once.
+- `DELETE /api/v1/agency/super-admins/{id}?hard=true` — remove (soft by default). Business rule:
+  `409 last_super_admin` if it's the only super admin left.
+
+**Agency admin — dynamic sidebar (`agency_administration` full, agency_admin role only)**
+
+- `GET /api/v1/agency/sidebar/items` — the fixed catalogue of every menu item (seeded from the
+  super-admin sidebar).
+- `GET /api/v1/agency/sidebar` — this admin's effective sidebar: each item with `visible` + `position`,
+  falling back to defaults for items they never configured.
+- `PUT /api/v1/agency/sidebar` — save the whole sidebar, body `{ items: [{ item_id, visible }, …] }`.
+  **List order is the saved order** (an item's index becomes its `position`), so this one call covers
+  reorder, enable/disable, and add/remove. Rejects duplicate (`422 duplicate_items`) or unknown
+  (`422 unknown_item`) items. Returns the new effective sidebar so the frontend can refresh live.
+
+Seed the first agency admin with `BOOTSTRAP_ROLE=agency_admin BOOTSTRAP_EMAIL=… BOOTSTRAP_PASSWORD=…
+python -m app.bootstrap`.
 
 **Auction categories (staff write via `asset_management` full, read via view)**
 
@@ -240,6 +272,25 @@ Rules the service enforces:
 ---
 
 ## Daily Log
+
+### 2026-07-23 — agency admin management & dynamic sidebar
+
+Pulled the teammate's latest `main` (KYC document URLs, `session.refresh`/`selectinload` refactors,
+lead `company_name`) — no conflicts — then added the **Agency Admin** feature, backend only.
+
+- New top-of-hierarchy `agency_admin` role (matrix + `role` enum value), with a dedicated
+  `agency_administration` module it alone holds. It has no operational access to anything else, and
+  no other role can reach its endpoints.
+- Super-admin lifecycle under `/agency/super-admins`: create, list (search/paginate/status), get,
+  edit + activate/deactivate, delete. Reuses the existing `users` service so there's no duplicated
+  logic; adds a "can't remove the last super admin" rule.
+- Dynamic sidebar under `/agency/sidebar`: a seeded catalogue (`sidebar_items`) plus per-admin
+  `sidebar_preferences`. One `PUT` saves visibility + order in a single call.
+- `bootstrap.py` now takes `BOOTSTRAP_ROLE` so the first agency admin can be seeded.
+
+Decisions: no separate `role_permissions` table — the code matrix in `rbac/permissions.py` stays the
+single source of truth. Audit logging was left out (the task marked it optional) to keep the code
+lean. Migration `0010`. Frontend not touched (out of scope for this pass).
 
 ### 2026-07-21 — auction categories (any domain, not just real estate)
 

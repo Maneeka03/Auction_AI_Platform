@@ -12,6 +12,8 @@ class Role(StrEnum):
     BUYER = "buyer"
     SELLER = "seller"
     EXECUTIVE = "executive"
+    # Sits above super admin: manages super-admin accounts and their sidebar, nothing operational.
+    AGENCY_ADMIN = "agency_admin"
 
 
 class Module(StrEnum):
@@ -28,6 +30,7 @@ class Module(StrEnum):
     SYSTEM_SETTINGS = "system_settings"
     USER_MANAGEMENT = "user_management"
     NOTIFICATIONS = "notifications"
+    AGENCY_ADMINISTRATION = "agency_administration"
 
 
 class Access(IntEnum):
@@ -49,28 +52,31 @@ _COLUMNS = (
     Role.BUYER,
     Role.SELLER,
     Role.EXECUTIVE,
+    Role.AGENCY_ADMIN,
 )
 
 F, V, N = Access.FULL, Access.VIEW, Access.NONE
 
 # Columns 1-3 and 7-9 are transcribed from "User Flow & Role Access Document" section 3.
 # Columns 4-6 (legal, finance, gemologist) are PROVISIONAL: inferred from the client's 2-of-3
-# auction approval quorum and awaiting sign-off. Every other column is client-confirmed.
+# auction approval quorum and awaiting sign-off. Column 10 (agency_admin) owns only agency
+# administration and nothing operational. Every other column is client-confirmed.
 # fmt: off
 _ROWS: dict[Module, tuple[Access, ...]] = {
-    Module.BUYER_CRM:           (F, F, V, N, N, N, N, N, V),
-    Module.SELLER_CRM:          (F, F, N, V, V, N, N, V, V),
-    Module.LEAD_MANAGEMENT:     (F, F, F, N, N, N, N, N, V),
-    Module.ASSET_MANAGEMENT:    (F, F, V, V, V, V, V, F, V),
-    Module.AUCTION_MANAGEMENT:  (F, F, N, V, V, V, V, V, V),
-    Module.BID_MANAGEMENT:      (F, F, N, N, V, N, F, V, V),
-    Module.MARKETING_CAMPAIGNS: (F, V, F, N, N, N, N, N, V),
-    Module.AI_CONFIGURATION:    (F, V, V, N, N, N, N, N, V),
-    Module.PAYMENT_ESCROW:      (F, V, N, V, F, N, F, F, V),
-    Module.REPORTS:             (F, F, V, V, V, N, V, V, F),
-    Module.SYSTEM_SETTINGS:     (F, N, N, N, N, N, N, N, N),
-    Module.USER_MANAGEMENT:     (F, V, N, N, N, N, N, N, N),
-    Module.NOTIFICATIONS:       (F, F, F, F, F, F, F, F, F),
+    Module.BUYER_CRM:             (F, F, V, N, N, N, N, N, V, N),
+    Module.SELLER_CRM:            (F, F, N, V, V, N, N, V, V, N),
+    Module.LEAD_MANAGEMENT:       (F, F, F, N, N, N, N, N, V, N),
+    Module.ASSET_MANAGEMENT:      (F, F, V, V, V, V, V, F, V, N),
+    Module.AUCTION_MANAGEMENT:    (F, F, N, V, V, V, V, V, V, N),
+    Module.BID_MANAGEMENT:        (F, F, N, N, V, N, F, V, V, N),
+    Module.MARKETING_CAMPAIGNS:   (F, V, F, N, N, N, N, N, V, N),
+    Module.AI_CONFIGURATION:      (F, V, V, N, N, N, N, N, V, N),
+    Module.PAYMENT_ESCROW:        (F, V, N, V, F, N, F, F, V, N),
+    Module.REPORTS:               (F, F, V, V, V, N, V, V, F, N),
+    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, N),
+    Module.USER_MANAGEMENT:       (F, V, N, N, N, N, N, N, N, N),
+    Module.NOTIFICATIONS:         (F, F, F, F, F, F, F, F, F, N),
+    Module.AGENCY_ADMINISTRATION: (N, N, N, N, N, N, N, N, N, F),
 }
 # fmt: on
 
