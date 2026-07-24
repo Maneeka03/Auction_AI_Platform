@@ -7,6 +7,10 @@ export function listCategories(accessToken: string): Promise<CategoryTree[]> {
   return apiClient.get<CategoryTree[]>(BASE, { accessToken });
 }
 
+export function listPublicCategories(): Promise<CategoryTree[]> {
+  return apiClient.get<CategoryTree[]>(`${BASE}/public`);
+}
+
 export function getCategory(accessToken: string, categoryId: string): Promise<CategoryTree> {
   return apiClient.get<CategoryTree>(`${BASE}/${categoryId}`, { accessToken });
 }

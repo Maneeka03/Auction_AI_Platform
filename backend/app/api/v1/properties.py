@@ -61,6 +61,40 @@ async def list_properties(
     )
 
 
+@router.get("/public", response_model=PropertyPage)
+async def list_public_properties(
+    session: DbSession,
+    page: int = Query(1, ge=1),
+    size: int = Query(6, ge=1, le=100),
+    search: str | None = Query(None, max_length=120),
+    category_id: uuid.UUID | None = None,
+    min_price: Decimal | None = Query(None, gt=0),
+    max_price: Decimal | None = Query(None, gt=0),
+    lat: Decimal | None = Query(None, ge=-90, le=90),
+    lng: Decimal | None = Query(None, ge=-180, le=180),
+    radius_km: float | None = Query(None, gt=0, le=20000),
+) -> PropertyPage:
+    near = (lat, lng, radius_km) if None not in (lat, lng, radius_km) else None
+
+    items, total = await properties.paginate(
+        session=session,
+        page=page,
+        size=size,
+        search=search,
+        category_id=category_id,
+        property_status=PropertyStatus.PUBLISHED,
+        min_price=min_price,
+        max_price=max_price,
+        near=near,
+    )
+
+    return PropertyPage(
+        items=[PropertyOut.of(item) for item in items],
+        total=total,
+        page=page,
+        size=size,
+    )
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(property_id: uuid.UUID, session: DbSession, _: User = Reader) -> PropertyOut:
     return PropertyOut.of(await properties.get(session, property_id))
@@ -121,3 +155,5 @@ async def property_analytics(
             "You can only view analytics for your own listings.",
         )
     return await analytics.for_property(session, property_id)
+
+

@@ -34,7 +34,6 @@ def _within(lat: Decimal, lng: Decimal, radius_km: float) -> ColumnElement[bool]
 
 
 async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest) -> Property:
-    # Assigned by object so the category is loaded for serialising, as with the seller below.
     category = await categories.get(session, data.category_id)
     listing = Property(
         title=data.title,
@@ -48,9 +47,6 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
         area_sqft=data.area_sqft,
         latitude=data.latitude,
         longitude=data.longitude,
-        # A seller listing their own asset owns it; staff list on behalf of nobody in particular.
-        # Assigned by object, not id: that leaves both relationships loaded, so serialising the
-        # result cannot trigger a lazy load on a greenlet-less async path.
         seller=actor if Role.SELLER in actor.roles else None,
         votes=[],
     )
@@ -87,7 +83,6 @@ async def paginate(
             )
         )
     if category_id:
-        # Filtering on a main category also returns everything in its subcategories.
         query = query.where(
             or_(
                 Property.category_id == category_id,
@@ -159,8 +154,6 @@ async def purchase(
     listing.paid_amount = price
     listing.purchased_at = datetime.now(UTC)
     wallets.log(session, buyer.id, WalletEntryKind.PURCHASE, -price)
-    # The money is held in escrow until staff release it to the seller (services/escrow). A
-    # staff-listed property has no seller, so its funds simply stay with the platform.
     if listing.seller_id is not None:
         escrow.open_for(session, listing, buyer.id, price)
     await session.commit()
@@ -195,9 +188,6 @@ async def update(
         raise AppError(
             status.HTTP_409_CONFLICT, "property_sold", "A sold property can no longer be edited."
         )
-
-    # Null means "leave it alone", never "write NULL" - title, address, category, status and
-    # reserve_price are all NOT NULL. Send "" to blank a description or image_url.
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(listing, field, value)
 

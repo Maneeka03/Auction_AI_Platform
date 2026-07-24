@@ -3,6 +3,7 @@
 import { Download, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AddUserDrawer } from "@/components/admin-users/AddUserDrawer";
@@ -101,8 +102,6 @@ export default function UserManagementPage() {
     await deleteUser(accessToken, user.id);
     void fetchUsers();
   }
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <AdminShell>
@@ -254,31 +253,7 @@ export default function UserManagementPage() {
           </table>
         </div>
 
-        {totalPages > 1 ? (
-          <div className="flex items-center justify-between text-sm text-neutral-600">
-            <span>
-              Page {page} of {totalPages} · {total} total
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        ) : null}
+        <Pagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="user" />
       </div>
 
         {showAddDrawer ? <AddUserDrawer onClose={() => setShowAddDrawer(false)} onCreate={handleCreate} /> : null}

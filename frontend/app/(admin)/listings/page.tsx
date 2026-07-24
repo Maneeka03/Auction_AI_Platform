@@ -1,8 +1,9 @@
 "use client";
 
 import { Download, Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AddPropertyDrawer } from "@/components/properties/AddPropertyDrawer";
 import { EditPropertyDrawer } from "@/components/properties/EditPropertyDrawer";
@@ -21,9 +22,12 @@ function formatPrice(value: string): string {
   return `$${Number(value).toLocaleString()}`;
 }
 
+const PAGE_SIZE = 10;
+
 export default function ListingsPage() {
   const { accessToken } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -47,6 +51,11 @@ export default function ListingsPage() {
   useEffect(() => {
     void fetchProperties();
   }, [fetchProperties]);
+
+  const pagedProperties = useMemo(
+    () => properties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [properties, page],
+  );
 
   async function handleCreate(payload: Parameters<typeof createProperty>[1]) {
     if (!accessToken) return;
@@ -165,7 +174,7 @@ export default function ListingsPage() {
                     </td>
                   </tr>
                 ) : (
-                  properties.map((property) => (
+                  pagedProperties.map((property) => (
                     <tr key={property.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -213,6 +222,15 @@ export default function ListingsPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={page}
+            total={properties.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+            itemLabel="property"
+            itemLabelPlural="properties"
+          />
         </div>
 
         {showAddDrawer ? (

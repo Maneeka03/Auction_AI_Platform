@@ -25,6 +25,28 @@ export function listProperties(accessToken: string, params: ListPropertiesParams
   return apiClient.get<PropertyPage>(`${BASE}${queryString ? `?${queryString}` : ""}`, { accessToken });
 }
 
+export function listPublicProperties(
+  params: {
+    page?: number;
+    size?: number;
+    search?: string;
+    category_id?: string;
+  } = {},
+): Promise<PropertyPage> {
+  const query = new URLSearchParams();
+
+  if (params.page) query.set("page", String(params.page));
+  if (params.size) query.set("size", String(params.size));
+  if (params.search) query.set("search", params.search);
+  if (params.category_id) query.set("category_id", params.category_id);
+
+  const queryString = query.toString();
+
+  return apiClient.get<PropertyPage>(
+    `${BASE}/public${queryString ? `?${queryString}` : ""}`,
+  );
+}
+
 export function getProperty(accessToken: string, propertyId: string): Promise<Property> {
   return apiClient.get<Property>(`${BASE}/${propertyId}`, { accessToken });
 }
