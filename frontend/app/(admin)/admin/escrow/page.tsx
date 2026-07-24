@@ -2,8 +2,9 @@
 
 import { ArrowRight, Building2, RefreshCw } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { advanceEscrow, listEscrows } from "@/lib/api/escrow";
 import { ApiRequestError } from "@/lib/api/client";
@@ -46,9 +47,12 @@ function formatMoney(value: string): string {
   return `$${Number(value).toLocaleString()}`;
 }
 
+const PAGE_SIZE = 10;
+
 export default function EscrowAdminPage() {
   const { accessToken } = useAuth();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [page, setPage] = useState(1);
   const [escrows, setEscrows] = useState<Escrow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +87,15 @@ export default function EscrowAdminPage() {
   useEffect(() => {
     void fetchEscrows();
   }, [fetchEscrows]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  const pagedEscrows = useMemo(
+    () => escrows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [escrows, page],
+  );
 
   async function handleAdvance(escrow: Escrow) {
     if (!accessToken) return;
@@ -196,7 +209,7 @@ export default function EscrowAdminPage() {
                     </td>
                   </tr>
                 ) : (
-                  escrows.map((escrow) => {
+                  pagedEscrows.map((escrow) => {
                     const next = NEXT_STATE[escrow.state];
                     return (
                       <tr key={escrow.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
@@ -261,6 +274,8 @@ export default function EscrowAdminPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination page={page} total={escrows.length} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="escrow" />
         </div>
       </RequirePermission>
     </AdminShell>

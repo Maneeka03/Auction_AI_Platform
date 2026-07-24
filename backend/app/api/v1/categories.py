@@ -32,6 +32,12 @@ async def list_categories(session: DbSession, _: User = Reader) -> list[Category
     """Every main category with its subcategories nested - one call fills a browse filter."""
     return [CategoryTreeOut.model_validate(item) for item in await categories.tree(session)]
 
+@router.get("/public", response_model=list[CategoryTreeOut])
+async def public_categories(session: DbSession):
+    return [
+        CategoryTreeOut.model_validate(item)
+        for item in await categories.tree(session)
+    ]
 
 @router.get("/{category_id}", response_model=CategoryTreeOut)
 async def get_category(
@@ -53,3 +59,4 @@ async def update_category(
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(category_id: uuid.UUID, session: DbSession, _: User = Manager) -> None:
     await categories.delete(session, category_id)
+

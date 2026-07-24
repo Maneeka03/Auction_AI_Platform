@@ -1,8 +1,9 @@
 "use client";
 
 import { Download, RefreshCw, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { listBuyers } from "@/lib/api/crm";
 import { ApiRequestError } from "@/lib/api/client";
@@ -27,11 +28,14 @@ function initialsFromName(name: string): string {
     .join("");
 }
 
+const PAGE_SIZE = 10;
+
 export default function BuyersCrmPage() {
   const { accessToken } = useAuth();
   const [search, setSearch] = useState("");
   const [buyers, setBuyers] = useState<BuyerCrmRow[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +58,12 @@ export default function BuyersCrmPage() {
     const timeout = setTimeout(() => void fetchBuyers(), 300);
     return () => clearTimeout(timeout);
   }, [fetchBuyers]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const pagedBuyers = useMemo(() => buyers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [buyers, page]);
 
   function handleExport() {
     exportToExcel(
@@ -143,7 +153,7 @@ export default function BuyersCrmPage() {
                     </td>
                   </tr>
                 ) : (
-                  buyers.map((buyer) => (
+                  pagedBuyers.map((buyer) => (
                     <tr key={buyer.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -171,6 +181,8 @@ export default function BuyersCrmPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination page={page} total={buyers.length} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="buyer" />
         </div>
       </RequirePermission>
     </AdminShell>

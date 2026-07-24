@@ -3,6 +3,7 @@
 import { Plus, RefreshCw, Search, StickyNote } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { LeadFormDrawer } from "@/components/crm/LeadFormDrawer";
@@ -37,9 +38,12 @@ function initialsFromName(name: string): string {
 
 type DrawerState = { mode: "create"; initialStatus?: LeadStatus } | { mode: "edit"; lead: Lead } | null;
 
+const PAGE_SIZE = 10;
+
 export default function LeadsCrmPage() {
   const { accessToken, session } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -111,6 +115,15 @@ export default function LeadsCrmPage() {
 
     return result;
   }, [leads, search, filters, dateRange, sortOrder]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters, dateRange, sortOrder]);
+
+  const pagedLeads = useMemo(
+    () => visibleLeads.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [visibleLeads, page],
+  );
 
   // Grows automatically: any source typed on Add Lead shows up here on the next fetch.
   const availableSources = useMemo(() => {
@@ -267,7 +280,7 @@ export default function LeadsCrmPage() {
                       </td>
                     </tr>
                   ) : (
-                    visibleLeads.map((lead) => (
+                    pagedLeads.map((lead) => (
                       <tr key={lead.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
@@ -324,6 +337,10 @@ export default function LeadsCrmPage() {
               </table>
             </div>
           )}
+
+          {viewMode === "list" ? (
+            <Pagination page={page} total={visibleLeads.length} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="lead" />
+          ) : null}
         </div>
 
         {drawer ? (
