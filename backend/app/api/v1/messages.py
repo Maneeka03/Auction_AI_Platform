@@ -14,7 +14,7 @@ async def send_message(
     payload: SendMessageRequest, session: DbSession, actor: CurrentUser
 ) -> MessageOut:
     message = await messaging.send(
-        session, actor.id, payload.recipient_id, payload.body, payload.property_id
+        session, actor, payload.recipient_id, payload.body, payload.property_id
     )
     return MessageOut.model_validate(message)
 
