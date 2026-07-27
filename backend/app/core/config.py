@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     # Share of the price a Buy Now token payment reserves the property with.
     purchase_token_percent: Decimal = Decimal(10)
 
+    # Web Push (VAPID). Leave the private key blank to disable device pushes entirely.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:admin@provenix.io"
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"

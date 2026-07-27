@@ -14,6 +14,7 @@ from app.api.v1 import (
     messages,
     notifications,
     properties,
+    push,
     reports,
     uploads,
     users,
@@ -30,6 +31,7 @@ api_router.include_router(properties.router)
 api_router.include_router(auctions.router)
 api_router.include_router(wallet.router)
 api_router.include_router(notifications.router)
+api_router.include_router(push.router)
 api_router.include_router(reports.router)
 api_router.include_router(uploads.router)
 api_router.include_router(kyc.router)

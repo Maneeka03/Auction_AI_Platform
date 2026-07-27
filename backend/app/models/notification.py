@@ -16,6 +16,7 @@ class NotificationKind(StrEnum):
     PROPERTY_APPROVED = "property_approved"
     PROPERTY_REJECTED = "property_rejected"
     KYC_REVIEWED = "kyc_reviewed"
+    NEW_MESSAGE = "new_message"
 
 
 class Notification(Base):

@@ -5,22 +5,31 @@ from sqlalchemy import Row, and_, case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.messaging import Message
+from app.models.notification import NotificationKind
 from app.models.user import User
-from app.services import users
+from app.services import notifications, users
 
 
 async def send(
     session: AsyncSession,
-    sender_id: uuid.UUID,
+    sender: User,
     recipient_id: uuid.UUID,
     body: str,
     property_id: uuid.UUID | None,
 ) -> Message:
     await users.get(session, recipient_id)  # 404s on an unknown recipient
     message = Message(
-        sender_id=sender_id, recipient_id=recipient_id, body=body, property_id=property_id
+        sender_id=sender.id, recipient_id=recipient_id, body=body, property_id=property_id
     )
     session.add(message)
+    # Surfaces in the bell and, being a PUSH_KIND, as a device push to the recipient.
+    notifications.push(
+        session,
+        recipient_id,
+        NotificationKind.NEW_MESSAGE,
+        f"New message from {sender.full_name}",
+        property_id=property_id,
+    )
     await session.commit()
     return message
 
