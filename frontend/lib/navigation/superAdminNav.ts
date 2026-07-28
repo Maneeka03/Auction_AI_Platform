@@ -44,8 +44,8 @@ export const superAdminNav: NavSection[] = [
     ],
   },
   {
-    title: "Marketing",
-    items: [{ label: "Campaigns", href: "/marketing", icon: Megaphone }],
+    title: "Campaigns",
+    items: [{ label: "Campaigns", href: "/campaigns", icon: Megaphone }],
   },
   {
     title: "Reports",
@@ -58,7 +58,7 @@ export const superAdminNav: NavSection[] = [
   {
     title: "Administration",
     items: [
-      { label: "User Management", href: "/admin/users", icon: UserCog },
+      { label: "Staff Management", href: "/admin/users", icon: UserCog },
       { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
