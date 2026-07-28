@@ -1,0 +1,430 @@
+================================================================================
+PROVENIX - FULL PROJECT CONTEXT
+Agentic AI Growth & Sales Platform for Auctioneers
+Written: 14 July 2026
+================================================================================
+
+This file is the single place to understand (a) what the client actually asked
+for, (b) what has been built so far, (c) why it was built that way, and (d) what
+is still unanswered. Hand this to anyone joining the project.
+
+
+================================================================================
+PART 1 - THE BUSINESS
+================================================================================
+
+WHAT THE CLIENT SELLS
+  Vintage / luxury goods at auction - primarily antique JEWELLERY and CARPETS.
+  Buyers are high-net-worth individuals and companies. Sellers are private
+  collectors, dealers, and estates.
+
+THE PROBLEM THEY HAVE TODAY (from "Sales and Marketing Supporting Doc")
+  1. Sales is 1-to-1 and manual. Staff hand-pick leads, judge intent by gut,
+     write every email themselves. It does not scale, and if a high-intent buyer
+     browses a high-value lot, nobody knows unless they read the logs.
+  2. Provenance and custody are a liability nightmare. Buyers won't pay first,
+     sellers won't ship first, and authenticity checks are ad-hoc human effort.
+     If a forgery slips through, there is no safety net.
+  3. Data is siloed. No behavioural telemetry, no dedupe, no enrichment.
+  4. Asset display is 2D and requires someone to physically travel, photograph,
+     and authenticate every piece.
+
+THE PLATFORM, IN THREE PARTS
+  1. CRM             - buyers, sellers, leads, history, follow-ups.
+  2. AUCTION PLATFORM- listings, auction lifecycle, bids, payment, escrow.
+  3. AI LAYER        - runs across both: pricing, matching, outreach,
+                       negotiation, content generation.
+
+MANDATED TECH STACK (from "Framework v1.0" - not negotiable)
+  Frontend        Next.js (TypeScript) + WebGPU / Three.js
+  Backend API     FastAPI (Python)              <-- what we are building
+  AI Engine       FastAPI + LangChain + OpenAI / Ollama
+  Background jobs Celery + Redis
+  Event streaming Kafka / Redis Streams
+  Database        PostgreSQL + Redis
+  Provenance vault MinIO (S3-compatible, object-lock)
+  Identity        Microsoft Entra ID + SCIM 2.0
+  Containers      Docker / Docker Compose
+  Proxy / CDN     Nginx + Cloudflare
+
+REPO LAYOUT (mandated by "Foundation v1.0")
+  /apps/api          FastAPI main API        <-- THIS IS WHAT EXISTS TODAY
+  /apps/ai-engine    FastAPI + LangChain     (not started)
+  /apps/workers      Celery                  (not started)
+  /apps/command-center, /apps/storefront   Next.js (not started - frontend team)
+  /infra/docker      Dockerfiles + compose
+  /docs              PRDs, ADRs, blueprints
+
+
+================================================================================
+PART 2 - WHAT THE CLIENT CONFIRMED
+================================================================================
+
+Source: "Client response from Sam G queries - Auction", dated 13 July 2026,
+answered by Kevin, Alan, Bonnie and Simon. These are ANSWERS, not proposals -
+they override anything that contradicts them.
+
+IDENTITY / ACCOUNTS
+  * Buyers and sellers REGISTER THEMSELVES. KYC follows, taking 3-5 days.
+  * Staff may NOT create buyer or seller accounts on their behalf. They may
+    only assist (e.g. host a Google Meet and walk the user through signup).
+  * A buyer CAN become a seller - "Same user ID, but can be with both roles".
+    => One account, multiple roles. This is now enforced in the data model.
+  * A buyer can be a PERSON or a COMPANY.
+      Person : name, IDs, passport, bank reference; net worth self-reported.
+      Company: business name, registration number, bank reference; revenue
+               self-reported; must disclose if de-registered / delisted.
+    (This data belongs to the KYC/CRM module, NOT to auth. See Part 5.)
+  * Every interaction (email, call, meeting) must be tracked, with consent.
+
+ROLES THE CLIENT NAMED
+  Super Admin = Executive = Director   (they treat these as the same person)
+  Administrator = Auction Manager = Admin
+  Legal personnel
+  Finance personnel
+  Marketing team
+  Gemologist
+  Buyer
+  Seller
+
+APPROVAL QUORUM (important, affects a later module)
+  An auction proceeds only when 2 OF 3 approve:
+      - Director (1 person)
+      - Gemologist (1 person)
+      - Legal + Finance auditor representative (1 person)
+
+AUCTION RULES
+  * Sellers CANNOT create auctions. Platform approval required.
+  * After publishing: images, video, description, certification and supporting
+    documents CANNOT be changed. Pricing can change before live. Reserve price
+    CAN change even after going live.
+  * Auctions are NOT auto-extended.
+  * Admins CAN intervene, drop, or cancel a live auction.
+
+MONEY
+  * Buyer pays the platform within 3 business days of winning.
+  * Escrow holds the funds for 2 MONTHS while AML/KYC clears at the seller's
+    receiving bank. Only then is the seller paid.
+  * Crypto payment is under consideration, pending legal advice.
+  * Seller carries full liability for forgery or undisclosed defects.
+
+AI BEHAVIOUR
+  * AI must NOT suggest or auto-adjust listing prices.
+  * AI MAY: recommend buyers, contact buyers automatically, run ads, suggest
+    AND conduct negotiation (as a middle-man between buyer and seller agents),
+    generate listing descriptions from documents, build marketing campaigns for
+    reputable sellers, send follow-up reminders.
+
+
+================================================================================
+PART 3 - WHAT HAS BEEN BUILT (Phase 1: AUTH ONLY)
+================================================================================
+
+SCOPE: authentication, session management, and user administration. Nothing
+else. No CRM, no auctions, no bids, no AI, no escrow.
+
+LOCATION: /apps/api  (FastAPI, Python 3.11+)
+
+RUNTIME: PostgreSQL + Redis, exactly as the Framework doc mandates. Redis backs
+login rate limiting, account lockout, and the access-token denylist.
+NOTE: the TEST SUITE does not need Redis - it uses fakeredis - so pytest runs on
+PostgreSQL alone, without starting Docker.
+
+STATUS: Feature-complete and verified. See PART 7 for what still stands between
+this and a production deployment.
+  - 13/13 tests passing (pytest)
+  - Alembic migration applies and reverses cleanly against PostgreSQL 16
+  - Ruff clean, Black clean; app boots, all 18 endpoints live
+  - An earlier build was additionally driven end to end against a live uvicorn
+    server (signup -> verify -> login -> role-correct permissions -> refresh ->
+    seller enrolment -> logout -> reset -> lockout; Director creates an auction
+    manager, is blocked from creating a buyer, the manager can list but not
+    create users, suspension kills the token). Every check passed. The only
+    thing changed since is that lockout/denylist moved back into Redis.
+  - Ruff clean, Black clean (the standards the Foundation doc mandates)
+  - Alembic migration applies and reverses cleanly against PostgreSQL 16
+  - App boots; all 16 endpoints live
+
+--------------------------------------------------------------------------------
+3.1  THE 16 ENDPOINTS
+--------------------------------------------------------------------------------
+  PUBLIC
+    POST   /api/v1/auth/register              buyer or seller self-registration
+    POST   /api/v1/auth/login                 email + password
+    POST   /api/v1/auth/refresh               rotate refresh token, new access
+    POST   /api/v1/auth/verify-email          consume emailed verification link
+    POST   /api/v1/auth/resend-verification   generic 202 (no enumeration)
+    POST   /api/v1/auth/forgot-password       generic 202 (no enumeration)
+    POST   /api/v1/auth/reset-password        also serves the staff invite flow
+
+  AUTHENTICATED
+    GET    /api/v1/auth/me                    session + resolved permission map
+    POST   /api/v1/auth/logout                kills refresh family + access token
+    POST   /api/v1/auth/change-password       revokes all sessions
+    POST   /api/v1/auth/roles/seller          buyer self-enrols as seller
+
+  SUPER ADMIN (module: user_management)
+    POST   /api/v1/admin/users                create INTERNAL user (invite email)
+    GET    /api/v1/admin/users                paginated, filter by role/status
+    GET    /api/v1/admin/users/{id}
+    PATCH  /api/v1/admin/users/{id}           status / roles / name
+    DELETE /api/v1/admin/users/{id}           soft delete
+
+  DEV ONLY (auto-disabled when PROVENIX_ENVIRONMENT=production)
+    GET    /api/v1/dev/emails                 the emails the API would have sent
+    DELETE /api/v1/dev/emails                 clear them
+
+  OPS
+    GET    /health
+
+--------------------------------------------------------------------------------
+3.2  THE AUTHORIZATION MODEL - THIS IS THE CORE
+--------------------------------------------------------------------------------
+File: app/rbac/permissions.py
+
+Nine roles x thirteen modules. Each cell is FULL / VIEW / NONE. The table is a
+verbatim transcription of section 3 of the "User Flow & Role Access Document",
+so authorization is provably the client's spec, not our invention.
+
+  Roles   : super_admin, auction_manager, marketing, legal, finance,
+            gemologist, buyer, seller, executive
+  Modules : buyer_crm, seller_crm, lead_management, asset_management,
+            auction_management, bid_management, marketing_campaigns,
+            ai_configuration, payment_escrow, reports, system_settings,
+            user_management, notifications
+
+A user may hold SEVERAL roles. Their effective permission on a module is the
+MAXIMUM across their roles (a buyer+seller gets bid_management=full from buyer
+and asset_management=full from seller). Every endpoint declares what it needs:
+
+      requires(Module.USER_MANAGEMENT, Access.FULL)
+
+Changing a permission means editing one cell in one table. Nothing else.
+
+--------------------------------------------------------------------------------
+3.3  SECURITY DECISIONS AND WHY
+--------------------------------------------------------------------------------
+  Argon2id password hashing        Memory-hard. Chosen over bcrypt to dodge the
+                                   passlib/bcrypt version incompatibilities that
+                                   plague Python projects.
+
+  Password policy: >= 12 chars     Length only, no composition rules. This is
+                                   current NIST guidance - length beats symbols.
+
+  Access token: JWT, 15 min        Stateless, short-lived. Deliberately carries
+                                   NO roles claim: permissions are re-read from
+                                   the database on every request, so a role
+                                   change or suspension takes effect instantly
+                                   rather than after the token expires.
+
+  Refresh token: opaque, 14 days   Random 48 bytes. Only its SHA-256 hash is
+                                   stored - a database leak yields nothing
+                                   usable. Delivered as an httpOnly, Secure,
+                                   SameSite cookie scoped to /api/v1/auth, so
+                                   JavaScript (and therefore XSS) cannot read it.
+
+  Rotation + reuse detection       Each refresh invalidates the old token and
+                                   issues a new one in the same "family". If an
+                                   already-used token is replayed, the whole
+                                   family is revoked. A stolen token therefore
+                                   buys an attacker one request before both they
+                                   AND the victim are logged out - and the event
+                                   is visible.
+
+  Single-use reset links           No token table. The reset JWT embeds a
+                                   fingerprint of the current password hash. The
+                                   moment the password changes, the fingerprint
+                                   no longer matches and the link is dead. Same
+                                   trick verifies email links. Zero extra storage.
+
+  Login brute-force defence        Redis: per-IP rate limit on register / login /
+                                   forgot-password, plus per-account lockout
+                                   after 5 failures for 15 minutes.
+
+  Timing-safe login                An unknown email is still verified against a
+                                   dummy hash, so response time cannot be used to
+                                   discover which addresses are registered.
+
+  No account enumeration           forgot-password and resend-verification always
+                                   return the same 202. (Registration does return
+                                   409 on a duplicate email - the standard
+                                   trade-off for usable signup UX.)
+
+  Immediate revocation             Logout and change-password put the caller's
+                                   access token ID on a Redis denylist for its
+                                   remaining lifetime, and revoke the refresh
+                                   family. Suspending or deleting a user revokes
+                                   every refresh token AND their next request
+                                   fails, because status is re-read from the
+                                   database on every call.
+
+  Soft delete                      DELETE sets status='deleted' and kills the
+                                   sessions. Rows survive, so future bids,
+                                   auctions and escrow records keep their foreign
+                                   keys intact.
+
+  Admin self-protection            An admin cannot suspend, delete, or re-role
+                                   themselves - prevents locking the platform out
+                                   of its only super admin.
+
+--------------------------------------------------------------------------------
+3.4  DATA MODEL
+--------------------------------------------------------------------------------
+  users           id, email (unique), password_hash (nullable), auth_provider,
+                  status, full_name, country, business_type, email_verified_at,
+                  last_login_at, created_at, updated_at
+  user_roles      (user_id, role) - composite PK. This is what makes one account
+                  able to be buyer AND seller.
+  refresh_tokens  id, user_id, token_hash, family_id, expires_at, revoked_at
+
+  status        : pending_verification -> active -> suspended / deleted
+  auth_provider : 'local' (email+password) | 'entra'
+
+--------------------------------------------------------------------------------
+3.5  THE ENTRA ID QUESTION
+--------------------------------------------------------------------------------
+The Framework doc mandates Microsoft Entra ID + SCIM 2.0 and says "every backend
+route validates Entra JWT". You asked for email + password for Phase 1.
+
+Both are satisfied without a rewrite: users carry an `auth_provider` column
+('local' | 'entra') and a NULLABLE password hash. When Entra is switched on,
+internal staff become auth_provider='entra' with no password, external buyers
+and sellers stay 'local', and only the token-validation dependency changes. The
+permission matrix, the user table, and every route are untouched.
+
+
+================================================================================
+PART 4 - HOW TO RUN IT
+================================================================================
+Needs PostgreSQL and Redis. (pytest needs only PostgreSQL - Redis is faked.)
+
+  cd apps/api
+  docker compose -f ../../infra/docker/docker-compose.yml up -d   # postgres+redis
+  python -m venv .venv
+  .venv/Scripts/activate            (Windows)  |  source .venv/bin/activate
+  pip install -e ".[dev]"
+  cp .env.example .env              # then set a real PROVENIX_JWT_SECRET
+  # CREATE DATABASE provenix;  (and provenix_test if you want to run the tests)
+  alembic upgrade head
+
+  BOOTSTRAP_EMAIL=director@provenix.io BOOTSTRAP_PASSWORD=<strong> \
+      python -m app.bootstrap       # creates the first super admin
+
+  uvicorn app.main:app --reload     # http://localhost:8000/docs
+  pytest                            # 13 tests
+
+EMAIL WITHOUT AN EMAIL PROVIDER
+  Nothing is actually sent yet. Outside production the API keeps the last 50
+  messages in memory and serves them at GET /api/v1/dev/emails (newest first).
+  Pull the verification / reset / invite token out of the "body" field and POST
+  it to the matching endpoint. Sign-up, password reset and staff invites are
+  therefore fully completable TODAY.
+
+  When a provider is chosen, replace the body of send() in app/services/mail.py.
+  The /dev router is only registered when PROVENIX_ENVIRONMENT != production, so
+  it removes itself.
+
+Frontend contract for the teammate: docs/AUTH_API.md
+
+
+================================================================================
+PART 5 - DELIBERATELY NOT BUILT (and where it belongs)
+================================================================================
+  KYC / identity verification   The 3-5 day document review, passport, bank
+                                reference, net worth, company registration.
+                                This is its own module with its own table and a
+                                staff review queue. Auth only tracks whether the
+                                EMAIL is verified. Bidding will gate on KYC
+                                status, not on auth status.
+
+  Person vs company account     Belongs with KYC above, not in the login table.
+
+  2-of-3 approval quorum        The roles (director/super_admin, gemologist,
+                                legal, finance) now EXIST so the approval module
+                                can reference them. The voting logic itself is
+                                part of Auction Management.
+
+  MFA / SSO / social login      Not requested. Entra covers staff SSO later.
+
+  Audit log                     The client wants every interaction tracked. That
+                                is a platform-wide concern (CRM), not auth-local.
+
+
+================================================================================
+PART 6 - OPEN QUESTIONS / ASSUMPTIONS NEEDING SIGN-OFF
+================================================================================
+  1. LEGAL, FINANCE and GEMOLOGIST roles exist because the client named them and
+     the 2-of-3 approval quorum requires them - but the client never gave us a
+     permission row for them. The rows currently in the matrix are OUR best
+     inference (broadly: view access to assets, auctions and the escrow/reports
+     they need to sign off). THESE THREE ROWS NEED CLIENT CONFIRMATION.
+     They are marked PROVISIONAL in the comment directly above the matrix in
+     app/rbac/permissions.py.
+
+  2. The client says Super Admin = Executive = Director. We kept EXECUTIVE as a
+     separate read-only role (as the matrix document defines it) and let the
+     Director simply hold super_admin. If they truly want one role, delete the
+     executive column - nothing else changes.
+
+  3. "Administrator" vs "Auction Manager": the client wrote
+     "Auction Manager = Admin" and listed Administrator separately. We treat them
+     as ONE role (auction_manager). Confirm.
+
+  4. Registration currently returns 409 on a duplicate email, which lets someone
+     probe whether an address is registered. Standard trade-off. If the client
+     wants strict anti-enumeration, we return a generic 202 and email the
+     existing account instead.
+
+  5. Password policy is 12 characters, no composition rules. Confirm this is
+     acceptable to whoever signs off on security.
+
+  6. Refresh cookie is SameSite=Lax today. If the API and the frontend end up on
+     different registrable domains in production, this MUST become
+     SameSite=None; Secure. Decide before deployment.
+
+  7. A soft-deleted user's email address CANNOT be re-registered - the row stays
+     and the unique constraint holds. That is deliberate (it stops someone
+     deleting an account to escape a ban), but confirm it is what the client
+     wants.
+
+
+================================================================================
+PART 7 - KNOWN LIMITATIONS BEFORE THIS GOES TO PRODUCTION
+================================================================================
+The auth feature set is complete and tested. These are the operational gaps
+between "works" and "deployed". None of them are code defects; all of them are
+things a security or ops review WILL raise.
+
+  1. NO REAL EMAIL YET - BY DESIGN. mail.send() is a placeholder awaiting
+     SES / Postmark / SMTP credentials from the client. The dev outbox (Part 4)
+     makes every flow completable in the meantime. When the credentials arrive,
+     replace ONE function body; nothing else changes.
+
+  2. THE DEV OUTBOX IS IN-MEMORY. It is per-process and lost on restart. That is
+     fine for development, and it is switched off entirely in production - but do
+     not build anything permanent on it.
+
+  3. REDIS HAS NOT BEEN EXERCISED LIVE. The lockout, IP throttle and denylist are
+     proven by the test suite against fakeredis, but have not run against a real
+     Redis server on this machine (Docker was too heavy for the dev box). Start
+     the compose stack and do one live login before demoing. If Redis is down,
+     login fails closed with a 500 - it needs the same uptime as Postgres.
+
+  4. refresh_tokens GROWS FOREVER. Revoked and expired rows are never purged.
+     This needs a periodic cleanup job - it belongs in /apps/workers (Celery),
+     which is not built yet. Not urgent at low volume; do it before launch.
+
+  5. NO AUTH AUDIT LOG. Sign-ins, failed sign-ins, role changes and suspensions
+     are not recorded anywhere queryable. The client explicitly wants every
+     interaction tracked, so this will be required - but it is a platform-wide
+     concern that should be designed once, with the CRM, rather than bolted on
+     here.
+
+  6. JWT SIGNING IS HS256 (a shared secret). Fine while the API is the only
+     service issuing and validating tokens. The moment /apps/ai-engine or
+     /apps/workers need to validate an access token, move to RS256/EdDSA so they
+     can verify with a public key and never hold the signing secret.
+
+  7. NO LOAD TEST. The Foundation doc requires an auction-peak load test in
+     Week 5. Auth has not been benchmarked. Argon2 is deliberately slow (that is
+     the point); tune its parameters against real hardware before launch.
