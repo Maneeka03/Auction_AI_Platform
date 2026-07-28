@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -23,7 +24,9 @@ const tabs: { key: FilterTab; label: string }[] = [
 ];
 
 export default function LiveAuctionsPage() {
+  const router = useRouter();
   const { accessToken, session } = useAuth();
+  const isSuperAdmin = session?.roles.includes("super_admin") ?? false;
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,16 +155,35 @@ export default function LiveAuctionsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {auctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  auction={auction}
-                  canManage={canCreate}
-                  onEdit={setEditingAuction}
-                  onEndAuction={handleEndAuction}
-                  onDelete={handleDeleteAuction}
-                />
-              ))}
+              {auctions.map((auction) => {
+                const card = (
+                  <AuctionCard
+                    auction={auction}
+                    canManage={canCreate}
+                    onEdit={setEditingAuction}
+                    onEndAuction={handleEndAuction}
+                    onDelete={handleDeleteAuction}
+                  />
+                );
+                // Super admins open the live room by clicking the card; the card's own action
+                // buttons keep working because clicks on a button or link are ignored here.
+                return isSuperAdmin ? (
+                  <div
+                    key={auction.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event) => {
+                      if ((event.target as HTMLElement).closest("button, a")) return;
+                      router.push(`/auctions/${auction.id}`);
+                    }}
+                    className="cursor-pointer rounded-xl transition-shadow hover:shadow-md"
+                  >
+                    {card}
+                  </div>
+                ) : (
+                  <div key={auction.id}>{card}</div>
+                );
+              })}
             </div>
           )}
         </div>
