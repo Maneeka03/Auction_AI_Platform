@@ -19,7 +19,8 @@ from app.schemas.auction import (
     UpdateAuctionRequest,
 )
 from app.schemas.bid import BidOut, ParticipantOut, PlaceBidRequest
-from app.services import auctions, bids
+from app.schemas.comment import CommentOut, CreateCommentRequest
+from app.services import auctions, bids, comments
 
 router = APIRouter(prefix="/auctions", tags=["auctions"])
 
@@ -118,6 +119,29 @@ async def place_bid(
 @router.get("/{auction_id}/bids", response_model=list[BidOut])
 async def list_bids(auction_id: uuid.UUID, session: DbSession, _: User = BidViewer) -> list[BidOut]:
     return [BidOut.model_validate(bid) for bid in await bids.history(session, auction_id)]
+
+
+@router.get("/{auction_id}/comments", response_model=list[CommentOut])
+async def list_comments(
+    auction_id: uuid.UUID,
+    session: DbSession,
+    limit: int = Query(50, ge=1, le=200),
+    _: User = Viewer,
+) -> list[CommentOut]:
+    return [CommentOut.of(item) for item in await comments.list_for(session, auction_id, limit)]
+
+
+@router.post(
+    "/{auction_id}/comments", response_model=CommentOut, status_code=status.HTTP_201_CREATED
+)
+async def post_comment(
+    auction_id: uuid.UUID,
+    payload: CreateCommentRequest,
+    session: DbSession,
+    actor: User = Viewer,
+) -> CommentOut:
+    """Post a live-chat message to the auction room; it is pushed to everyone connected."""
+    return CommentOut.of(await comments.post(session, auction_id, actor, payload.body))
 
 
 async def _relay(websocket: WebSocket, channel: str) -> None:
