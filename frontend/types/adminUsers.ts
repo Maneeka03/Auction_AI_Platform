@@ -10,7 +10,10 @@ export const STAFF_ROLES: StaffRole[] = [
   "finance",
   "gemologist",
   "executive",
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 ];
 
 export interface AdminUserListItem
@@ -24,6 +27,7 @@ export interface PaginatedUsers {
 export interface CreateUserPayload {
   email: string;
   full_name: string;
+<<<<<<< HEAD
   roles: UserRole[];
   country?: string;
 }
@@ -31,6 +35,14 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
   status?: UserStatus;
   roles?: UserRole[];
+=======
+  roles: StaffRole[];
+  country?: string;
+}
+export interface UpdateUserPayload {
+  status?: UserStatus;
+  roles?: StaffRole[];
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
   full_name?: string;
 }
 export interface ListUsersParams {

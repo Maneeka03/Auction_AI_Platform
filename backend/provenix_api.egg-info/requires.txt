@@ -9,7 +9,10 @@ pyjwt>=2.10
 argon2-cffi>=23.1
 redis>=5.2
 boto3>=1.35
+<<<<<<< HEAD
 pywebpush>=2.0
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 
 [dev]
 pytest>=8.3
