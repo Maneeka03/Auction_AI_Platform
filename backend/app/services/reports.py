@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.auction import Auction, Bid
@@ -101,16 +101,17 @@ async def revenue(session: AsyncSession) -> RevenueOut:
     )
 
     since = datetime.now(UTC) - timedelta(days=30 * MONTHS)
+    _month = literal("month")
     direct_months = await session.execute(
-        select(func.date_trunc("month", Property.purchased_at), func.sum(Property.paid_amount))
+        select(func.date_trunc(_month, Property.purchased_at), func.sum(Property.paid_amount))
         .where(Property.purchased_at.is_not(None), Property.purchased_at >= since)
-        .group_by(func.date_trunc("month", Property.purchased_at))
+        .group_by(func.date_trunc(_month, Property.purchased_at))
     )
     auction_months = await session.execute(
-        select(func.date_trunc("month", Auction.ended_at), func.sum(Property.reserve_price))
+        select(func.date_trunc(_month, Auction.ended_at), func.sum(Property.reserve_price))
         .join(Property, Property.id == Auction.property_id)
         .where(Auction.winner_id.is_not(None), Auction.ended_at >= since)
-        .group_by(func.date_trunc("month", Auction.ended_at))
+        .group_by(func.date_trunc(_month, Auction.ended_at))
     )
     monthly: dict[datetime, Decimal] = {}
     for month, amount in [*direct_months.all(), *auction_months.all()]:

@@ -41,6 +41,12 @@ class User(Base, TimestampMixin):
         DateTime(timezone=True), default=None
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # Which super admin owns this account (NULL for super_admin and agency_admin themselves)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
+    )
+    # URL-safe slug for super admins — e.g. "john-doe" → /john-doe/dashboard
+    slug: Mapped[str | None] = mapped_column(String(80), unique=True, default=None)
 
     role_rows: Mapped[list["UserRole"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", lazy="selectin"

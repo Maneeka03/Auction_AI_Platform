@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import CurrentUser, DbSession, requires
+from app.api.deps import CurrentUser, DbSession, effective_tenant_id, requires
 from app.core.errors import AppError
 from app.models.property import PropertyStatus
 from app.models.user import User
@@ -30,7 +30,7 @@ Buyer = Depends(requires(Module.PAYMENT_ESCROW, Access.FULL))
 async def create_property(
     payload: CreatePropertyRequest, session: DbSession, actor: User = Manager
 ) -> PropertyOut:
-    return PropertyOut.of(await properties.create(session, actor, payload))
+    return PropertyOut.of(await properties.create(session, actor, payload, tenant_id=effective_tenant_id(actor)))
 
 
 @router.get("", response_model=PropertyPage)
@@ -46,12 +46,13 @@ async def list_properties(
     lat: Decimal | None = Query(None, ge=-90, le=90),
     lng: Decimal | None = Query(None, ge=-180, le=180),
     radius_km: float | None = Query(None, gt=0, le=20000),
-    _: User = Reader,
+    actor: User = Reader,
 ) -> PropertyPage:
     # Radius search needs all three of lat, lng and radius_km together, or none of them.
     near = (lat, lng, radius_km) if None not in (lat, lng, radius_km) else None
     items, total = await properties.paginate(
-        session, page, size, search, category_id, status_filter, min_price, max_price, near
+        session, page, size, search, category_id, status_filter, min_price, max_price, near,
+        tenant_id=effective_tenant_id(actor),
     )
     return PropertyPage(
         items=[PropertyOut.of(item) for item in items],

@@ -10,8 +10,12 @@ from app.models.campaign import Campaign, CampaignStatus
 from app.schemas.campaign import CreateCampaignRequest, UpdateCampaignRequest
 
 
-async def create(session: AsyncSession, data: CreateCampaignRequest) -> Campaign:
-    campaign = Campaign(**data.model_dump())
+async def create(
+    session: AsyncSession,
+    data: CreateCampaignRequest,
+    tenant_id: uuid.UUID | None = None,
+) -> Campaign:
+    campaign = Campaign(**data.model_dump(), tenant_id=tenant_id)
     session.add(campaign)
     await session.commit()
     await session.refresh(campaign)
@@ -26,9 +30,15 @@ async def get(session: AsyncSession, campaign_id: uuid.UUID) -> Campaign:
 
 
 async def paginate(
-    session: AsyncSession, page: int, size: int, campaign_status: CampaignStatus | None
+    session: AsyncSession,
+    page: int,
+    size: int,
+    campaign_status: CampaignStatus | None,
+    tenant_id: uuid.UUID | None = None,
 ) -> tuple[list[Campaign], int]:
     query = select(Campaign)
+    if tenant_id is not None:
+        query = query.where(Campaign.tenant_id == tenant_id)
     if campaign_status:
         query = query.where(Campaign.status == campaign_status)
 

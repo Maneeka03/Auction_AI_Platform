@@ -1,6 +1,6 @@
 import type { Session, UserRole, UserStatus } from "@/types/auth";
 
-export type StaffRole = Exclude<UserRole, "buyer" | "seller">;
+export type StaffRole = Exclude<UserRole, "buyer" | "seller" | "agency_admin">;
 
 export const STAFF_ROLES: StaffRole[] = [
   "super_admin",

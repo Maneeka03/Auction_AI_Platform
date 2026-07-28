@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/Label";
 import { ApiRequestError } from "@/lib/api/client";
 import { resolveErrorMessage } from "@/lib/api/errorMessages";
 import { useAuth } from "@/lib/auth/session-context";
+import { useTenant } from "@/lib/tenant/tenant-context";
 import { validateLogin, type LoginFieldErrors } from "@/lib/validation/authSchemas";
 import type { LoginPayload } from "@/types/auth";
 
@@ -19,6 +20,7 @@ const INITIAL_VALUES: LoginPayload = { email: "", password: "" };
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { slug } = useTenant();
   const [values, setValues] = useState<LoginPayload>(INITIAL_VALUES);
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -37,10 +39,19 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const session = await login(values);
+      const isAgency = session.roles.includes("agency_admin");
       const isStaff = session.roles.some((role) =>
         ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
       );
-      router.push(isStaff ? "/dashboard" : "/properties");
+      if (isAgency) {
+        router.push("/agency/super-admins");
+      } else if (isStaff) {
+        router.push(slug ? `/${slug}/dashboard` : "/dashboard");
+      } else {
+        // Buyers/sellers always land on the discovery page so they can see
+        // all super admins' categories and choose which platform to enter.
+        router.push("/");
+      }
       router.refresh();
     } catch (error) {
       if (error instanceof ApiRequestError) {
@@ -106,7 +117,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-neutral-600">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
+        <Link href={slug ? `/${slug}/signup` : "/signup"} className="font-medium text-brand-600 hover:text-brand-700">
           Sign up
         </Link>
       </p>

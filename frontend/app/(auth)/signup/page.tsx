@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { register } from "@/lib/api/auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { resolveErrorMessage } from "@/lib/api/errorMessages";
+import { useTenant } from "@/lib/tenant/tenant-context";
 import { validateRegister, type RegisterFieldErrors } from "@/lib/validation/authSchemas";
 import type { RegisterPayload } from "@/types/auth";
 
@@ -25,6 +26,7 @@ const INITIAL_VALUES: RegisterPayload = {
 };
 
 export default function SignupPage() {
+  const { slug } = useTenant();
   const [values, setValues] = useState<RegisterPayload>(INITIAL_VALUES);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -48,6 +50,7 @@ export default function SignupPage() {
         ...values,
         country: values.country || null,
         business_type: values.role === "seller" ? values.business_type || null : null,
+        tenant_slug: slug ?? null,
       };
       const created = await register(payload);
       setRegisteredEmail(created.email);
@@ -73,7 +76,7 @@ export default function SignupPage() {
           activate your account, then log in.
         </p>
         <ResendVerificationForm initialEmail={registeredEmail} />
-        <Link href="/login" className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
+        <Link href={slug ? `/${slug}/login` : "/login"} className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
           Back to log in
         </Link>
       </div>
@@ -180,9 +183,9 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-neutral-600">
+      <p className="mt-1 text-center text-sm text-neutral-600 p-5">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700">
+        <Link href={slug ? `/${slug}/login` : "/login"} className="font-medium text-brand-600 hover:text-brand-700">
           Log in
         </Link>
       </p>

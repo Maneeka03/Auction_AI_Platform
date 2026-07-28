@@ -83,6 +83,10 @@ class Property(Base, TimestampMixin):
     buyer_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), default=None
     )
+    # Which super admin's platform this listing belongs to
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
+    )
     payment_method: Mapped[PaymentMethod | None] = mapped_column(
         pg_enum(PaymentMethod, "payment_method"), default=None
     )

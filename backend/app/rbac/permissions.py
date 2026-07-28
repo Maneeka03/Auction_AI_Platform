@@ -73,7 +73,8 @@ _ROWS: dict[Module, tuple[Access, ...]] = {
     Module.AI_CONFIGURATION:      (F, V, V, N, N, N, N, N, V, N),
     Module.PAYMENT_ESCROW:        (F, V, N, V, F, N, F, F, V, N),
     Module.REPORTS:               (F, F, V, V, V, N, V, V, F, N),
-    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, N),
+    # Agency admin owns global platform settings (logo, colour, name)
+    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, F),
     Module.USER_MANAGEMENT:       (F, V, N, N, N, N, N, N, N, N),
     Module.NOTIFICATIONS:         (F, F, F, F, F, F, F, F, F, N),
     Module.AGENCY_ADMINISTRATION: (N, N, N, N, N, N, N, N, N, F),

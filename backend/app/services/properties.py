@@ -33,7 +33,12 @@ def _within(lat: Decimal, lng: Decimal, radius_km: float) -> ColumnElement[bool]
     )
 
 
-async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest) -> Property:
+async def create(
+    session: AsyncSession,
+    actor: User,
+    data: CreatePropertyRequest,
+    tenant_id: uuid.UUID | None = None,
+) -> Property:
     # Assigned by object so the category is loaded for serialising, as with the seller below.
     category = await categories.get(session, data.category_id)
     listing = Property(
@@ -48,6 +53,7 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
         area_sqft=data.area_sqft,
         latitude=data.latitude,
         longitude=data.longitude,
+        tenant_id=tenant_id,
         # A seller listing their own asset owns it; staff list on behalf of nobody in particular.
         # Assigned by object, not id: that leaves both relationships loaded, so serialising the
         # result cannot trigger a lazy load on a greenlet-less async path.
@@ -77,8 +83,11 @@ async def paginate(
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     near: tuple[Decimal, Decimal, float] | None = None,
+    tenant_id: uuid.UUID | None = None,
 ) -> tuple[list[Property], int]:
     query = select(Property)
+    if tenant_id is not None:
+        query = query.where(Property.tenant_id == tenant_id)
     if search:
         pattern = f"%{search.lower()}%"
         query = query.where(

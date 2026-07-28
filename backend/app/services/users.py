@@ -12,11 +12,16 @@ from app.schemas.user import CreateUserRequest, UpdateUserRequest
 from app.services import auth
 
 
-async def create(session: AsyncSession, data: CreateUserRequest) -> User:
+async def create(
+    session: AsyncSession,
+    data: CreateUserRequest,
+    tenant_id: uuid.UUID | None = None,
+) -> User:
     user = User(
         email=data.email,
         full_name=data.full_name,
         country=data.country,
+        tenant_id=tenant_id,
         role_rows=[UserRole(role=role) for role in set(data.roles)],
     )
     session.add(user)
@@ -28,7 +33,7 @@ async def create(session: AsyncSession, data: CreateUserRequest) -> User:
             status.HTTP_409_CONFLICT, "email_taken", "A user with this email already exists."
         ) from None
 
-    await auth.send_password_link(user, "Your Provenix account is ready", "set-password")
+    await auth.send_password_link(user, "Your account is ready", "set-password")
     return user
 
 
@@ -46,8 +51,11 @@ async def paginate(
     search: str | None,
     role: Role | None,
     user_status: UserStatus | None,
+    tenant_id: uuid.UUID | None = None,
 ) -> tuple[list[User], int]:
     query = select(User).where(User.status != UserStatus.DELETED)
+    if tenant_id is not None:
+        query = query.where(User.tenant_id == tenant_id)
     if search:
         pattern = f"%{search.lower()}%"
         query = query.where(
@@ -94,8 +102,7 @@ async def soft_delete(session: AsyncSession, actor: User, user_id: uuid.UUID) ->
 
 
 async def hard_delete(session: AsyncSession, actor: User, user_id: uuid.UUID) -> None:
-    """Remove the account outright, including one already soft-deleted. Rows that reference the
-    user fall away or null out through their own foreign keys."""
+    """Remove the account outright, including one already soft-deleted."""
     user = await session.get(User, user_id)
     if user is None:
         raise AppError(status.HTTP_404_NOT_FOUND, "user_not_found", "User not found.")

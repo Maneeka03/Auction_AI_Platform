@@ -7,7 +7,8 @@ export type UserRole =
   | "gemologist"
   | "buyer"
   | "seller"
-  | "executive";
+  | "executive"
+  | "agency_admin";
 
 export type UserStatus = "pending_verification" | "active" | "suspended" | "deleted";
 
@@ -26,7 +27,8 @@ export type PermissionModule =
   | "reports"
   | "system_settings"
   | "user_management"
-  | "notifications";
+  | "notifications"
+  | "agency_administration";
 
 export interface Session {
   id: string;
@@ -39,6 +41,8 @@ export interface Session {
   last_login_at: string | null;
   roles: UserRole[];
   permissions: Record<PermissionModule, PermissionLevel>;
+  tenant_id: string | null;
+  slug: string | null;
 }
 
 export interface AccessToken {
@@ -59,6 +63,7 @@ export interface RegisterPayload {
   role: "buyer" | "seller";
   country?: string | null;
   business_type?: string | null;
+  tenant_slug?: string | null;
 }
 
 export interface ApiErrorField {

@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import DbSession, requires
+from app.api.deps import DbSession, effective_tenant_id, requires
 from app.models.campaign import CampaignStatus
 from app.models.user import User
 from app.rbac.permissions import Access, Module
@@ -22,9 +22,11 @@ Manager = Depends(requires(Module.MARKETING_CAMPAIGNS, Access.FULL))
 
 @router.post("", response_model=CampaignOut, status_code=status.HTTP_201_CREATED)
 async def create_campaign(
-    payload: CreateCampaignRequest, session: DbSession, _: User = Manager
+    payload: CreateCampaignRequest, session: DbSession, actor: User = Manager
 ) -> CampaignOut:
-    return CampaignOut.model_validate(await campaigns.create(session, payload))
+    return CampaignOut.model_validate(
+        await campaigns.create(session, payload, tenant_id=effective_tenant_id(actor))
+    )
 
 
 @router.get("", response_model=CampaignPage)
@@ -33,9 +35,11 @@ async def list_campaigns(
     page: int = Query(1, ge=1),
     size: int = Query(25, ge=1, le=100),
     status_filter: CampaignStatus | None = Query(None, alias="status"),
-    _: User = Reader,
+    actor: User = Reader,
 ) -> CampaignPage:
-    items, total = await campaigns.paginate(session, page, size, status_filter)
+    items, total = await campaigns.paginate(
+        session, page, size, status_filter, tenant_id=effective_tenant_id(actor)
+    )
     return CampaignPage(
         items=[CampaignOut.model_validate(item) for item in items],
         total=total,

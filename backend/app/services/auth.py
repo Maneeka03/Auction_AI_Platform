@@ -23,7 +23,7 @@ from app.core.security import (
 from app.models.user import AuthProvider, RefreshToken, User, UserRole, UserStatus
 from app.rbac.permissions import SELF_SERVICE_ROLES, Role
 from app.schemas.auth import RegisterRequest
-from app.services import mail
+from app.services import agency as agency_service, mail
 
 ACCESS = "access"
 VERIFY_EMAIL = "verify_email"
@@ -43,12 +43,22 @@ async def get_by_email(session: AsyncSession, email: str) -> User | None:
 
 
 async def register(session: AsyncSession, data: RegisterRequest) -> User:
+    # Resolve tenant from slug so the new buyer/seller is isolated to the right super admin
+    tenant_id: uuid.UUID | None = None
+    if data.tenant_slug:
+        try:
+            super_admin = await agency_service.get_by_slug(session, data.tenant_slug)
+            tenant_id = super_admin.id
+        except AppError:
+            pass  # Unknown slug → register without tenant assignment
+
     user = User(
         email=data.email,
         password_hash=hash_password(data.password),
         full_name=data.full_name,
         country=data.country,
         business_type=data.business_type,
+        tenant_id=tenant_id,
         role_rows=[UserRole(role=data.role)],
     )
     session.add(user)
@@ -129,6 +139,39 @@ async def reset_password(session: AsyncSession, token: str, password: str) -> No
         user.status = UserStatus.ACTIVE
     await revoke_all(session, user.id)
     await rate_limit.clear_failures(user.email)
+    await session.commit()
+
+
+async def change_email(session: AsyncSession, user: User, new_email: str, password: str) -> None:
+    if user.password_hash is None or not verify_password(password, user.password_hash):
+        raise AppError(
+            status.HTTP_400_BAD_REQUEST, "invalid_password", "Current password is incorrect."
+        )
+    new_email = new_email.strip().lower()
+    if user.email == new_email:
+        raise AppError(
+            status.HTTP_400_BAD_REQUEST, "same_email", "New email must differ from the current one."
+        )
+    existing = await get_by_email(session, new_email)
+    if existing is not None:
+        raise AppError(
+            status.HTTP_409_CONFLICT, "email_taken", "This email address is already in use."
+        )
+    try:
+        await session.execute(
+            update(User).where(User.id == user.id).values(email=new_email)
+        )
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise AppError(
+            status.HTTP_409_CONFLICT, "email_taken", "This email address is already in use."
+        ) from None
+
+
+async def deactivate_account(session: AsyncSession, user: User) -> None:
+    user.status = UserStatus.SUSPENDED
+    await revoke_all(session, user.id)
     await session.commit()
 
 

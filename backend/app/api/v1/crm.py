@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import DbSession, requires
+from app.api.deps import DbSession, effective_tenant_id, requires
 from app.models.lead import LeadStatus
 from app.models.user import User
 from app.rbac.permissions import Access, Module
@@ -24,9 +24,9 @@ async def list_buyers(
     page: int = Query(1, ge=1),
     size: int = Query(25, ge=1, le=100),
     search: str | None = Query(None, max_length=120),
-    _: User = BuyerReader,
+    actor: User = BuyerReader,
 ) -> BuyerCrmPage:
-    rows, total = await crm.buyers(session, page, size, search)
+    rows, total = await crm.buyers(session, page, size, search, tenant_id=effective_tenant_id(actor))
     return BuyerCrmPage(
         items=[BuyerCrmOut.of(*row) for row in rows], total=total, page=page, size=size
     )
@@ -38,9 +38,9 @@ async def list_sellers(
     page: int = Query(1, ge=1),
     size: int = Query(25, ge=1, le=100),
     search: str | None = Query(None, max_length=120),
-    _: User = SellerReader,
+    actor: User = SellerReader,
 ) -> SellerCrmPage:
-    rows, total = await crm.sellers(session, page, size, search)
+    rows, total = await crm.sellers(session, page, size, search, tenant_id=effective_tenant_id(actor))
     return SellerCrmPage(
         items=[SellerCrmOut.of(*row) for row in rows], total=total, page=page, size=size
     )
@@ -50,7 +50,9 @@ async def list_sellers(
 async def create_lead(
     payload: CreateLeadRequest, session: DbSession, actor: User = LeadManager
 ) -> LeadOut:
-    return LeadOut.model_validate(await leads.create(session, actor, payload))
+    return LeadOut.model_validate(
+        await leads.create(session, actor, payload, tenant_id=effective_tenant_id(actor))
+    )
 
 
 @router.get("/leads", response_model=LeadPage)
@@ -59,9 +61,11 @@ async def list_leads(
     page: int = Query(1, ge=1),
     size: int = Query(25, ge=1, le=100),
     status_filter: LeadStatus | None = Query(None, alias="status"),
-    _: User = LeadReader,
+    actor: User = LeadReader,
 ) -> LeadPage:
-    items, total = await leads.paginate(session, page, size, status_filter)
+    items, total = await leads.paginate(
+        session, page, size, status_filter, tenant_id=effective_tenant_id(actor)
+    )
     return LeadPage(
         items=[LeadOut.model_validate(item) for item in items], total=total, page=page, size=size
     )

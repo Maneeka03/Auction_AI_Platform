@@ -25,6 +25,7 @@ class RegisterRequest(EmailNormalized):
     role: Literal[Role.BUYER, Role.SELLER]
     country: str | None = Field(default=None, min_length=2, max_length=2)
     business_type: str | None = Field(default=None, max_length=40)
+    tenant_slug: str | None = Field(default=None, max_length=80)
 
 
 class SellerEnrolmentRequest(BaseModel):
@@ -53,6 +54,11 @@ class ChangePasswordRequest(BaseModel):
     new_password: Password
 
 
+class ChangeEmailRequest(EmailNormalized):
+    email: Email
+    current_password: str = Field(max_length=128)
+
+
 class AccessToken(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
@@ -70,6 +76,8 @@ class Session(BaseModel):
     last_login_at: datetime | None
     roles: list[Role]
     permissions: dict[str, str]
+    tenant_id: uuid.UUID | None
+    slug: str | None
 
     @classmethod
     def of(cls, user: User) -> "Session":
@@ -84,6 +92,8 @@ class Session(BaseModel):
             last_login_at=user.last_login_at,
             roles=user.roles,
             permissions=permissions_for(user.roles),
+            tenant_id=user.tenant_id,
+            slug=user.slug,
         )
 
 

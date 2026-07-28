@@ -12,7 +12,7 @@ from app.core.rate_limit import is_denied
 from app.core.security import decode_jwt
 from app.db.session import get_session
 from app.models.user import User, UserStatus
-from app.rbac.permissions import Access, Module, can
+from app.rbac.permissions import Access, Module, Role, can
 from app.services.auth import ACCESS
 
 bearer = HTTPBearer(auto_error=False)
@@ -76,6 +76,25 @@ def requires(module: Module, level: Access = Access.FULL) -> Callable[..., Await
         return user
 
     return guard
+
+
+# Sentinel UUID that can never match a real tenant — used so unassigned users see nothing.
+_NO_TENANT = uuid.UUID(int=0)
+
+
+def effective_tenant_id(actor: User) -> uuid.UUID | None:
+    """Returns the tenant filter to apply to all data queries.
+
+    - super_admin       → their own id (they ARE the tenant root)
+    - agency_admin      → None (no operational data access via RBAC)
+    - staff/buyer/seller with tenant_id → that tenant_id
+    - staff/buyer/seller with NO tenant_id → zero UUID (matches nothing → empty results)
+    """
+    if Role.SUPER_ADMIN in actor.roles:
+        return actor.id
+    if Role.AGENCY_ADMIN in actor.roles:
+        return None  # RBAC already blocks operational endpoints for agency_admin
+    return actor.tenant_id if actor.tenant_id is not None else _NO_TENANT
 
 
 def client_ip(request: Request) -> str:

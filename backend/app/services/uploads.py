@@ -1,9 +1,11 @@
+import json
 import uuid
 from functools import lru_cache
 from pathlib import PurePosixPath
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 from app.core.config import settings
 
@@ -27,6 +29,34 @@ def _client():
         config=Config(signature_version="s3v4"),
         region_name=settings.s3_region,
     )
+
+
+def ensure_bucket_public() -> None:
+    """Create the S3/MinIO bucket if absent and apply a public-read policy.
+
+    Called once at startup so every uploaded asset is directly accessible via
+    its plain URL without needing presigned GET links.
+    """
+    client = _client()
+    try:
+        client.create_bucket(Bucket=settings.s3_bucket)
+    except ClientError as exc:
+        code = exc.response["Error"]["Code"]
+        if code not in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists"):
+            raise
+
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetObject"],
+                "Resource": [f"arn:aws:s3:::{settings.s3_bucket}/*"],
+            }
+        ],
+    }
+    client.put_bucket_policy(Bucket=settings.s3_bucket, Policy=json.dumps(policy))
 
 
 def new_key(prefix: str, content_type: str) -> str:

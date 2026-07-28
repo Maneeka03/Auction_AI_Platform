@@ -10,8 +10,13 @@ from app.models.user import User
 from app.schemas.lead import CreateLeadRequest, UpdateLeadRequest
 
 
-async def create(session: AsyncSession, actor: User, data: CreateLeadRequest) -> Lead:
-    lead = Lead(**data.model_dump(), owner_id=actor.id)
+async def create(
+    session: AsyncSession,
+    actor: User,
+    data: CreateLeadRequest,
+    tenant_id: uuid.UUID | None = None,
+) -> Lead:
+    lead = Lead(**data.model_dump(), owner_id=actor.id, tenant_id=tenant_id)
     session.add(lead)
     await session.commit()
     await session.refresh(lead)
@@ -26,9 +31,15 @@ async def get(session: AsyncSession, lead_id: uuid.UUID) -> Lead:
 
 
 async def paginate(
-    session: AsyncSession, page: int, size: int, lead_status: LeadStatus | None
+    session: AsyncSession,
+    page: int,
+    size: int,
+    lead_status: LeadStatus | None,
+    tenant_id: uuid.UUID | None = None,
 ) -> tuple[list[Lead], int]:
     query = select(Lead)
+    if tenant_id is not None:
+        query = query.where(Lead.tenant_id == tenant_id)
     if lead_status:
         query = query.where(Lead.status == lead_status)
 

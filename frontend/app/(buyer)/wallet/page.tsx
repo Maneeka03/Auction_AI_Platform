@@ -3,6 +3,7 @@
 import { Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { RequirePermission } from "@/components/auth/RequirePermission";
+import { AdminShell } from "@/components/layout/AdminShell";
 import { BuyerTopbar } from "@/components/layout/BuyerTopbar";
 import { AddFundsModal } from "@/components/wallet/AddFundsModal";
 import { WithdrawModal } from "@/components/wallet/WithdrawModal";
@@ -11,6 +12,8 @@ import { WalletBalanceCard } from "@/components/wallet/WalletBalanceCard";
 import { getWallet, listWalletTransactions } from "@/lib/api/wallet";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
+
+const STAFF_ROLES = new Set(["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"]);
 import type { WalletEntry, WalletEntryKind, WalletSummary } from "@/types/wallet";
 
 const typeLabels: Record<WalletEntryKind, string> = {
@@ -32,7 +35,8 @@ function formatDate(iso: string): string {
 }
 
 export default function WalletPage() {
-  const { accessToken } = useAuth();
+  const { accessToken, session } = useAuth();
+  const isStaff = session?.roles.some((r) => STAFF_ROLES.has(r)) ?? false;
   const [summary, setSummary] = useState<WalletSummary | null>(null);
   const [transactions, setTransactions] = useState<WalletEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,10 +76,10 @@ export default function WalletPage() {
     void fetchWallet();
   }
 
-  return (
+  const pageContent = (
     <RequirePermission module="payment_escrow" need="view">
-      <div className="min-h-screen bg-neutral-50">
-        <BuyerTopbar />
+      <div className={isStaff ? undefined : "min-h-screen bg-neutral-50"}>
+        {!isStaff && <BuyerTopbar />}
 
         <div className="mx-auto max-w-4xl space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -168,4 +172,9 @@ export default function WalletPage() {
       ) : null}
     </RequirePermission>
   );
+
+  if (isStaff) {
+    return <AdminShell>{pageContent}</AdminShell>;
+  }
+  return pageContent;
 }

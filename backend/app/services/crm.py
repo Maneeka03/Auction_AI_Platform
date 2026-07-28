@@ -10,10 +10,12 @@ from app.models.user import User, UserRole, UserStatus
 from app.rbac.permissions import Role
 
 
-def _members(role: Role, search: str | None):
+def _members(role: Role, search: str | None, tenant_id=None):
     query = select(User).where(
         User.status != UserStatus.DELETED, User.role_rows.any(UserRole.role == role)
     )
+    if tenant_id is not None:
+        query = query.where(User.tenant_id == tenant_id)
     if search:
         pattern = f"%{search.lower()}%"
         query = query.where(
@@ -23,13 +25,17 @@ def _members(role: Role, search: str | None):
 
 
 async def buyers(
-    session: AsyncSession, page: int, size: int, search: str | None
+    session: AsyncSession,
+    page: int,
+    size: int,
+    search: str | None,
+    tenant_id=None,
 ) -> tuple[list[Row], int]:
     bids = _tally(Bid.bidder_id)
     won = _tally(Auction.winner_id, Auction.winner_id.is_not(None))
     bought = _tally(Property.buyer_id, Property.buyer_id.is_not(None))
 
-    base = _members(Role.BUYER, search)
+    base = _members(Role.BUYER, search, tenant_id)
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     rows = await session.execute(
         base.add_columns(
@@ -46,7 +52,11 @@ async def buyers(
 
 
 async def sellers(
-    session: AsyncSession, page: int, size: int, search: str | None
+    session: AsyncSession,
+    page: int,
+    size: int,
+    search: str | None,
+    tenant_id=None,
 ) -> tuple[list[Row], int]:
     listings = (
         select(
@@ -67,7 +77,7 @@ async def sellers(
         .subquery()
     )
 
-    base = _members(Role.SELLER, search)
+    base = _members(Role.SELLER, search, tenant_id)
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     rows = await session.execute(
         base.add_columns(

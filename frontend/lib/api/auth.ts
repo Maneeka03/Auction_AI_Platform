@@ -39,3 +39,7 @@ export function verifyEmail(token: string): Promise<void> {
 export function resendVerification(email: string): Promise<void> {
   return apiClient.post<void>(`${BASE}/resend-verification`, { email });
 }
+
+export function joinTenant(accessToken: string, slug: string): Promise<import("@/types/auth").Session> {
+  return apiClient.post<import("@/types/auth").Session>("/api/v1/users/me/tenant", { slug }, { accessToken });
+}

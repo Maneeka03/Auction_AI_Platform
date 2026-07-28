@@ -8,6 +8,7 @@ from app.core.errors import unauthorized
 from app.core.security import decode_jwt
 from app.schemas.auth import (
     AccessToken,
+    ChangeEmailRequest,
     ChangePasswordRequest,
     EmailRequest,
     LoginRequest,
@@ -28,16 +29,26 @@ ACCEPTED = Message(message="If the address matches an account, an email is on it
 
 
 def _set_refresh_cookie(response: Response, token: str) -> None:
+    # response.set_cookie(
+    #     settings.refresh_cookie_name,
+    #     token,
+    #     max_age=settings.refresh_token_ttl,
+    #     httponly=True,
+    #     secure=settings.refresh_cookie_secure,
+    #     samesite=settings.refresh_cookie_samesite,
+    #     domain=settings.refresh_cookie_domain,
+    #     path=COOKIE_PATH,
+    # )
     response.set_cookie(
-        settings.refresh_cookie_name,
-        token,
-        max_age=settings.refresh_token_ttl,
-        httponly=True,
-        secure=settings.refresh_cookie_secure,
-        samesite=settings.refresh_cookie_samesite,
-        domain=settings.refresh_cookie_domain,
-        path=COOKIE_PATH,
-    )
+    settings.refresh_cookie_name,
+    token,
+    max_age=settings.refresh_token_ttl,  # <-- persistent cookie
+    httponly=True,
+    secure=settings.refresh_cookie_secure,
+    samesite=settings.refresh_cookie_samesite,
+    domain=settings.refresh_cookie_domain,
+    path=COOKIE_PATH,
+)
 
 
 def _clear_refresh_cookie(response: Response) -> None:
@@ -148,4 +159,23 @@ async def change_password(
 ) -> None:
     await auth.change_password(session, user, payload.current_password, payload.new_password)
     await rate_limit.deny_token(token["jti"], token["exp"])
+    _clear_refresh_cookie(response)
+
+
+@router.patch("/me/email", status_code=status.HTTP_204_NO_CONTENT)
+async def change_email(
+    payload: ChangeEmailRequest,
+    user: CurrentUser,
+    session: DbSession,
+) -> None:
+    await auth.change_email(session, user, payload.email, payload.current_password)
+
+
+@router.post("/me/deactivate", status_code=status.HTTP_204_NO_CONTENT)
+async def deactivate_account(
+    user: CurrentUser,
+    session: DbSession,
+    response: Response,
+) -> None:
+    await auth.deactivate_account(session, user)
     _clear_refresh_cookie(response)

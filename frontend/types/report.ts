@@ -22,3 +22,16 @@ export interface DashboardStats {
   category_mix: CategoryCount[];
   weekly_signups: WeeklyCount[];
 }
+
+export interface MonthlyAmount {
+  month: string;
+  amount: string;
+}
+
+export interface RevenueStats {
+  total_revenue: string;
+  auction_revenue: string;
+  direct_sales_revenue: string;
+  sales_count: number;
+  monthly: MonthlyAmount[];
+}

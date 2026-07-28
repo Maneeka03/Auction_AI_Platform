@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -39,3 +39,7 @@ class Campaign(Base, TimestampMixin):
     audience: Mapped[str | None] = mapped_column(String(60), default=None)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # Which super admin's platform this campaign belongs to
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
+    )

@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import DbSession, requires
+from app.api.deps import DbSession, effective_tenant_id, requires
 from app.models.user import User, UserStatus
 from app.rbac.permissions import Access, Module, Role
 from app.schemas.user import CreateUserRequest, UpdateUserRequest, UserOut, UserPage
@@ -15,8 +15,12 @@ Manager = Depends(requires(Module.USER_MANAGEMENT, Access.FULL))
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-async def create_user(payload: CreateUserRequest, session: DbSession, _: User = Manager) -> UserOut:
-    user = await users.create(session, payload)
+async def create_user(
+    payload: CreateUserRequest, session: DbSession, actor: User = Manager
+) -> UserOut:
+    # agency_admin can only create super admins (handled via /agency endpoint); here we scope to tenant
+    tid = effective_tenant_id(actor)
+    user = await users.create(session, payload, tenant_id=tid)
     return UserOut.model_validate(user)
 
 
@@ -28,9 +32,10 @@ async def list_users(
     search: str | None = Query(None, max_length=120),
     role: Role | None = None,
     status_filter: UserStatus | None = Query(None, alias="status"),
-    _: User = Reader,
+    actor: User = Reader,
 ) -> UserPage:
-    items, total = await users.paginate(session, page, size, search, role, status_filter)
+    tid = effective_tenant_id(actor)
+    items, total = await users.paginate(session, page, size, search, role, status_filter, tenant_id=tid)
     return UserPage(
         items=[UserOut.model_validate(user) for user in items],
         total=total,

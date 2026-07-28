@@ -11,12 +11,14 @@ from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, validation_error_handler
 from app.core.redis import redis
 from app.db.session import engine
+from app.services import uploads
 
 logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    uploads.ensure_bucket_public()
     yield
     await redis.aclose()
     await engine.dispose()
@@ -35,7 +37,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
 

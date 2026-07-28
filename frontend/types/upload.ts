@@ -1,4 +1,4 @@
-export type UploadPurpose = "property" | "kyc";
+export type UploadPurpose = "property" | "kyc" | "branding";
 
 export interface PresignUploadRequest {
   content_type: string;

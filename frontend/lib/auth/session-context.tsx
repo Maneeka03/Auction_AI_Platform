@@ -11,7 +11,27 @@ import {
 } from "react";
 import { getMe, login as apiLogin, logout as apiLogout, refresh as apiRefresh } from "@/lib/api/auth";
 import { ApiRequestError } from "@/lib/api/client";
-import type { LoginPayload, Session } from "@/types/auth";
+import type { LoginPayload, Session, UserRole } from "@/types/auth";
+
+const STAFF_ROLES = new Set<UserRole>([
+  "super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive",
+]);
+
+function setAuthHint(session: Session) {
+  let hint: string;
+  if (session.roles.includes("agency_admin")) {
+    hint = "agency";
+  } else if (session.roles.some((r) => STAFF_ROLES.has(r))) {
+    hint = "staff";
+  } else {
+    hint = "buyer";
+  }
+  document.cookie = `auth_hint=${hint}; path=/; SameSite=Lax; Max-Age=604800`;
+}
+
+function clearAuthHint() {
+  document.cookie = "auth_hint=; path=/; Max-Age=0";
+}
 
 interface AuthContextValue {
   session: Session | null;
@@ -19,6 +39,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<Session>;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -60,10 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         scheduleRefresh(token.expires_in);
         const me = await getMe(token.access_token);
         setSession(me);
+        setAuthHint(me);
         return token.access_token;
       } catch {
         setAccessToken(null);
         setSession(null);
+        clearAuthHint();
         return null;
       } finally {
         refreshInFlightPromise = null;
@@ -86,13 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       scheduleRefresh(token.expires_in);
       const me = await getMe(token.access_token);
       setSession(me);
+      setAuthHint(me);
       return me;
     },
     [scheduleRefresh],
   );
 
+  const refreshSession = useCallback(async () => {
+    if (!accessToken) return;
+    const me = await getMe(accessToken);
+    setSession(me);
+    setAuthHint(me);
+  }, [accessToken]);
+
   const logout = useCallback(async () => {
     clearRefreshTimer();
+    clearAuthHint();
     try {
       if (accessToken) await apiLogout(accessToken);
     } catch (error) {
@@ -104,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [accessToken, clearRefreshTimer]);
 
   return (
-    <AuthContext.Provider value={{ session, accessToken, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ session, accessToken, isLoading, login, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );

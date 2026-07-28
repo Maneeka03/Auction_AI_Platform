@@ -26,8 +26,17 @@ async def get(session: AsyncSession, category_id: uuid.UUID) -> Category:
     return category
 
 
+async def get_for_tenant(
+    session: AsyncSession, category_id: uuid.UUID, tenant_id: uuid.UUID | None
+) -> Category:
+    """Fetch a category and verify it belongs to the given tenant."""
+    category = await get(session, category_id)
+    if tenant_id is not None and category.tenant_id != tenant_id:
+        raise AppError(status.HTTP_404_NOT_FOUND, "category_not_found", "Category not found.")
+    return category
+
+
 async def _assert_is_main(session: AsyncSession, parent_id: uuid.UUID) -> None:
-    """A subcategory may only hang off a main category, keeping the tree exactly two levels deep."""
     parent = await get(session, parent_id)
     if parent.parent_id is not None:
         raise AppError(
@@ -35,11 +44,18 @@ async def _assert_is_main(session: AsyncSession, parent_id: uuid.UUID) -> None:
         )
 
 
-async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category:
+async def create(
+    session: AsyncSession, data: CreateCategoryRequest, tenant_id: uuid.UUID | None
+) -> Category:
     if data.parent_id is not None:
         await _assert_is_main(session, data.parent_id)
 
-    category = Category(name=data.name, slug=slugify(data.name), parent_id=data.parent_id)
+    category = Category(
+        name=data.name,
+        slug=slugify(data.name),
+        parent_id=data.parent_id,
+        tenant_id=tenant_id,
+    )
     session.add(category)
     try:
         await session.commit()
@@ -54,21 +70,42 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
     return category
 
 
-async def tree(session: AsyncSession) -> list[Category]:
-    """Main categories, each carrying its subcategories."""
-    rows = await session.scalars(
+async def tree(session: AsyncSession, tenant_id: uuid.UUID | None) -> list[Category]:
+    """Main categories for a tenant, each carrying its subcategories."""
+    q = (
         select(Category)
         .where(Category.parent_id.is_(None))
         .options(selectinload(Category.children))
         .order_by(Category.name)
     )
+    if tenant_id is not None:
+        q = q.where(Category.tenant_id == tenant_id)
+    rows = await session.scalars(q)
     return list(rows)
 
 
+async def tree_all_tenants(session: AsyncSession) -> dict[uuid.UUID, list[Category]]:
+    """All main categories grouped by tenant_id — used for the public discovery endpoint."""
+    rows = await session.scalars(
+        select(Category)
+        .where(Category.parent_id.is_(None))
+        .where(Category.tenant_id.is_not(None))
+        .options(selectinload(Category.children))
+        .order_by(Category.name)
+    )
+    result: dict[uuid.UUID, list[Category]] = {}
+    for cat in rows:
+        result.setdefault(cat.tenant_id, []).append(cat)
+    return result
+
+
 async def update(
-    session: AsyncSession, category_id: uuid.UUID, data: UpdateCategoryRequest
+    session: AsyncSession,
+    category_id: uuid.UUID,
+    data: UpdateCategoryRequest,
+    tenant_id: uuid.UUID | None,
 ) -> Category:
-    category = await get(session, category_id)
+    category = await get_for_tenant(session, category_id, tenant_id)
     fields = data.model_dump(exclude_unset=True)
 
     if "parent_id" in fields and fields["parent_id"] is not None:
@@ -100,9 +137,10 @@ async def update(
     return category
 
 
-async def delete(session: AsyncSession, category_id: uuid.UUID) -> None:
-    """Remove a category and its subcategories. Blocked while any listing still uses one of them."""
-    category = await get(session, category_id)
+async def delete(
+    session: AsyncSession, category_id: uuid.UUID, tenant_id: uuid.UUID | None
+) -> None:
+    category = await get_for_tenant(session, category_id, tenant_id)
     in_use = await session.scalar(
         select(func.count())
         .select_from(Property)
@@ -121,6 +159,5 @@ async def delete(session: AsyncSession, category_id: uuid.UUID) -> None:
             "category_in_use",
             "Listings still use this category. Move them before deleting it.",
         )
-
     await session.delete(category)
     await session.commit()

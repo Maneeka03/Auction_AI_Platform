@@ -5,10 +5,15 @@ from fastapi import APIRouter, Depends, Query, status
 from app.api.deps import DbSession, requires
 from app.models.user import User, UserStatus
 from app.rbac.permissions import Access, Module
-from app.schemas.agency import CreateSuperAdminRequest, UpdateSuperAdminRequest
+from app.schemas.agency import (
+    CreateSuperAdminRequest,
+    UpdateSuperAdminRequest,
+    UpdateUserBrandingRequest,
+    UserBrandingOut,
+)
 from app.schemas.sidebar import SaveSidebarRequest, SidebarEntryOut, SidebarItemOut
 from app.schemas.user import UserOut, UserPage
-from app.services import agency, sidebar
+from app.services import agency, sidebar, user_branding
 
 router = APIRouter(prefix="/agency", tags=["agency"])
 
@@ -63,6 +68,51 @@ async def delete_super_admin(
 ) -> None:
     await agency.delete(session, actor, user_id, hard)
 
+
+# ── Per-super-admin branding ──────────────────────────────────────────────────
+
+@router.get("/super-admins/{user_id}/branding", response_model=UserBrandingOut)
+async def get_super_admin_branding(
+    user_id: uuid.UUID, session: DbSession, _: User = Admin
+) -> UserBrandingOut:
+    await agency.get(session, user_id)  # 404 if not a super admin
+    result = await user_branding.get(session, user_id)
+    return result or UserBrandingOut()
+
+
+@router.put("/super-admins/{user_id}/branding", response_model=UserBrandingOut)
+async def update_super_admin_branding(
+    user_id: uuid.UUID,
+    payload: UpdateUserBrandingRequest,
+    session: DbSession,
+    _: User = Admin,
+) -> UserBrandingOut:
+    await agency.get(session, user_id)  # 404 if not a super admin
+    return await user_branding.upsert(session, user_id, payload)
+
+
+# ── Per-super-admin sidebar ───────────────────────────────────────────────────
+
+@router.get("/super-admins/{user_id}/sidebar", response_model=list[SidebarEntryOut])
+async def get_super_admin_sidebar(
+    user_id: uuid.UUID, session: DbSession, _: User = Admin
+) -> list[SidebarEntryOut]:
+    await agency.get(session, user_id)  # 404 if not a super admin
+    return [_entry(row) for row in await sidebar.config(session, user_id)]
+
+
+@router.put("/super-admins/{user_id}/sidebar", response_model=list[SidebarEntryOut])
+async def save_super_admin_sidebar(
+    user_id: uuid.UUID,
+    payload: SaveSidebarRequest,
+    session: DbSession,
+    _: User = Admin,
+) -> list[SidebarEntryOut]:
+    await agency.get(session, user_id)  # 404 if not a super admin
+    return [_entry(row) for row in await sidebar.save(session, user_id, payload.items)]
+
+
+# ── Agency admin's own sidebar ────────────────────────────────────────────────
 
 @router.get("/sidebar/items", response_model=list[SidebarItemOut])
 async def list_sidebar_items(session: DbSession, _: User = Admin) -> list[SidebarItemOut]:
