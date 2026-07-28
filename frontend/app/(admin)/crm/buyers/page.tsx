@@ -1,6 +1,10 @@
 "use client";
 
+<<<<<<< HEAD
 import { Download, Plus, RefreshCw, Search } from "lucide-react";
+=======
+import { Download, RefreshCw, Search } from "lucide-react";
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
@@ -11,12 +15,15 @@ import { useAuth } from "@/lib/auth/session-context";
 import { exportToExcel } from "@/lib/utils/exportToExcel";
 import type { BuyerCrmRow } from "@/types/crm";
 import type { UserStatus } from "@/types/auth";
+<<<<<<< HEAD
 import { UserRowMenu } from "@/components/crm/UserRowMenu";
 import { BuyerDetailsDrawer } from "@/components/crm/BuyerDetailsDrawer";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { updateUser } from "@/lib/api/admin";
 import { AddBuyerDrawer } from "@/components/crm/AddBuyerDrawer";
 import { createUser } from "@/lib/api/admin";
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 
 const STATUS_BADGE: Record<UserStatus, string> = {
   active: "bg-success-500/10 text-success-500",
@@ -44,15 +51,19 @@ export default function BuyersCrmPage() {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+<<<<<<< HEAD
   const [buyerToBlock, setBuyerToBlock] = useState<BuyerCrmRow | null>(null);
   const [blocking, setBlocking] = useState(false);
   const [showAddBuyer, setShowAddBuyer] = useState(false);
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 
   const fetchBuyers = useCallback(async () => {
     if (!accessToken) return;
     setIsLoading(true);
     setError(null);
     try {
+<<<<<<< HEAD
       const result = await listBuyers(accessToken, {
         page: 1,
         size: 100,
@@ -64,6 +75,13 @@ export default function BuyersCrmPage() {
       setError(
         err instanceof ApiRequestError ? err.message : "Failed to load buyers.",
       );
+=======
+      const result = await listBuyers(accessToken, { page: 1, size: 100, search: search || undefined });
+      setBuyers(result.items);
+      setTotal(result.total);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Failed to load buyers.");
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
     } finally {
       setIsLoading(false);
     }
@@ -78,10 +96,14 @@ export default function BuyersCrmPage() {
     setPage(1);
   }, [search]);
 
+<<<<<<< HEAD
   const pagedBuyers = useMemo(
     () => buyers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [buyers, page],
   );
+=======
+  const pagedBuyers = useMemo(() => buyers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [buyers, page]);
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 
   function handleExport() {
     exportToExcel(
@@ -99,6 +121,7 @@ export default function BuyersCrmPage() {
     );
   }
 
+<<<<<<< HEAD
   const [selectedBuyer, setSelectedBuyer] = useState<BuyerCrmRow | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const handleView = (buyer: BuyerCrmRow) => {
@@ -136,12 +159,15 @@ export default function BuyersCrmPage() {
     await fetchBuyers();
   };
 
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
   return (
     <AdminShell>
       <RequirePermission module="buyer_crm" need="view">
         <div className="space-y-5 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
+<<<<<<< HEAD
               <h1 className="text-2xl font-semibold text-neutral-900">
                 Buyers
               </h1>
@@ -151,6 +177,14 @@ export default function BuyersCrmPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+=======
+              <h1 className="text-2xl font-semibold text-neutral-900">Buyers</h1>
+              <p className="mt-1 text-sm text-neutral-600">
+                {total.toLocaleString()} registered buyer{total === 1 ? "" : "s"}.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
               <button
                 type="button"
                 onClick={() => void fetchBuyers()}
@@ -166,6 +200,7 @@ export default function BuyersCrmPage() {
               >
                 <Download size={16} /> Export
               </button>
+<<<<<<< HEAD
 
               <button
                 type="button"
@@ -175,14 +210,20 @@ export default function BuyersCrmPage() {
                 <Plus size={16} />
                 Add Buyer
               </button>
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
             </div>
           </div>
 
           <div className="relative max-w-sm">
+<<<<<<< HEAD
             <Search
               size={16}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
             />
+=======
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -201,59 +242,84 @@ export default function BuyersCrmPage() {
                   <th className="px-4 py-3 font-medium">Auctions Won</th>
                   <th className="px-4 py-3 font-medium">Properties Bought</th>
                   <th className="px-4 py-3 font-medium">Joined</th>
+<<<<<<< HEAD
                   <th className="px-4 py-3 font-medium">Action</th>
+=======
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
+<<<<<<< HEAD
                     <td
                       colSpan={7}
                       className="px-4 py-8 text-center text-neutral-500"
                     >
+=======
+                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                       Loading buyers...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
+<<<<<<< HEAD
                     <td
                       colSpan={7}
                       className="px-4 py-8 text-center text-danger-600"
                     >
+=======
+                    <td colSpan={6} className="px-4 py-8 text-center text-danger-600">
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                       {error}
                     </td>
                   </tr>
                 ) : buyers.length === 0 ? (
                   <tr>
+<<<<<<< HEAD
                     <td
                       colSpan={7}
                       className="px-4 py-8 text-center text-neutral-500"
                     >
+=======
+                    <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                       No buyers found.
                     </td>
                   </tr>
                 ) : (
                   pagedBuyers.map((buyer) => (
+<<<<<<< HEAD
                     <tr
                       key={buyer.id}
                       className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50"
                     >
+=======
+                    <tr key={buyer.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
                             {initialsFromName(buyer.full_name)}
                           </span>
                           <div>
+<<<<<<< HEAD
                             <p className="font-medium text-neutral-900">
                               {buyer.full_name}
                             </p>
                             <p className="text-xs text-neutral-500">
                               {buyer.email}
                             </p>
+=======
+                            <p className="font-medium text-neutral-900">{buyer.full_name}</p>
+                            <p className="text-xs text-neutral-500">{buyer.email}</p>
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
+<<<<<<< HEAD
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[buyer.status]}`}
                         >
@@ -278,6 +344,16 @@ export default function BuyersCrmPage() {
                           onBlock={() => setBuyerToBlock(buyer)}
                         />
                       </td>
+=======
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[buyer.status]}`}>
+                          {buyer.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">{buyer.bids}</td>
+                      <td className="px-4 py-3 text-neutral-600">{buyer.auctions_won}</td>
+                      <td className="px-4 py-3 text-neutral-600">{buyer.properties_bought}</td>
+                      <td className="px-4 py-3 text-neutral-500">{new Date(buyer.created_at).toLocaleDateString()}</td>
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
                     </tr>
                   ))
                 )}
@@ -285,6 +361,7 @@ export default function BuyersCrmPage() {
             </table>
           </div>
 
+<<<<<<< HEAD
           <Pagination
             page={page}
             total={buyers.length}
@@ -322,3 +399,11 @@ export default function BuyersCrmPage() {
     </AdminShell>
   );
 }
+=======
+          <Pagination page={page} total={buyers.length} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="buyer" />
+        </div>
+      </RequirePermission>
+    </AdminShell>
+  );
+}
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3

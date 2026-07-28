@@ -5,7 +5,11 @@ from fastapi import APIRouter, Depends, Query, status
 from app.api.deps import DbSession, requires
 from app.models.user import User, UserStatus
 from app.rbac.permissions import Access, Module, Role
+<<<<<<< HEAD
 from app.schemas.user import  AdminCreateUserRequest, UpdateUserRequest, UserOut, UserPage
+=======
+from app.schemas.user import CreateUserRequest, UpdateUserRequest, UserOut, UserPage
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 from app.services import users
 
 router = APIRouter(prefix="/admin/users", tags=["user-management"])
@@ -15,7 +19,11 @@ Manager = Depends(requires(Module.USER_MANAGEMENT, Access.FULL))
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+<<<<<<< HEAD
 async def create_user(payload: AdminCreateUserRequest, session: DbSession, _: User = Manager) -> UserOut:
+=======
+async def create_user(payload: CreateUserRequest, session: DbSession, _: User = Manager) -> UserOut:
+>>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
     user = await users.create(session, payload)
     return UserOut.model_validate(user)
 
