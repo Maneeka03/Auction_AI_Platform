@@ -282,6 +282,7 @@ export default function BuyersCrmPage() {
               </tbody>
             </table>
           </div>
+
           <Pagination
             page={page}
             total={buyers.length}

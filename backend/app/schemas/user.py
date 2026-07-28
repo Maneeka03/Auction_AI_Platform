@@ -24,7 +24,6 @@ class CreateUserRequest(EmailNormalized, InternalRoles):
     roles: list[Role] = Field(min_length=1)
     country: str | None = Field(default=None, min_length=2, max_length=2)
 
-
 class AdminCreateUserRequest(EmailNormalized):
     email: Email
     full_name: str = Field(min_length=2, max_length=120)
