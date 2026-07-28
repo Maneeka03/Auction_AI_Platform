@@ -24,14 +24,11 @@ class CreateUserRequest(EmailNormalized, InternalRoles):
     roles: list[Role] = Field(min_length=1)
     country: str | None = Field(default=None, min_length=2, max_length=2)
 
-<<<<<<< HEAD
 class AdminCreateUserRequest(EmailNormalized):
     email: Email
     full_name: str = Field(min_length=2, max_length=120)
     roles: list[Role] = Field(min_length=1)
     country: str | None = Field(default=None, min_length=2, max_length=2)
-=======
->>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
 
 class UpdateUserRequest(InternalRoles):
     status: Literal[UserStatus.ACTIVE, UserStatus.SUSPENDED] | None = None

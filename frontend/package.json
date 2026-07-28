@@ -21,11 +21,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-<<<<<<< HEAD
     "@types/react": "^19.2.17",
-=======
-    "@types/react": "^19",
->>>>>>> 2981f801ee55426fcb4cf51912ac86a028d7ffa3
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
