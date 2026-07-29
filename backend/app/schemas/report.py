@@ -14,9 +14,12 @@ class WeeklyCount(BaseModel):
     count: int
 
 
-class MonthlyAmount(BaseModel):
+class MonthlyRevenueDetail(BaseModel):
     month: datetime
     amount: Decimal
+    auction_amount: Decimal
+    direct_amount: Decimal
+    sales_count: int
 
 
 class RevenueOut(BaseModel):
@@ -24,7 +27,7 @@ class RevenueOut(BaseModel):
     auction_revenue: Decimal
     direct_sales_revenue: Decimal
     sales_count: int
-    monthly: list[MonthlyAmount]
+    monthly: list[MonthlyRevenueDetail]
 
 
 class AuctionActivityOut(BaseModel):

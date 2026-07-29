@@ -82,45 +82,46 @@ export default function LiveBiddingRoomPage() {
     <div className="min-h-screen bg-neutral-50">
       <BuyerTopbar />
 
-      <div className="mx-auto max-w-3xl space-y-5 p-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 p-6">
         <Link href="/auctions" className="flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700">
           <ArrowLeft size={15} /> Back to auctions
         </Link>
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-6">
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div className="p-7">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
-              <h1 className="mt-0.5 text-xl font-semibold text-neutral-900">{auction.title}</h1>
-              <p className="text-sm text-neutral-500">{auction.address}</p>
-            </div>
+          
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">{auction.category_name}</p>
+              <h1 className="mt-2 text-3xl font-bold leading-tight text-neutral-900">{auction.title}</h1>
+              <p className="mt-2 text-base text-neutral-500">{auction.address}</p>
+          
             <ConnectionStatusBadge state={connectionState} />
           </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-4 rounded-lg bg-neutral-50 p-4 sm:grid-cols-4">
-            <div>
-              <p className="text-xs text-neutral-500">Current Bid</p>
-              <p className="text-lg font-semibold text-neutral-900">{formatMoney(auction.current_bid)}</p>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Current Bid</p>
+              <p className="mt-2 text-2xl font-bold text-neutral-900">{formatMoney(auction.current_bid)}</p>
             </div>
-            <div>
-              <p className="text-xs text-neutral-500">Reserve Price</p>
-              <p className="text-lg font-semibold text-neutral-900">{formatMoney(auction.reserve_price)}</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Reserve Price</p>
+              <p className="mt-2 text-2xl font-bold text-neutral-900">{formatMoney(auction.reserve_price)}</p>
             </div>
-            <div>
-              <p className="text-xs text-neutral-500">Bidders</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Bidders</p>
               <p className="flex items-center gap-1 text-lg font-semibold text-neutral-900">
                 <Users size={16} /> {auction.bidder_count}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-neutral-500">{isEnded ? "Ended" : "Time Left"}</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{isEnded ? "Ended" : "Time Left"}</p>
               <p className={`flex items-center gap-1 text-lg font-semibold ${isLive ? "text-danger-600" : "text-neutral-900"}`}>
                 <Clock size={16} /> {isEnded ? "—" : countdown.label}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <div className="mt-6 flex items-center justify-between">
             <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600">
               {auction.room_access === "invite_only" ? <Lock size={11} /> : <Users size={11} />}
               {auction.room_access === "invite_only" ? "Invite Only" : "Open to Everyone"}
@@ -179,9 +180,10 @@ export default function LiveBiddingRoomPage() {
             )}
           </div>
         </div>
+        
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-neutral-900">Bid Activity</h2>
+        <div className="rounded-2xl border border-neutral-200 bg-white p-7 shadow-sm">
+          <h2 className="text-lg font-semibold text-neutral-900"> Activity</h2>
           <div className="mt-3">
             <BidHistoryList bids={bids} currentUserId={session?.id} />
           </div>
