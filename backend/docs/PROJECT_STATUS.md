@@ -322,6 +322,19 @@ Rules the service enforces:
 
 ## Daily Log
 
+### 2026-07-30 — public property detail + browse-all page
+
+Public-facing property viewing from the landing page, no login required to browse.
+
+- Backend: added `GET /properties/public/{id}` — a single published listing for the public detail
+  page (drafts stay hidden). The public list endpoint already existed.
+- Frontend: shared `FeaturedAssetCard` now links to `/browse-properties/{id}`, so clicking a card on
+  the landing page (or the new browse page) opens a full public detail page. New
+  `/browse-properties` page lists every published property with load-more. The detail page has a
+  "Book Now" button that routes to `/login` (the post-login booking flow is not defined yet).
+- Minimal touches to teammate code: the card gains a link, and the landing "Browse All Properties"
+  link now always points at the public page.
+
 ### 2026-07-28 — merge-conflict repair + auction room live chat
 
 - Repaired `main`: the "merge conflicts" commit had committed unresolved conflict markers into 9

@@ -9,13 +9,11 @@ import featuredBg from "@/public/images/featured-bg.png";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useAuth } from "@/lib/auth/session-context";
 
 export default function FeaturedAssets() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { accessToken } = useAuth();
 
     useEffect(() => {
         async function loadProperties() {
@@ -44,7 +42,7 @@ export default function FeaturedAssets() {
                             Explore Premium Properties
                         </h2>
                     </div>
-                    <Link href={accessToken ? "/browse-properties" : "/login"}
+                    <Link href="/browse-properties"
                         className="group inline-flex items-center gap-2 text-m font-bold text-brand-500 transition-colors hover:text-brand-600"
                     >Browse All Properties
                         <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1"/>

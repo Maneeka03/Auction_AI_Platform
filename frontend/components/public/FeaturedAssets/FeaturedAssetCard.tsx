@@ -9,7 +9,10 @@ interface FeaturedAssetCardProps {
 
 export function FeaturedAssetCard({ property }: FeaturedAssetCardProps) {
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <Link
+      href={`/browse-properties/${property.id}`}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+    >
       <div className="relative h-60 overflow-hidden bg-neutral-100">
         {property.image_url ? (
           <Image src={property.image_url} alt={property.title} fill sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
@@ -38,10 +41,10 @@ export function FeaturedAssetCard({ property }: FeaturedAssetCardProps) {
         <p className="mt-4 text-2xl font-bold tracking-tight text-brand-600">
           ${Number(property.reserve_price).toLocaleString()}
         </p>
-        <button type="button" className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-brand-500 py-2.5 text-sm font-semibold text-brand-500 transition-colors hover:bg-brand-500 hover:text-white">
+        <span className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-brand-500 py-2.5 text-sm font-semibold text-brand-500 transition-colors group-hover:bg-brand-500 group-hover:text-white">
           View Details
-        </button>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
