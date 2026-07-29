@@ -1,6 +1,6 @@
 "use client";
 
-import { Gavel, Home, LogOut, Menu, ShieldCheck, Wallet, X } from "lucide-react";
+import { Gavel, Home, LogOut, Menu, MessageSquare, ShieldCheck, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth/session-context";
 const navLinks = [
   { label: "Browse Properties", href: "/properties", icon: Home },
   { label: "Live Auctions", href: "/live-auctions", icon: Gavel },
+  { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Wallet", href: "/wallet", icon: Wallet },
   { label: "Verify ID", href: "/kyc", icon: ShieldCheck },
 ];
