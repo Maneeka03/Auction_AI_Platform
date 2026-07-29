@@ -16,14 +16,14 @@ export function PropertyCard({ property, onBuyNow }: PropertyCardProps) {
           <Image src={property.image_url} alt={property.title} fill sizes="400px" unoptimized className="object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-neutral-400 capitalize">
-            {property.category} photo
+            {property.category_name} photo
           </div>
         )}
       </div>
 
       <div className="p-4">
         <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium capitalize text-brand-700">
-          {property.category}
+          {property.category_name}
         </span>
         <h3 className="mt-1.5 text-sm font-semibold text-neutral-900">{property.title}</h3>
         <p className="text-xs text-neutral-500">{property.address}</p>

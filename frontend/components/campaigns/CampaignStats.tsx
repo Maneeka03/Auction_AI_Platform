@@ -1,69 +1,39 @@
-"use client";
+import { CalendarClock, CheckCircle2, Megaphone, PenLine } from "lucide-react";
+import type { Campaign } from "@/types/campaign";
 
-import { Megaphone, PlayCircle, CalendarClock, CheckCircle2 } from "lucide-react";
-
-interface Props {
-  total: number;
-  running: number;
-  scheduled: number;
-  completed: number;
+interface CampaignStatsProps {
+  campaigns: Campaign[];
 }
 
-const cards = [
-  {
-    key: "total",
-    title: "Campaigns",
-    icon: Megaphone,
-  },
-  {
-    key: "running",
-    title: "Running",
-    icon: PlayCircle,
-  },
-  {
-    key: "scheduled",
-    title: "Scheduled",
-    icon: CalendarClock,
-  },
-  {
-    key: "completed",
-    title: "Completed",
-    icon: CheckCircle2,
-  },
-];
+const CARDS = [
+  { key: "total", title: "Campaigns", icon: Megaphone, iconClass: "bg-brand-500/10 text-brand-600" },
+  { key: "draft", title: "Draft", icon: PenLine, iconClass: "bg-neutral-200/60 text-neutral-500" },
+  { key: "scheduled", title: "Scheduled", icon: CalendarClock, iconClass: "bg-amber-500/10 text-amber-600" },
+  { key: "sent", title: "Sent", icon: CheckCircle2, iconClass: "bg-success-500/10 text-success-500" },
+] as const;
 
-export default function CampaignStats(props: Props) {
+export default function CampaignStats({ campaigns }: CampaignStatsProps) {
   const values = {
-    total: props.total,
-    running: props.running,
-    scheduled: props.scheduled,
-    completed: props.completed,
+    total: campaigns.length,
+    draft: campaigns.filter((c) => c.status === "draft").length,
+    scheduled: campaigns.filter((c) => c.status === "scheduled").length,
+    sent: campaigns.filter((c) => c.status === "sent").length,
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-4">
-      {cards.map(card => {
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {CARDS.map((card) => {
         const Icon = card.icon;
-
         return (
-          <div
-            key={card.key}
-            className="rounded-2xl border bg-card p-6 shadow-sm"
-          >
+          <div key={card.key} className="rounded-xl border border-neutral-200 bg-white p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {card.title}
-                </p>
-
-                <h2 className="mt-2 text-3xl font-bold">
-                  {values[card.key as keyof typeof values]}
-                </h2>
+                <p className="text-sm text-neutral-500">{card.title}</p>
+                <p className="mt-1.5 text-2xl font-semibold text-neutral-900">{values[card.key]}</p>
               </div>
-
-              <div className="rounded-xl bg-primary/10 p-3">
-                <Icon className="h-6 w-6 text-primary" />
-              </div>
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${card.iconClass}`}>
+                <Icon size={18} />
+              </span>
             </div>
           </div>
         );

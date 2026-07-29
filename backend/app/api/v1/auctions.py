@@ -140,7 +140,6 @@ async def post_comment(
     session: DbSession,
     actor: User = Viewer,
 ) -> CommentOut:
-    """Post a live-chat message to the auction room; it is pushed to everyone connected."""
     return CommentOut.of(await comments.post(session, auction_id, actor, payload.body))
 
 
@@ -151,14 +150,8 @@ async def _relay(websocket: WebSocket, channel: str) -> None:
 
 @router.websocket("/{auction_id}/ws")
 async def auction_room(websocket: WebSocket, auction_id: uuid.UUID, token: str) -> None:
-    """Live auction room: a snapshot on connect, then every change as it happens.
-
-    Messages are {"type": "snapshot" | "bid" | "updated" | "ended", "auction": AuctionOut}. The
-    auction is always sent whole, so a client renders the latest message and never merges deltas.
-    """
     await websocket.accept()
 
-    # Scoped tightly: an open room must not hold a database connection while it idles.
     async with SessionFactory() as session:
         user = await socket_user(session, token)
         if user is None or not can(user.roles, Module.AUCTION_MANAGEMENT, Access.VIEW):
@@ -173,7 +166,6 @@ async def auction_room(websocket: WebSocket, auction_id: uuid.UUID, token: str) 
     await websocket.send_json({"type": "snapshot", "auction": snapshot.model_dump(mode="json")})
     relay = asyncio.create_task(_relay(websocket, events.auction_channel(auction_id)))
     try:
-        # The client sends nothing; this exists purely to notice the socket closing.
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
