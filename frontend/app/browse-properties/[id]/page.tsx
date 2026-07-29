@@ -43,10 +43,10 @@ export default function PublicPropertyDetailPage() {
       <Navbar />
       <main className="mx-auto w-full max-w-[1200px] px-8 py-12">
         <Link
-          href="/browse-properties"
+          href="/"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
         >
-          <ArrowLeft size={15} /> Back to all properties
+          <ArrowLeft size={15} /> Back to home
         </Link>
 
         {error ? (
