@@ -40,8 +40,8 @@ export default function PublicPropertyDetailPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="mx-auto w-full max-w-[1200px] px-8 py-12">
+      <Navbar solid />
+      <main className="mx-auto w-full max-w-[1200px] px-8 pt-32 pb-12">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"

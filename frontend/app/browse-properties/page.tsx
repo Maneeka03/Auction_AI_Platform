@@ -38,8 +38,8 @@ export default function BrowsePropertiesPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="mx-auto w-full max-w-[1600px] px-8 py-16">
+      <Navbar solid />
+      <main className="mx-auto w-full max-w-[1600px] px-8 pt-32 pb-16">
         <header className="mb-10">
           <span className="text-m font-bold uppercase tracking-[0.2em] text-brand-500">
             Explore
