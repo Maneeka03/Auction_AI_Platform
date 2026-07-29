@@ -54,7 +54,7 @@ export function AuctionCommentPanel({ comments, currentUserId, onSend }: Auction
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {comments.length === 0 ? (
           <p className="py-10 text-center text-sm text-neutral-400">
             No messages yet — say hello to the room.

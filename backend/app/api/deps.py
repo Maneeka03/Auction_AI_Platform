@@ -47,12 +47,6 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 async def socket_user(session: AsyncSession, token: str) -> User | None:
-    """Authenticate a WebSocket from its query-string token.
-
-    Browsers cannot set an Authorization header on a WebSocket handshake, so the access token
-    arrives as a query parameter. The checks are the same as the HTTP path; only the way failure is
-    reported differs - a socket gets a close code, not a JSON body.
-    """
     try:
         payload = decode_jwt(token, ACCESS)
         user_id = uuid.UUID(payload["sub"])

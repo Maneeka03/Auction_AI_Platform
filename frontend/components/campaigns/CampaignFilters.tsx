@@ -1,69 +1,49 @@
 "use client";
 
-import { CalendarDays, ArrowUpDown, Funnel, Search, List, LayoutGrid } from "lucide-react";
+import { Search } from "lucide-react";
+import { SortByDropdown, type SortOrder } from "@/components/crm/SortByDropdown";
+import { DateRangeDropdown } from "@/components/crm/DateRangeDropdown";
+import type { DateRange } from "@/lib/utils/dateRangePresets";
+import { CampaignFilterDropdown, type CampaignFilters as CampaignFilterValues } from "./CampaignFilterDropdown";
 
-interface Props {
+interface CampaignFiltersProps {
   search: string;
   onSearchChange: (value: string) => void;
-  boardView: boolean;
-  onToggleView: () => void;
+  sortOrder: SortOrder;
+  onSortChange: (value: SortOrder) => void;
+  dateRange: DateRange | null;
+  onDateRangeChange: (range: DateRange | null) => void;
+  filters: CampaignFilterValues;
+  onFiltersChange: (filters: CampaignFilterValues) => void;
 }
 
 export function CampaignFilters({
   search,
   onSearchChange,
-  boardView,
-  onToggleView,
-}: Props) {
+  sortOrder,
+  onSortChange,
+  dateRange,
+  onDateRangeChange,
+  filters,
+  onFiltersChange,
+}: CampaignFiltersProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-
       <div className="flex flex-wrap items-center gap-2">
-
-        <button className="flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm">
-          <ArrowUpDown size={16} />
-          Sort By
-        </button>
-
-        <button className="flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm">
-          <CalendarDays size={16} />
-          All Time
-        </button>
-
-        <button className="flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm">
-          <Funnel size={16} />
-          Filter
-        </button>
-
+        <SortByDropdown value={sortOrder} onChange={onSortChange} />
+        <DateRangeDropdown range={dateRange} onChange={onDateRangeChange} />
+        <CampaignFilterDropdown filters={filters} onChange={onFiltersChange} />
       </div>
 
-      <div className="flex items-center gap-2">
-
-        <div className="relative w-80">
-
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-          />
-
-          <input
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search campaigns..."
-            className="h-11 w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-4 outline-none focus:ring-2 focus:ring-brand-300"
-          />
-
-        </div>
-
-        <button
-          onClick={onToggleView}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-white"
-        >
-          {boardView ? <List size={18} /> : <LayoutGrid size={18} />}
-        </button>
-
+      <div className="relative w-full max-w-xs sm:w-80">
+        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <input
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search campaigns..."
+          className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+        />
       </div>
-
     </div>
   );
 }

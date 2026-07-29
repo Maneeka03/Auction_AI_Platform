@@ -239,7 +239,7 @@ export function DateRangeDropdown({ range, onChange }: DateRangeDropdownProps) {
                   type="button"
                   onClick={handleApply}
                   disabled={!tentativeStart || !tentativeEnd}
-                  className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+                  className="rounded-lg bg-brand-500 px-3 py-1.5 mr-10 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
                 >
                   Apply
                 </button>

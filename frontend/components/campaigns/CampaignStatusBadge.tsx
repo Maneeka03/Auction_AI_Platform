@@ -1,21 +1,27 @@
-interface Props {
-  status: "Draft" | "Scheduled" | "Running" | "Paused" | "Completed";
+import type { CampaignStatus } from "@/types/campaign";
+
+interface CampaignStatusBadgeProps {
+  status: CampaignStatus;
 }
 
-const styles = {
-  Draft: "bg-gray-100 text-gray-700",
-  Scheduled: "bg-blue-100 text-blue-700",
-  Running: "bg-green-100 text-green-700",
-  Paused: "bg-yellow-100 text-yellow-700",
-  Completed: "bg-purple-100 text-purple-700",
+const STATUS_LABEL: Record<CampaignStatus, string> = {
+  draft: "Draft",
+  scheduled: "Scheduled",
+  sent: "Sent",
+  archived: "Archived",
 };
 
-export default function CampaignStatusBadge({ status }: Props) {
+const STATUS_STYLE: Record<CampaignStatus, string> = {
+  draft: "bg-neutral-100 text-neutral-500",
+  scheduled: "bg-amber-500/10 text-amber-700",
+  sent: "bg-success-500/10 text-success-500",
+  archived: "bg-neutral-100 text-neutral-400",
+};
+
+export default function CampaignStatusBadge({ status }: CampaignStatusBadgeProps) {
   return (
-    <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${styles[status]}`}
-    >
-      {status}
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[status]}`}>
+      {STATUS_LABEL[status]}
     </span>
   );
 }

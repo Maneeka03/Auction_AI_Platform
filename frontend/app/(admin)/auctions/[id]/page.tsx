@@ -78,7 +78,6 @@ export default function AdminAuctionRoomPage() {
                 <div className="space-y-5">
                   <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
                     {auction.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={auction.image_url}
                         alt={auction.title}
@@ -144,9 +143,6 @@ export default function AdminAuctionRoomPage() {
                             <Users size={11} />
                           )}
                           {auction.room_access === "invite_only" ? "Invite Only" : "Open to Everyone"}
-                        </span>
-                        <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs capitalize text-neutral-600">
-                          {auction.status}
                         </span>
                       </div>
                     </div>
