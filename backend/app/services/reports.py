@@ -13,7 +13,7 @@ from app.schemas.report import (
     AuctionActivityOut,
     CategoryCount,
     DashboardOut,
-    MonthlyAmount,
+    MonthlyRevenueDetail,
     RevenueOut,
     WeeklyCount,
 )
@@ -101,27 +101,53 @@ async def revenue(session: AsyncSession) -> RevenueOut:
     )
 
     since = datetime.now(UTC) - timedelta(days=30 * MONTHS)
-    direct_months = await session.execute(
-        select(func.date_trunc("month", Property.purchased_at), func.sum(Property.paid_amount))
-        .where(Property.purchased_at.is_not(None), Property.purchased_at >= since)
-        .group_by(func.date_trunc("month", Property.purchased_at))
-    )
-    auction_months = await session.execute(
-        select(func.date_trunc("month", Auction.ended_at), func.sum(Property.reserve_price))
-        .join(Property, Property.id == Auction.property_id)
-        .where(Auction.winner_id.is_not(None), Auction.ended_at >= since)
-        .group_by(func.date_trunc("month", Auction.ended_at))
-    )
-    monthly: dict[datetime, Decimal] = {}
-    for month, amount in [*direct_months.all(), *auction_months.all()]:
-        monthly[month] = monthly.get(month, Decimal(0)) + amount
+    direct_rows = (
+        await session.execute(
+            select(
+                func.date_trunc("month", Property.purchased_at).label("month"),
+                func.sum(Property.paid_amount),
+                func.count(),
+            )
+            .where(Property.purchased_at.is_not(None), Property.purchased_at >= since)
+            .group_by("month")
+        )
+    ).all()
+    auction_rows = (
+        await session.execute(
+            select(
+                func.date_trunc("month", Auction.ended_at).label("month"),
+                func.sum(Property.reserve_price),
+                func.count(),
+            )
+            .join(Property, Property.id == Auction.property_id)
+            .where(Auction.winner_id.is_not(None), Auction.ended_at >= since)
+            .group_by("month")
+        )
+    ).all()
+
+    direct_by_month = {month: (amount, count) for month, amount, count in direct_rows}
+    auction_by_month = {month: (amount, count) for month, amount, count in auction_rows}
+    months = sorted(set(direct_by_month) | set(auction_by_month))
+
+    monthly = [
+        MonthlyRevenueDetail(
+            month=month,
+            amount=Decimal(auction_by_month.get(month, (Decimal(0), 0))[0])
+            + Decimal(direct_by_month.get(month, (Decimal(0), 0))[0]),
+            auction_amount=Decimal(auction_by_month.get(month, (Decimal(0), 0))[0]),
+            direct_amount=Decimal(direct_by_month.get(month, (Decimal(0), 0))[0]),
+            sales_count=auction_by_month.get(month, (Decimal(0), 0))[1]
+            + direct_by_month.get(month, (Decimal(0), 0))[1],
+        )
+        for month in months
+    ]
 
     return RevenueOut(
         total_revenue=Decimal(auction_rev or 0) + Decimal(direct_rev or 0),
         auction_revenue=Decimal(auction_rev or 0),
         direct_sales_revenue=Decimal(direct_rev or 0),
         sales_count=await _count(session, Property.status == PropertyStatus.SOLD),
-        monthly=[MonthlyAmount(month=month, amount=monthly[month]) for month in sorted(monthly)],
+        monthly=monthly,
     )
 
 
