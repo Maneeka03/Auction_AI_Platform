@@ -6,6 +6,7 @@ const ribbonColor: Record<RibbonKpi["accent"], string> = {
   success: "bg-success-500",
   amber: "bg-amber-500",
   sky: "bg-sky-500",
+  danger: "bg-danger-500",
 };
 
 const iconBg: Record<RibbonKpi["accent"], string> = {
@@ -13,6 +14,7 @@ const iconBg: Record<RibbonKpi["accent"], string> = {
   success: "bg-success-500/10 text-success-500",
   amber: "bg-amber-500/10 text-amber-600",
   sky: "bg-sky-500/10 text-sky-600",
+  danger: "bg-danger-500/10 text-danger-600",
 };
 
 export function RibbonKpiCard({ label, value, changePercent, changeLabel, accent, hideChange }: RibbonKpi & { hideChange?: boolean }) {
