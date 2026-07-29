@@ -47,6 +47,10 @@ export function listPublicProperties(
   );
 }
 
+export function getPublicProperty(propertyId: string): Promise<Property> {
+  return apiClient.get<Property>(`${BASE}/public/${propertyId}`);
+}
+
 export function getProperty(accessToken: string, propertyId: string): Promise<Property> {
   return apiClient.get<Property>(`${BASE}/${propertyId}`, { accessToken });
 }

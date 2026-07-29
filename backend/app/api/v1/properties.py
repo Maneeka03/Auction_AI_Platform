@@ -95,6 +95,15 @@ async def list_public_properties(
         size=size,
     )
 
+@router.get("/public/{property_id}", response_model=PropertyOut)
+async def get_public_property(property_id: uuid.UUID, session: DbSession) -> PropertyOut:
+    """A single published listing for the public detail page. Drafts stay hidden."""
+    listing = await properties.get(session, property_id)
+    if listing.status is not PropertyStatus.PUBLISHED:
+        raise AppError(status.HTTP_404_NOT_FOUND, "property_not_found", "Property not found.")
+    return PropertyOut.of(listing)
+
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(property_id: uuid.UUID, session: DbSession, _: User = Reader) -> PropertyOut:
     return PropertyOut.of(await properties.get(session, property_id))
