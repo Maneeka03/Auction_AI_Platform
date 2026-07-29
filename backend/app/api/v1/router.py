@@ -9,6 +9,7 @@ from app.api.v1 import (
     crm,
     dev,
     escrow,
+    groups,
     kyc,
     me,
     messages,
@@ -38,6 +39,7 @@ api_router.include_router(kyc.router)
 api_router.include_router(watchlist.router)
 api_router.include_router(me.router)
 api_router.include_router(messages.router)
+api_router.include_router(groups.router)
 api_router.include_router(crm.router)
 api_router.include_router(campaigns.router)
 api_router.include_router(escrow.router)

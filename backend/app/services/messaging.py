@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.messaging import Message
 from app.models.notification import NotificationKind
-from app.models.user import User
+from app.models.user import User, UserStatus
+from app.schemas.messaging import AdminThreadOut
 from app.services import notifications, users
 
 
@@ -89,3 +90,108 @@ async def threads(session: AsyncSession, user_id: uuid.UUID) -> list[Row]:
         .order_by(latest.c.created_at.desc())
     )
     return list(rows.all())
+
+
+async def admin_all_threads(session: AsyncSession) -> list[AdminThreadOut]:
+    """All distinct DM conversations in the system (admin oversight, read-only)."""
+    a = User.__table__.alias("ua")
+    b = User.__table__.alias("ub")
+
+    # One row per ordered (sender_id, recipient_id) pair, keeping the latest message.
+    latest = (
+        select(
+            case(
+                (Message.sender_id < Message.recipient_id, Message.sender_id),
+                else_=Message.recipient_id,
+            ).label("user_a"),
+            case(
+                (Message.sender_id < Message.recipient_id, Message.recipient_id),
+                else_=Message.sender_id,
+            ).label("user_b"),
+            Message.body,
+            Message.created_at,
+        )
+        .order_by(
+            case(
+                (Message.sender_id < Message.recipient_id, Message.sender_id),
+                else_=Message.recipient_id,
+            ),
+            case(
+                (Message.sender_id < Message.recipient_id, Message.recipient_id),
+                else_=Message.sender_id,
+            ),
+            Message.created_at.desc(),
+        )
+        .distinct(
+            case(
+                (Message.sender_id < Message.recipient_id, Message.sender_id),
+                else_=Message.recipient_id,
+            ),
+            case(
+                (Message.sender_id < Message.recipient_id, Message.recipient_id),
+                else_=Message.sender_id,
+            ),
+        )
+        .subquery()
+    )
+
+    rows = await session.execute(
+        select(
+            latest.c.user_a,
+            a.c.full_name.label("name_a"),
+            latest.c.user_b,
+            b.c.full_name.label("name_b"),
+            latest.c.body,
+            latest.c.created_at,
+        )
+        .join(a, a.c.id == latest.c.user_a)
+        .join(b, b.c.id == latest.c.user_b)
+        .order_by(latest.c.created_at.desc())
+    )
+    return [
+        AdminThreadOut(
+            user_a_id=r.user_a,
+            user_a_name=r.name_a,
+            user_b_id=r.user_b,
+            user_b_name=r.name_b,
+            last_message=r.body,
+            last_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+async def admin_thread(
+    session: AsyncSession, user_a_id: uuid.UUID, user_b_id: uuid.UUID
+) -> list[tuple[Message, str]]:
+    """Read any DM thread between two users (admin, read-only — does not mark read)."""
+    rows = await session.execute(
+        select(Message, User.full_name)
+        .join(User, User.id == Message.sender_id)
+        .where(
+            or_(
+                and_(Message.sender_id == user_a_id, Message.recipient_id == user_b_id),
+                and_(Message.sender_id == user_b_id, Message.recipient_id == user_a_id),
+            )
+        )
+        .order_by(Message.created_at)
+    )
+    return list(rows.all())
+
+
+async def chat_search(session: AsyncSession, q: str) -> list[User]:
+    """Users visible in DM/group search — all active non-deleted users."""
+    pattern = f"%{q.lower()}%"
+    rows = await session.scalars(
+        select(User)
+        .where(
+            User.status == UserStatus.ACTIVE,
+            or_(
+                User.full_name.ilike(pattern),
+                User.email.ilike(pattern),
+            ),
+        )
+        .order_by(User.full_name)
+        .limit(20)
+    )
+    return list(rows)

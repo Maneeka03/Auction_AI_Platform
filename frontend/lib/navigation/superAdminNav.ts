@@ -6,6 +6,7 @@ import {
   Home,
   LayoutDashboard,
   Megaphone,
+  MessageSquare,
   PackageSearch,
   Settings,
   ShieldCheck,
@@ -54,6 +55,10 @@ export const superAdminNav: NavSection[] = [
       { label: "Auction Activity", href: "/reports/auction-activity", icon: Gavel },
       { label: "AI Insights", href: "/reports/ai-insights", icon: Sparkles },
     ],
+  },
+  {
+    title: "Communication",
+    items: [{ label: "Messages", href: "/admin/messages", icon: MessageSquare }],
   },
   {
     title: "Administration",
