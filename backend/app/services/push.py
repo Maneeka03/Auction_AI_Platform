@@ -41,7 +41,7 @@ async def unsubscribe(session: AsyncSession, endpoint: str) -> None:
 
 async def dispatch(user_id: uuid.UUID, title: str, body: str, url: str | None = None) -> None:
     """Push a notification to every device a user has registered. Best-effort; prunes dead ones."""
-    if not settings.vapid_private_key:
+    if not settings.vapid_private_key_pem:
         return
     try:
         async with SessionFactory() as session:
@@ -72,7 +72,7 @@ async def _send(sub: PushSubscription, payload: str) -> bool:
                 "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
             },
             data=payload,
-            vapid_private_key=settings.vapid_private_key,
+            vapid_private_key=settings.vapid_private_key_pem,
             vapid_claims={"sub": settings.vapid_subject},
         )
         return True

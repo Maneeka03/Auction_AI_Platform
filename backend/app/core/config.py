@@ -1,3 +1,4 @@
+import base64
 from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
@@ -49,10 +50,17 @@ class Settings(BaseSettings):
     # Share of the price a Buy Now token payment reserves the property with.
     purchase_token_percent: Decimal = Decimal(10)
 
-    # Web Push (VAPID). Leave the private key blank to disable device pushes entirely.
+    # Web Push (VAPID). Private key stored as base64-encoded PEM; leave blank to disable pushes.
     vapid_public_key: str = ""
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@provenix.io"
+
+    @property
+    def vapid_private_key_pem(self) -> str:
+        """Decode the base64-encoded PEM back to a real PEM string for pywebpush."""
+        if not self.vapid_private_key:
+            return ""
+        return base64.b64decode(self.vapid_private_key).decode()
 
     @property
     def is_production(self) -> bool:

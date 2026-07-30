@@ -14,6 +14,8 @@ class Role(StrEnum):
     EXECUTIVE = "executive"
     # Sits above super admin: manages super-admin accounts and their sidebar, nothing operational.
     AGENCY_ADMIN = "agency_admin"
+    # Full operational access except system settings; fills Director seat like super_admin.
+    ADMIN = "admin"
 
 
 class Module(StrEnum):
@@ -53,6 +55,7 @@ _COLUMNS = (
     Role.SELLER,
     Role.EXECUTIVE,
     Role.AGENCY_ADMIN,
+    Role.ADMIN,
 )
 
 F, V, N = Access.FULL, Access.VIEW, Access.NONE
@@ -63,20 +66,20 @@ F, V, N = Access.FULL, Access.VIEW, Access.NONE
 # administration and nothing operational. Every other column is client-confirmed.
 # fmt: off
 _ROWS: dict[Module, tuple[Access, ...]] = {
-    Module.BUYER_CRM:             (F, F, V, N, N, N, N, N, V, N),
-    Module.SELLER_CRM:            (F, F, N, V, V, N, N, V, V, N),
-    Module.LEAD_MANAGEMENT:       (F, F, F, N, N, N, N, N, V, N),
-    Module.ASSET_MANAGEMENT:      (F, F, V, V, V, V, V, F, V, N),
-    Module.AUCTION_MANAGEMENT:    (F, F, N, V, V, V, V, V, V, N),
-    Module.BID_MANAGEMENT:        (F, F, N, N, V, N, F, V, V, N),
-    Module.MARKETING_CAMPAIGNS:   (F, V, F, N, N, N, N, N, V, N),
-    Module.AI_CONFIGURATION:      (F, V, V, N, N, N, N, N, V, N),
-    Module.PAYMENT_ESCROW:        (F, V, N, V, F, N, F, F, V, N),
-    Module.REPORTS:               (F, F, V, V, V, N, V, V, F, N),
-    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, N),
-    Module.USER_MANAGEMENT:       (F, V, N, N, N, N, N, N, N, N),
-    Module.NOTIFICATIONS:         (F, F, F, F, F, F, F, F, F, N),
-    Module.AGENCY_ADMINISTRATION: (N, N, N, N, N, N, N, N, N, F),
+    Module.BUYER_CRM:             (F, F, V, N, N, N, N, N, V, N, F),
+    Module.SELLER_CRM:            (F, F, N, V, V, N, N, V, V, N, F),
+    Module.LEAD_MANAGEMENT:       (F, F, F, N, N, N, N, N, V, N, F),
+    Module.ASSET_MANAGEMENT:      (F, F, V, V, V, V, V, F, V, N, F),
+    Module.AUCTION_MANAGEMENT:    (F, F, N, V, V, V, V, V, V, N, F),
+    Module.BID_MANAGEMENT:        (F, F, N, N, V, N, F, V, V, N, F),
+    Module.MARKETING_CAMPAIGNS:   (F, V, F, N, N, N, N, N, V, N, F),
+    Module.AI_CONFIGURATION:      (F, V, V, N, N, N, N, N, V, N, F),
+    Module.PAYMENT_ESCROW:        (F, V, N, V, F, N, F, F, V, N, F),
+    Module.REPORTS:               (F, F, V, V, V, V, V, V, F, N, F),
+    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, N, N),
+    Module.USER_MANAGEMENT:       (F, V, N, N, N, N, N, N, N, N, F),
+    Module.NOTIFICATIONS:         (F, F, F, F, F, F, F, F, F, N, F),
+    Module.AGENCY_ADMINISTRATION: (N, N, N, N, N, N, N, N, N, F, N),
 }
 # fmt: on
 

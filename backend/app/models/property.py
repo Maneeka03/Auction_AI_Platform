@@ -37,7 +37,7 @@ class ApproverRole(StrEnum):
 # Which platform role fills each seat. The client calls the gemologist an appraiser, and treats
 # legal and finance as one auditor representative.
 SEAT_HOLDERS: dict[ApproverRole, frozenset[Role]] = {
-    ApproverRole.DIRECTOR: frozenset({Role.SUPER_ADMIN}),
+    ApproverRole.DIRECTOR: frozenset({Role.SUPER_ADMIN, Role.ADMIN}),
     ApproverRole.APPRAISER: frozenset({Role.GEMOLOGIST}),
     ApproverRole.LEGAL_FINANCE: frozenset({Role.LEGAL, Role.FINANCE}),
 }
