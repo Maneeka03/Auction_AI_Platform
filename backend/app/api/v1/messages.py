@@ -17,7 +17,7 @@ from app.services import messaging
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
-AdminReader = Depends(requires(Module.USER_MANAGEMENT, Access.VIEW))
+AdminReader = Depends(requires(Module.NOTIFICATIONS, Access.FULL))
 
 
 @router.post("", response_model=MessageOut, status_code=status.HTTP_201_CREATED)

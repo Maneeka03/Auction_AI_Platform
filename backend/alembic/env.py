@@ -11,6 +11,7 @@ from app.db.base import Base
 # Registers every table on Base.metadata. user must stay - the others carry foreign keys to it.
 from app.models import analytics as _analytics  # noqa: F401
 from app.models import auction as _auction  # noqa: F401
+from app.models import auction_request as _auction_request  # noqa: F401
 from app.models import campaign as _campaign  # noqa: F401
 from app.models import category as _category  # noqa: F401
 from app.models import comment as _comment  # noqa: F401

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     admin,
     agency,
+    auction_requests,
     auctions,
     auth,
     buyer,
@@ -55,6 +56,7 @@ api_router.include_router(seller.router)
 api_router.include_router(saved_searches.router)
 api_router.include_router(reviews.router)
 api_router.include_router(tasks.router)
+api_router.include_router(auction_requests.router)
 api_router.include_router(admin.router)
 
 if not settings.is_production:
