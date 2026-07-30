@@ -1,8 +1,9 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy import DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -45,5 +46,7 @@ class Escrow(Base, TimestampMixin):
     state: Mapped[EscrowState] = mapped_column(
         pg_enum(EscrowState, "escrow_state"), default=EscrowState.FUNDS_LOCKED, index=True
     )
+    # Set when the buyer confirms they received the item.
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     listing: Mapped[Property] = relationship(lazy="selectin")

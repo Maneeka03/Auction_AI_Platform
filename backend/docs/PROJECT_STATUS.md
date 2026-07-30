@@ -322,6 +322,28 @@ Rules the service enforces:
 
 ## Daily Log
 
+### 2026-07-31 — buyer & seller portals + missing admin reports
+
+Built the outstanding buyer, seller and admin backend endpoints (~30), reusing existing
+schemas/services wherever possible. Migration `0014` adds a `status` to watchlist items, a
+`delivered_at` to escrows, and `saved_searches`, `reviews` and `tasks` tables.
+
+- Buyer: `GET /me/dashboard`, `GET /me/recommendations`, `GET /me/purchases`,
+  `PATCH /me/purchases/{escrow_id}/delivery`; `PATCH /watchlist/{property_id}` (status tracking -
+  GET /watchlist now returns `{ status, property }`); `POST/GET/DELETE /saved-searches`;
+  `POST /reviews`, `GET /reviews/seller/{id}`, `GET /reviews/property/{id}`;
+  `GET /auctions/calendar.ics` (iCal feed).
+- Seller: `GET /seller/dashboard`; `POST/GET /seller/listings`, `GET/PATCH /seller/listings/{id}`;
+  `GET /seller/auctions`, `PATCH /seller/auctions/{id}/reserve-price`,
+  `GET /seller/auctions/{id}/analysis`; `GET /seller/sales`, `GET /seller/escrow`.
+- Admin: `POST/GET/PATCH/DELETE /tasks`; reports `GET /reports/seller-performance`,
+  `/buyer-activity`, `/marketing-performance`, `/best-sellers`, `/ai-insights`,
+  `/conversion-rates`; `GET /admin/document-verification`.
+- A review requires the buyer to have actually purchased the item (an escrow); seller edits are
+  restricted to their own draft listings; reserve-price edits stay allowed after an auction is live.
+  `ai-insights` is a deterministic summary of live data (no external model).
+
+
 ### 2026-07-30 — public property detail + browse-all page
 
 Public-facing property viewing from the landing page, no login required to browse.

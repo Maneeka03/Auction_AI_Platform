@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect, status
 
 from app.api.deps import DbSession, requires, socket_user
 from app.core import events
@@ -54,6 +54,12 @@ async def list_auctions(
         page=page,
         size=size,
     )
+
+
+@router.get("/calendar.ics")
+async def auction_calendar(session: DbSession, _: User = Viewer) -> Response:
+    """An iCalendar feed of upcoming and live auctions to subscribe to."""
+    return Response(await auctions.calendar_feed(session), media_type="text/calendar")
 
 
 @router.get("/{auction_id}", response_model=AuctionOut)

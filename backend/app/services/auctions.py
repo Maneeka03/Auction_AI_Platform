@@ -14,7 +14,7 @@ from app.core import events
 from app.core.errors import UNPROCESSABLE, AppError
 from app.models.auction import Auction, AuctionInvite, AuctionStatus, Bid
 from app.models.notification import NotificationKind
-from app.models.property import PropertyStatus
+from app.models.property import Property, PropertyStatus
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
 from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionRequest
@@ -305,6 +305,38 @@ async def invited(session: AsyncSession, user_id: uuid.UUID) -> list[AuctionRow]
         .order_by(Auction.starts_at.desc())
     )
     return [(row[0], row[1], row[2]) for row in rows.all()]
+
+
+async def by_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[AuctionRow]:
+    """Auctions running on a seller's own properties, newest first."""
+    rows = await session.execute(
+        _with_totals()
+        .join(Property, Property.id == Auction.property_id)
+        .where(Property.seller_id == seller_id)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()]
+
+
+def _ics_dt(value: datetime) -> str:
+    return value.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+
+async def calendar_feed(session: AsyncSession) -> str:
+    """An iCalendar feed of upcoming and live auctions, for a buyer to subscribe to."""
+    rows = await session.scalars(select(Auction).where(_open()).order_by(Auction.starts_at))
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Provenix//Auctions//EN"]
+    for auction in rows:
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:{auction.id}@provenix",
+            f"DTSTART:{_ics_dt(auction.starts_at)}",
+            f"DTEND:{_ics_dt(auction.ends_at)}",
+            f"SUMMARY:{auction.listing.title}",
+            "END:VEVENT",
+        ]
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines)
 
 
 async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UUID) -> Auction:

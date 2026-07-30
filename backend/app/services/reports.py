@@ -4,17 +4,27 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.analytics import PropertyView
 from app.models.auction import Auction, Bid
+from app.models.campaign import Campaign, CampaignStatus
 from app.models.category import Category
+from app.models.escrow import Escrow
+from app.models.lead import Lead, LeadStatus
 from app.models.property import Property, PropertyStatus
 from app.models.user import User, UserRole, UserStatus
 from app.rbac.permissions import Role
 from app.schemas.report import (
+    AiInsightsOut,
     AuctionActivityOut,
+    BestSeller,
+    BuyerActivity,
     CategoryCount,
+    ConversionRatesOut,
     DashboardOut,
+    MarketingPerformanceOut,
     MonthlyRevenueDetail,
     RevenueOut,
+    SellerPerformance,
     WeeklyCount,
 )
 
@@ -197,4 +207,174 @@ async def _role_count(session: AsyncSession, role: Role) -> int:
             .where(User.status != UserStatus.DELETED, User.role_rows.any(UserRole.role == role))
         )
         or 0
+    )
+
+
+async def seller_performance(session: AsyncSession) -> list[SellerPerformance]:
+    """Per-seller: listings, sold count, average released payout, and success rate."""
+    listings = (
+        select(
+            Property.seller_id.label("sid"),
+            func.count().label("listings"),
+            func.count().filter(Property.status == PropertyStatus.SOLD).label("sold"),
+        )
+        .where(Property.seller_id.is_not(None))
+        .group_by(Property.seller_id)
+        .subquery()
+    )
+    payouts = (
+        select(Escrow.seller_id.label("sid"), func.avg(Escrow.amount).label("avg_amt"))
+        .group_by(Escrow.seller_id)
+        .subquery()
+    )
+    rows = await session.execute(
+        select(
+            User.id,
+            User.full_name,
+            listings.c.listings,
+            listings.c.sold,
+            func.coalesce(payouts.c.avg_amt, 0),
+        )
+        .join(listings, listings.c.sid == User.id)
+        .outerjoin(payouts, payouts.c.sid == User.id)
+        .order_by(listings.c.sold.desc())
+    )
+    return [
+        SellerPerformance(
+            seller_id=uid,
+            seller_name=name,
+            listings=lc,
+            sold=sold,
+            avg_sale_price=Decimal(avg_amt or 0),
+            success_rate=round(sold / lc, 3) if lc else 0.0,
+        )
+        for uid, name, lc, sold, avg_amt in rows.all()
+    ]
+
+
+async def buyer_activity(session: AsyncSession) -> list[BuyerActivity]:
+    """Per-buyer: bids placed, auctions won, and average spend."""
+    bids = (
+        select(Bid.bidder_id.label("bid"), func.count().label("bids"))
+        .group_by(Bid.bidder_id)
+        .subquery()
+    )
+    won = (
+        select(Auction.winner_id.label("bid"), func.count().label("won"))
+        .where(Auction.winner_id.is_not(None))
+        .group_by(Auction.winner_id)
+        .subquery()
+    )
+    spend = (
+        select(Escrow.buyer_id.label("bid"), func.avg(Escrow.amount).label("avg_spend"))
+        .group_by(Escrow.buyer_id)
+        .subquery()
+    )
+    rows = await session.execute(
+        select(
+            User.id,
+            User.full_name,
+            bids.c.bids,
+            func.coalesce(won.c.won, 0),
+            func.coalesce(spend.c.avg_spend, 0),
+        )
+        .join(bids, bids.c.bid == User.id)
+        .outerjoin(won, won.c.bid == User.id)
+        .outerjoin(spend, spend.c.bid == User.id)
+        .order_by(bids.c.bids.desc())
+    )
+    return [
+        BuyerActivity(buyer_id=uid, buyer_name=name, bids=b, won=w, avg_spend=Decimal(av or 0))
+        for uid, name, b, w, av in rows.all()
+    ]
+
+
+async def marketing_performance(session: AsyncSession) -> MarketingPerformanceOut:
+    async def count(*where) -> int:
+        return await session.scalar(select(func.count()).select_from(Campaign).where(*where)) or 0
+
+    return MarketingPerformanceOut(
+        total=await session.scalar(select(func.count()).select_from(Campaign)) or 0,
+        sent=await count(Campaign.status == CampaignStatus.SENT),
+        scheduled=await count(Campaign.status == CampaignStatus.SCHEDULED),
+        draft=await count(Campaign.status == CampaignStatus.DRAFT),
+    )
+
+
+async def best_sellers(session: AsyncSession, limit: int) -> list[BestSeller]:
+    """Top sold listings by final price, with the bid volume they drew."""
+    bids = (
+        select(Bid.auction_id.label("aid"), func.count().label("bids"))
+        .group_by(Bid.auction_id)
+        .subquery()
+    )
+    final_price = func.coalesce(Property.paid_amount, Property.reserve_price)
+    rows = await session.execute(
+        select(Property.id, Property.title, final_price, func.coalesce(bids.c.bids, 0))
+        .outerjoin(Auction, Auction.property_id == Property.id)
+        .outerjoin(bids, bids.c.aid == Auction.id)
+        .where(Property.status == PropertyStatus.SOLD)
+        .order_by(final_price.desc())
+        .limit(limit)
+    )
+    return [
+        BestSeller(property_id=pid, title=title, final_price=Decimal(price or 0), bid_count=count)
+        for pid, title, price, count in rows.all()
+    ]
+
+
+async def ai_insights(session: AsyncSession) -> AiInsightsOut:
+    """A deterministic platform summary drawn from live data (no external model)."""
+    sold = await _count(session, Property.status == PropertyStatus.SOLD)
+    published = await _count(session, Property.status == PropertyStatus.PUBLISHED)
+    top = (
+        await session.execute(
+            select(Category.name, func.count())
+            .join(Property, Property.category_id == Category.id)
+            .group_by(Category.name)
+            .order_by(func.count().desc())
+            .limit(1)
+        )
+    ).first()
+    highlights = [f"{sold} listings sold to date.", f"{published} listings currently live."]
+    if top:
+        highlights.append(f"'{top[0]}' is the most listed category ({top[1]} listings).")
+    return AiInsightsOut(
+        summary="Automated platform summary based on current data.", highlights=highlights
+    )
+
+
+async def conversion_rates(session: AsyncSession) -> ConversionRatesOut:
+    """Funnel conversion: lead-to-buyer, browse-to-bid, and bid-to-win."""
+    leads = await session.scalar(select(func.count()).select_from(Lead)) or 0
+    won_leads = (
+        await session.scalar(
+            select(func.count()).select_from(Lead).where(Lead.status == LeadStatus.WON)
+        )
+        or 0
+    )
+    viewers = (
+        await session.scalar(
+            select(func.count(func.distinct(PropertyView.viewer_id))).where(
+                PropertyView.viewer_id.is_not(None)
+            )
+        )
+        or 0
+    )
+    bidders = await session.scalar(select(func.count(func.distinct(Bid.bidder_id)))) or 0
+    total_bids = await session.scalar(select(func.count()).select_from(Bid)) or 0
+    wins = (
+        await session.scalar(
+            select(func.count()).select_from(Auction).where(Auction.winner_id.is_not(None))
+        )
+        or 0
+    )
+
+    def pct(numerator: int, denominator: int) -> float:
+        return round(100 * numerator / denominator, 1) if denominator else 0.0
+
+    return ConversionRatesOut(
+        lead_to_buyer=pct(won_leads, leads),
+        browse_to_bid=pct(bidders, viewers),
+        bid_to_win=pct(wins, total_bids),
     )

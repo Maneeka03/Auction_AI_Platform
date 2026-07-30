@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import status
@@ -42,6 +43,33 @@ async def get(session: AsyncSession, escrow_id: uuid.UUID) -> Escrow:
     escrow = await session.get(Escrow, escrow_id)
     if escrow is None:
         raise AppError(status.HTTP_404_NOT_FOUND, "escrow_not_found", "Escrow not found.")
+    return escrow
+
+
+async def for_buyer(session: AsyncSession, buyer_id: uuid.UUID) -> list[Escrow]:
+    rows = await session.scalars(
+        select(Escrow).where(Escrow.buyer_id == buyer_id).order_by(Escrow.created_at.desc())
+    )
+    return list(rows)
+
+
+async def for_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[Escrow]:
+    rows = await session.scalars(
+        select(Escrow).where(Escrow.seller_id == seller_id).order_by(Escrow.created_at.desc())
+    )
+    return list(rows)
+
+
+async def mark_delivered(
+    session: AsyncSession, escrow_id: uuid.UUID, buyer_id: uuid.UUID
+) -> Escrow:
+    """The buyer confirms they received the item."""
+    escrow = await get(session, escrow_id)
+    if escrow.buyer_id != buyer_id:
+        raise AppError(status.HTTP_403_FORBIDDEN, "forbidden", "This purchase is not yours.")
+    escrow.delivered_at = datetime.now(UTC)
+    await session.commit()
+    await session.refresh(escrow)
     return escrow
 
 
