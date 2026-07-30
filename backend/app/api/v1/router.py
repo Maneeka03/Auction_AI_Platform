@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin,
     agency,
     auctions,
     auth,
+    buyer,
     campaigns,
     categories,
     crm,
@@ -17,6 +19,10 @@ from app.api.v1 import (
     properties,
     push,
     reports,
+    reviews,
+    saved_searches,
+    seller,
+    tasks,
     uploads,
     users,
     wallet,
@@ -44,6 +50,12 @@ api_router.include_router(crm.router)
 api_router.include_router(campaigns.router)
 api_router.include_router(escrow.router)
 api_router.include_router(agency.router)
+api_router.include_router(buyer.router)
+api_router.include_router(seller.router)
+api_router.include_router(saved_searches.router)
+api_router.include_router(reviews.router)
+api_router.include_router(tasks.router)
+api_router.include_router(admin.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)

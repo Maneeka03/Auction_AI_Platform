@@ -8,11 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.errors import AppError
-from app.models.auction import Auction
+from app.models.auction import Auction, Bid
 from app.models.category import Category
 from app.models.property import PaymentMethod, Property, PropertyStatus
 from app.models.user import User
 from app.models.wallet import WalletEntryKind
+from app.models.watchlist import WatchlistItem
 from app.rbac.permissions import Role
 from app.schemas.property import CreatePropertyRequest, UpdatePropertyRequest
 from app.services import categories, escrow, kyc, wallets
@@ -167,6 +168,61 @@ async def by_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[Propert
         select(Property).where(Property.seller_id == seller_id).order_by(Property.created_at.desc())
     )
     return list(rows)
+
+
+async def by_seller_status(
+    session: AsyncSession, seller_id: uuid.UUID, listing_status: PropertyStatus
+) -> list[Property]:
+    """A seller's listings in one status - drafts awaiting sign-off, or completed sales."""
+    rows = await session.scalars(
+        select(Property)
+        .where(Property.seller_id == seller_id, Property.status == listing_status)
+        .order_by(Property.created_at.desc())
+    )
+    return list(rows)
+
+
+async def direct_offers(session: AsyncSession, seller_id: uuid.UUID) -> list[Property]:
+    """The seller's listings taken via a direct Buy Now (an offer outside a live auction)."""
+    rows = await session.scalars(
+        select(Property)
+        .where(Property.seller_id == seller_id, Property.buyer_id.is_not(None))
+        .order_by(Property.purchased_at.desc())
+    )
+    return list(rows)
+
+
+async def recommended_for(session: AsyncSession, buyer_id: uuid.UUID, limit: int) -> list[Property]:
+    """Published listings in the categories a buyer has watched or bid on, newest first.
+
+    Falls back to the newest published listings when the buyer has no history yet.
+    """
+    watched = select(WatchlistItem.property_id).where(WatchlistItem.user_id == buyer_id)
+    interested = (
+        select(Property.category_id)
+        .join(WatchlistItem, WatchlistItem.property_id == Property.id)
+        .where(WatchlistItem.user_id == buyer_id)
+        .union(
+            select(Property.category_id)
+            .join(Auction, Auction.property_id == Property.id)
+            .join(Bid, Bid.auction_id == Auction.id)
+            .where(Bid.bidder_id == buyer_id)
+        )
+        .subquery()
+    )
+    base = select(Property).where(
+        Property.status == PropertyStatus.PUBLISHED, Property.id.not_in(watched)
+    )
+    rows = list(
+        await session.scalars(
+            base.where(Property.category_id.in_(select(interested.c.category_id)))
+            .order_by(Property.created_at.desc())
+            .limit(limit)
+        )
+    )
+    if rows:
+        return rows
+    return list(await session.scalars(base.order_by(Property.created_at.desc()).limit(limit)))
 
 
 async def locked(session: AsyncSession, property_id: uuid.UUID) -> Property:
