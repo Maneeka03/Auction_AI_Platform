@@ -35,8 +35,8 @@ export default function BestSellersPage() {
         ) : data.length === 0 ? (
           <p className="text-sm text-neutral-500">No sales data yet.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full min-w-[600px] text-sm">
               <thead className="border-b border-neutral-100 bg-neutral-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">#</th>

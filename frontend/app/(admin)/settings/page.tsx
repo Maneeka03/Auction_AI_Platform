@@ -171,7 +171,7 @@ export default function SettingsPage() {
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
             {/* Tab bar */}
-            <div className="flex border-b border-neutral-200">
+            <div className="flex overflow-x-auto border-b border-neutral-200">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
@@ -180,7 +180,7 @@ export default function SettingsPage() {
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors ${
+                    className={`flex shrink-0 items-center gap-2 whitespace-nowrap px-5 py-3.5 text-sm font-medium transition-colors ${
                       isActive
                         ? "border-b-2 border-brand-500 text-brand-600"
                         : "text-neutral-500 hover:text-neutral-800"
