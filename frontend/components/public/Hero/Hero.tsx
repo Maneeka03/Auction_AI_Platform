@@ -20,7 +20,7 @@ export default function Hero() {
                     sellers and collectors.
                 </p>
                 <div className="mt-10 flex flex-wrap gap-5">
-                    <Link href="/assets" className="rounded-xl bg-white px-8 py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                    <Link href="/browse-properties" className="rounded-xl bg-white px-8 py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
                         Browse Assets
                     </Link>
                     <Link href="/live-auctions" className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700">

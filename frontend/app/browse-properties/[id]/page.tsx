@@ -34,9 +34,8 @@ export default function PublicPropertyDetailPage() {
       );
   }, [params.id]);
 
-  // Booking requires an account. The step after login is not defined yet, so Book Now goes to login.
   function handleBookNow() {
-    router.push("/login");
+    router.push("/login?redirect=/recommendations");
   }
 
   return (

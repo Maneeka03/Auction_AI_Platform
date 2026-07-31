@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +18,7 @@ const INITIAL_VALUES: LoginPayload = { email: "", password: "" };
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [values, setValues] = useState<LoginPayload>(INITIAL_VALUES);
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
@@ -41,7 +42,9 @@ export default function LoginPage() {
         ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
       );
       const isSeller = session.roles.includes("seller");
-      router.push(isStaff ? "/dashboard" : isSeller ? "/seller/dashboard" : "/home");
+      const redirect = searchParams.get("redirect");
+      const destination = isStaff ? "/dashboard" : isSeller ? "/seller/dashboard" : (redirect ?? "/home");
+      router.push(destination);
       router.refresh();
     } catch (error) {
       if (error instanceof ApiRequestError) {
