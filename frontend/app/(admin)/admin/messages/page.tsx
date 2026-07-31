@@ -18,6 +18,7 @@ import {
 } from "@/lib/api/messages";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
+import { listNotifications, markNotificationsRead } from "@/lib/api/notifications";
 import type {
   AdminThread,
   ChatUser,
@@ -98,6 +99,23 @@ export default function AdminMessagesPage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [fetchLists]);
+
+  // Auto-clear new_message notification badges when admin opens messages page
+  useEffect(() => {
+    if (!accessToken) return;
+    async function clearMessageNotifs() {
+      try {
+        const result = await listNotifications(accessToken!, { limit: 50 });
+        const unreadMsgIds = result.items
+          .filter((n) => n.kind === "new_message" && !n.read_at)
+          .map((n) => n.id);
+        if (unreadMsgIds.length > 0) {
+          await markNotificationsRead(accessToken!, { ids: unreadMsgIds });
+        }
+      } catch {}
+    }
+    void clearMessageNotifs();
+  }, [accessToken]);
 
   const fetchActiveMessages = useCallback(async () => {
     if (!accessToken || !active) return;

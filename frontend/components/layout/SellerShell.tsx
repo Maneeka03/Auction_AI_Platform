@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationPromptBanner } from "@/components/notifications/NotificationPromptBanner";
-import { PushEnableButton } from "@/components/notifications/PushEnableButton";
+// PushEnableButton removed from navbar — now in /seller/settings page
+// import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 import { SellerSidebar } from "@/components/layout/SellerSidebar";
 
@@ -77,7 +78,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <PushEnableButton />
+            {/* PushEnableButton moved to /seller/settings page */}
             <NotificationBell />
 
             {/* Account menu */}

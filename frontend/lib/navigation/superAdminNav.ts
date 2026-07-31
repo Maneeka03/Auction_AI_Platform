@@ -65,7 +65,7 @@ export const superAdminNav: NavSection[] = [
     items: [
       { label: "Staff Management", href: "/admin/users", icon: UserCog },
       { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
-      { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

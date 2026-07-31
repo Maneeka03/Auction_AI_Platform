@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 
 type Tab = "general" | "auction" | "notifications" | "security";
 
@@ -314,6 +315,12 @@ export default function SettingsPage() {
                   <div className="mt-6">
                     <SectionTitle>Push Notifications</SectionTitle>
                   </div>
+                  <Field label="Your Browser Notifications" hint="Enable or disable push notifications for your account on this device.">
+                    <div className="flex items-center gap-3">
+                      <PushEnableButton />
+                      <span className="text-sm text-neutral-500">Toggle browser push notifications for your account</span>
+                    </div>
+                  </Field>
                   <Field label="Bid Notifications" hint="Browser push when a new bid is placed.">
                     <Toggle checked={pushBid} onChange={setPushBid} label="Enable bid push notifications" />
                   </Field>

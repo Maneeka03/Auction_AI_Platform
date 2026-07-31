@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Package,
+  Settings,
   ShoppingBag,
   Tag,
 } from "lucide-react";
@@ -37,5 +38,9 @@ export const sellerNav: NavSection[] = [
   {
     title: "Communication",
     items: [{ label: "Messages", href: "/messages", icon: MessageSquare }],
+  },
+  {
+    title: "Account",
+    items: [{ label: "Settings", href: "/seller/settings", icon: Settings }],
   },
 ];

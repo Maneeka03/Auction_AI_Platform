@@ -1,14 +1,15 @@
 "use client";
 
-import { AlertCircle, Clock, Gavel, Lock, Package, Users } from "lucide-react";
+import { AlertCircle, ArrowLeft, Clock, Gavel, Lock, Package, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ConnectionStatusBadge } from "@/components/bidding/ConnectionStatusBadge";
 import { QuickBidButtons } from "@/components/bidding/QuickBidButtons";
 import { BidHistoryList } from "@/components/bidding/BidHistoryList";
 import { placeBid, listBids } from "@/lib/api/bids";
 import { ApiRequestError } from "@/lib/api/client";
+import { addToWatchlist, listWatchlist, removeFromWatchlist } from "@/lib/api/watchlist";
 import { useAuctionSocket } from "@/lib/hooks/useAuctionSocket";
 import { useCountdown } from "@/lib/hooks/useCountdown";
 import { useAuth } from "@/lib/auth/session-context";
@@ -22,6 +23,7 @@ function formatMoney(value: string | null): string {
 export default function LiveBiddingRoomPage() {
   const params = useParams<{ id: string }>();
   const auctionId = params.id;
+  const router = useRouter();
   const { accessToken, session } = useAuth();
 
   const { auction, connectionState, lastEvent } = useAuctionSocket(auctionId, accessToken);
@@ -31,6 +33,35 @@ export default function LiveBiddingRoomPage() {
   const [customAmount, setCustomAmount] = useState("");
   const [isBidding, setIsBidding] = useState(false);
   const [bidError, setBidError] = useState<{ code: string; message: string } | null>(null);
+
+  const [isWatched, setIsWatched] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  // Check if auction's property is already in watchlist
+  useEffect(() => {
+    if (!accessToken || !auction?.property_id) return;
+    listWatchlist(accessToken)
+      .then((items) => setIsWatched(items.some((i) => i.property.id === auction.property_id)))
+      .catch(() => {});
+  }, [accessToken, auction?.property_id]);
+
+  async function toggleWatchlist() {
+    if (!accessToken || !auction?.property_id || watchlistLoading) return;
+    setWatchlistLoading(true);
+    try {
+      if (isWatched) {
+        await removeFromWatchlist(accessToken, auction.property_id);
+        setIsWatched(false);
+      } else {
+        await addToWatchlist(accessToken, auction.property_id);
+        setIsWatched(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setWatchlistLoading(false);
+    }
+  }
 
   const canBid = session
     ? can(session.permissions, "bid_management", "full") && session.roles.includes("buyer")
@@ -83,6 +114,35 @@ export default function LiveBiddingRoomPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-6">
+
+      {/* Top bar: back + watchlist */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
+        >
+          <ArrowLeft size={15} />
+          Back to Browse Auctions
+        </button>
+
+        {auction?.property_id ? (
+          <button
+            type="button"
+            onClick={() => void toggleWatchlist()}
+            disabled={watchlistLoading}
+            title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
+              isWatched
+                ? "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
+                : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+            }`}
+          >
+            <Star size={15} fill={isWatched ? "currentColor" : "none"} />
+            {isWatched ? "Saved" : "Save to Watchlist"}
+          </button>
+        ) : null}
+      </div>
 
       {/* Hero card */}
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">

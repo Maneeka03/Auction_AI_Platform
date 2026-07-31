@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Search,
+  Settings,
   Sparkles,
   Star,
   Wallet,
@@ -37,5 +38,9 @@ export const buyerNav: NavSection[] = [
   {
     title: "Communication",
     items: [{ label: "Messages", href: "/messages", icon: MessageSquare }],
+  },
+  {
+    title: "Account",
+    items: [{ label: "Settings", href: "/settings", icon: Settings }],
   },
 ];
