@@ -20,12 +20,12 @@ export default function NotFound() {
       </p>
 
       <div className="mt-2 flex gap-3">
-        <Link
+        {/* <Link
           href="/dashboard"
           className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           Go to Dashboard
-        </Link>
+        </Link> */}
         <Link
           href="/login"
           className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
