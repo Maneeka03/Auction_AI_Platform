@@ -2,7 +2,6 @@
 
 import { MessageSquare, Plus, Users } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BuyerTopbar } from "@/components/layout/BuyerTopbar";
 import { CreateGroupModal } from "@/components/messaging/CreateGroupModal";
 import { MessageView } from "@/components/messaging/MessageView";
 import { NewDMModal } from "@/components/messaging/NewDMModal";
@@ -140,7 +139,6 @@ export default function BuyerMessagesPage() {
 
   return (
     <>
-      <BuyerTopbar />
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         {/* Left panel */}
         <aside className="flex w-72 shrink-0 flex-col border-r border-neutral-200 bg-white">

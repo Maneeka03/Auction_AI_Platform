@@ -3,7 +3,6 @@
 import { Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { RequirePermission } from "@/components/auth/RequirePermission";
-import { BuyerTopbar } from "@/components/layout/BuyerTopbar";
 import { AddFundsModal } from "@/components/wallet/AddFundsModal";
 import { WithdrawModal } from "@/components/wallet/WithdrawModal";
 import { TransactionIcon } from "@/components/wallet/TransactionIcon";
@@ -75,8 +74,6 @@ export default function WalletPage() {
   return (
     <RequirePermission module="payment_escrow" need="view">
       <div className="min-h-screen bg-neutral-50">
-        <BuyerTopbar />
-
         <div className="mx-auto max-w-4xl space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

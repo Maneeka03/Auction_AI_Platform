@@ -4,8 +4,9 @@ import type { Auction } from "@/types/auction";
 import type { AuctionComment, RoomMessage } from "@/types/comment";
 import type { RoomFeedItem, SystemEvent } from "@/types/roomFeed";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+// WebSocket connects directly to the backend (can't be proxied via Next.js rewrites).
+// Set NEXT_PUBLIC_WS_URL to the backend Cloudflare tunnel when accessing via Cloudflare.
+const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 const RECONNECT_MS = 2000;
 
 export type RoomConnection = "connecting" | "live" | "reconnecting";

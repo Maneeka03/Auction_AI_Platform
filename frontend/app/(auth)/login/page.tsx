@@ -40,7 +40,8 @@ export default function LoginPage() {
       const isStaff = session.roles.some((role) =>
         ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
       );
-      router.push(isStaff ? "/dashboard" : "/properties");
+      const isSeller = session.roles.includes("seller");
+      router.push(isStaff ? "/dashboard" : isSeller ? "/seller/dashboard" : "/home");
       router.refresh();
     } catch (error) {
       if (error instanceof ApiRequestError) {

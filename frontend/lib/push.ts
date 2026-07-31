@@ -1,7 +1,8 @@
 // Web push client glue. Call enablePush(accessToken) from a UI toggle (e.g. after login or a
 // "Turn on notifications" button) to register the device; disablePush to turn it off.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Relative base — proxied to backend by Next.js rewrites, no CORS needed.
+const API_BASE_URL = "";
 
 async function api<T>(path: string, accessToken: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
@@ -17,11 +18,14 @@ async function api<T>(path: string, accessToken: string, init?: RequestInit): Pr
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
-function urlBase64ToUint8Array(base64: string): Uint8Array {
+function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const normalized = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(normalized);
-  return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
+  const buffer = new ArrayBuffer(raw.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
+  return view;
 }
 
 export async function enablePush(accessToken: string): Promise<boolean> {
