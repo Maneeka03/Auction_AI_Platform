@@ -18,14 +18,11 @@ const TABS: { key: FilterTab; label: string }[] = [
   { key: "live", label: "Live Now" },
   { key: "upcoming", label: "Upcoming" },
 ];
-
 interface Row {
   auction: Auction;
   property: Property | null;
 }
 
-// Real IDs are UUIDs, not the short sequential codes in the mockup — this
-// derives a readable reference code from the real id rather than inventing one.
 function shortCode(id: string): string {
   return id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
@@ -66,7 +63,6 @@ export default function UpcomingAuctions() {
             const property = await getPublicProperty(auction.property_id);
             return { auction, property };
           } catch {
-            // Property lookup failing shouldn't drop the whole card — just show it without specs.
             return { auction, property: null };
           }
         }),
@@ -84,8 +80,8 @@ export default function UpcomingAuctions() {
   }, [load]);
 
   return (
-    <section className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-6">
+    <section className="relative py-20">
+        <div className="relative z-20 mx-auto w-full max-w-[1600px] px-8">
         <div className="text-center">
           <h2 className="text-4xl font-bold text-neutral-900">Upcoming Auctions</h2>
           <p className="mt-3 text-neutral-500">
