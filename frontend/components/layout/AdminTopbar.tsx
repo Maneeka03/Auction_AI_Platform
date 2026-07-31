@@ -25,8 +25,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { PushEnableButton } from "@/components/notifications/PushEnableButton";
+// PushEnableButton removed from navbar — now in /admin/settings Notifications tab
+// import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
+import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
 
 type MenuKey = "apps" | "help" | "reports" | "messages" | "notifications" | "profile";
 
@@ -92,6 +94,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
   const router = useRouter();
   const { session, logout } = useAuth();
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
+  const unreadMsgCount = useUnreadMessageCount();
   const [isDark, setIsDark] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState(initialMessages);
@@ -276,7 +279,12 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             className="relative flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
           >
             <MessageSquare size={17} />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger-500" />
+            {/* OLD hardcoded dot: <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger-500" /> */}
+            {unreadMsgCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-semibold text-white">
+                {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+              </span>
+            ) : null}
           </button>
           {openMenu === "messages" ? (
             <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white shadow-lg">
@@ -324,7 +332,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
         </div>
 
         {/* Notifications */}
-        <PushEnableButton />
+        {/* PushEnableButton moved to /admin/settings → Notifications tab */}
         <NotificationBell />
 
         {/* Profile */}

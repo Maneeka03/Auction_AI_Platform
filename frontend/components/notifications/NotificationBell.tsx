@@ -1,30 +1,46 @@
 "use client";
 
-import { Bell, CheckCheck, Gavel, MessageSquare, ShieldCheck, Trophy, XCircle } from "lucide-react";
+// MessageSquare removed — new_message notifications moved to the Messages icon
+// import { Bell, CheckCheck, Gavel, MessageSquare, ShieldCheck, Trophy, XCircle } from "lucide-react";
+import { Bell, CheckCheck, Gavel, ShieldCheck, Trophy, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { listNotifications, markNotificationsRead } from "@/lib/api/notifications";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Notification, NotificationKind } from "@/types/notification";
 
-const KIND_ICON: Record<NotificationKind, typeof Bell> = {
+// NOTE: new_message is intentionally excluded — those surface on the Messages icon, not the bell.
+// Old mapping included new_message:
+// const KIND_ICON: Record<NotificationKind, typeof Bell> = {
+//   outbid: Gavel, auction_won: Trophy, auction_lost: Gavel,
+//   property_approved: CheckCheck, property_rejected: XCircle,
+//   kyc_reviewed: ShieldCheck, new_message: MessageSquare,
+// };
+// const KIND_COLOR: Record<NotificationKind, string> = {
+//   outbid: "bg-amber-500/10 text-amber-600", auction_won: "bg-success-500/10 text-success-500",
+//   auction_lost: "bg-neutral-100 text-neutral-500", property_approved: "bg-success-500/10 text-success-500",
+//   property_rejected: "bg-danger-500/10 text-danger-600", kyc_reviewed: "bg-brand-500/10 text-brand-600",
+//   new_message: "bg-sky-500/10 text-sky-600",
+// };
+
+type BellNotificationKind = Exclude<NotificationKind, "new_message">;
+
+const KIND_ICON: Record<BellNotificationKind, typeof Bell> = {
   outbid: Gavel,
   auction_won: Trophy,
   auction_lost: Gavel,
   property_approved: CheckCheck,
   property_rejected: XCircle,
   kyc_reviewed: ShieldCheck,
-  new_message: MessageSquare,
 };
 
-const KIND_COLOR: Record<NotificationKind, string> = {
+const KIND_COLOR: Record<BellNotificationKind, string> = {
   outbid: "bg-amber-500/10 text-amber-600",
   auction_won: "bg-success-500/10 text-success-500",
   auction_lost: "bg-neutral-100 text-neutral-500",
   property_approved: "bg-success-500/10 text-success-500",
   property_rejected: "bg-danger-500/10 text-danger-600",
   kyc_reviewed: "bg-brand-500/10 text-brand-600",
-  new_message: "bg-sky-500/10 text-sky-600",
 };
 
 function formatTime(iso: string): string {
@@ -54,10 +70,14 @@ export function NotificationBell() {
     if (!accessToken) return;
     setIsLoading(true);
     try {
-      const result = await listNotifications(accessToken, { limit: 20 });
-      setNotifications(result.items);
-      setUnread(result.unread);
-    } catch {} 
+      const result = await listNotifications(accessToken, { limit: 50 });
+      // OLD: setNotifications(result.items); setUnread(result.unread);
+      // new_message notifications now go to the Messages icon instead of the bell
+      const nonMsgItems = result.items.filter((n) => n.kind !== "new_message");
+      const nonMsgUnread = nonMsgItems.filter((n) => !n.read_at).length;
+      setNotifications(nonMsgItems);
+      setUnread(nonMsgUnread);
+    } catch {}
     finally {
       setIsLoading(false);
     }
@@ -166,7 +186,7 @@ export function NotificationBell() {
                   <p className="px-4 py-8 text-center text-sm text-neutral-500">No notifications yet</p>
                 ) : (
                   notifications.map((notification) => {
-                    const Icon = KIND_ICON[notification.kind];
+                    const Icon = KIND_ICON[notification.kind as BellNotificationKind];
                     const isUnread = !notification.read_at;
                     return (
                       <button
@@ -178,7 +198,7 @@ export function NotificationBell() {
                         }`}
                       >
                         <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KIND_COLOR[notification.kind]}`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KIND_COLOR[notification.kind as BellNotificationKind]}`}
                         >
                           <Icon size={14} />
                         </span>

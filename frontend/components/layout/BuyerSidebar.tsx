@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buyerNav } from "@/lib/navigation/buyerNav";
+import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
 
 interface BuyerSidebarProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface BuyerSidebarProps {
 
 function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const unreadMsgCount = useUnreadMessageCount();
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4">
       {buyerNav.map((section) => (
@@ -25,6 +27,7 @@ function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigat
           <ul className="space-y-0.5">
             {section.items.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isMessages = item.href === "/messages";
               return (
                 <li key={item.href}>
                   <Link
@@ -37,7 +40,19 @@ function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigat
                         : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                     } ${showLabels ? "" : "justify-center"}`}
                   >
-                    <item.icon size={18} className="shrink-0" />
+                    {/* OLD: <item.icon size={18} className="shrink-0" /> */}
+                    {isMessages ? (
+                      <span className="relative shrink-0">
+                        <item.icon size={18} />
+                        {unreadMsgCount > 0 ? (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-0.5 text-[9px] font-semibold text-white">
+                            {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : (
+                      <item.icon size={18} className="shrink-0" />
+                    )}
                     {showLabels ? <span>{item.label}</span> : null}
                   </Link>
                 </li>

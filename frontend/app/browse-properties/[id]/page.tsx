@@ -2,7 +2,8 @@
 
 import { ArrowLeft, Bath, BedDouble, MapPin, Ruler } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+// Link removed — back button now uses router.back() to return to referrer (e.g. /recommendations)
+// import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiRequestError } from "@/lib/api/client";
@@ -42,12 +43,13 @@ export default function PublicPropertyDetailPage() {
     <>
       <Navbar solid />
       <main className="mx-auto w-full max-w-[1200px] px-8 pt-32 pb-12">
-        <Link
-          href="/"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
         >
-          <ArrowLeft size={15} /> Back to home
-        </Link>
+          <ArrowLeft size={15} /> Back
+        </button>
 
         {error ? (
           <p className="mt-8 text-red-500">{error}</p>

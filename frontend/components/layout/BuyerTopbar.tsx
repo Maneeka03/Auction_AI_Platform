@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { PushEnableButton } from "@/components/notifications/PushEnableButton";
+// PushEnableButton removed from navbar — now in /settings page
+// import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
+import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
 
 const navLinks = [
   { label: "Browse Properties", href: "/properties", icon: Home },
@@ -30,6 +32,7 @@ export function BuyerTopbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const unreadMsgCount = useUnreadMessageCount();
 
   async function handleSignOut() {
     await logout();
@@ -57,6 +60,7 @@ export function BuyerTopbar() {
           <nav className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+              const isMessages = link.href === "/messages";
               return (
                 <Link
                   key={link.href}
@@ -65,7 +69,19 @@ export function BuyerTopbar() {
                     isActive ? "bg-brand-50 text-brand-700" : "text-neutral-600 hover:bg-neutral-100"
                   }`}
                 >
-                  <link.icon size={16} />
+                  {/* OLD: <link.icon size={16} /> */}
+                  {isMessages ? (
+                    <span className="relative">
+                      <link.icon size={16} />
+                      {unreadMsgCount > 0 ? (
+                        <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-0.5 text-[9px] font-semibold text-white">
+                          {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <link.icon size={16} />
+                  )}
                   {link.label}
                 </Link>
               );
@@ -74,7 +90,7 @@ export function BuyerTopbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <PushEnableButton />
+          {/* PushEnableButton moved to /settings page */}
           <NotificationBell />
           {session ? (
             <span
@@ -100,6 +116,7 @@ export function BuyerTopbar() {
         <nav className="border-t border-neutral-200 bg-white px-4 py-2 md:hidden">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const isMessages = link.href === "/messages";
             return (
               <Link
                 key={link.href}
@@ -109,7 +126,19 @@ export function BuyerTopbar() {
                   isActive ? "bg-brand-50 text-brand-700" : "text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
-                <link.icon size={16} />
+                {/* OLD: <link.icon size={16} /> */}
+                {isMessages ? (
+                  <span className="relative">
+                    <link.icon size={16} />
+                    {unreadMsgCount > 0 ? (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-0.5 text-[9px] font-semibold text-white">
+                        {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                      </span>
+                    ) : null}
+                  </span>
+                ) : (
+                  <link.icon size={16} />
+                )}
                 {link.label}
               </Link>
             );

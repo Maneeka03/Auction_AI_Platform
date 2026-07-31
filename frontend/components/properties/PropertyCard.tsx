@@ -1,16 +1,18 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Property } from "@/types/property";
 
 interface PropertyCardProps {
   property: Property;
   onBuyNow: (property: Property) => void;
+  detailHref?: string;
 }
 
-export function PropertyCard({ property, onBuyNow }: PropertyCardProps) {
+export function PropertyCard({ property, onBuyNow, detailHref }: PropertyCardProps) {
   const isAvailable = property.status === "published";
 
-  return (
-    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+  const cardContent = (
+    <>
       <div className="relative h-40 bg-neutral-100">
         {property.image_url ? (
           <Image src={property.image_url} alt={property.title} fill sizes="400px" unoptimized className="object-cover" />
@@ -36,15 +38,30 @@ export function PropertyCard({ property, onBuyNow }: PropertyCardProps) {
           <p className="mt-2 line-clamp-2 text-xs text-neutral-500">{property.description}</p>
         ) : null}
 
+        {/* stopPropagation so card-level Link navigation doesn't fire when clicking Buy Now */}
         <button
           type="button"
           disabled={!isAvailable}
-          onClick={() => onBuyNow(property)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onBuyNow(property); }}
           className="mt-4 w-full rounded-lg bg-brand-500 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
         >
           {isAvailable ? "Buy Now" : property.status === "sold" ? "Sold" : "Not Yet Available"}
         </button>
       </div>
+    </>
+  );
+
+  if (detailHref) {
+    return (
+      <Link href={detailHref} className="block overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      {cardContent}
     </div>
   );
 }
