@@ -61,6 +61,21 @@ async def auction_calendar(session: DbSession, _: User = Viewer) -> Response:
     """An iCalendar feed of upcoming and live auctions to subscribe to."""
     return Response(await auctions.calendar_feed(session), media_type="text/calendar")
 
+@router.get("/public", response_model=AuctionPage)
+async def list_public_auctions(
+    session: DbSession,
+    page: int = Query(1, ge=1),
+    size: int = Query(12, ge=1, le=100),
+    status_filter: AuctionStatus | None = Query(None, alias="status"),
+) -> AuctionPage:
+    """Live/upcoming auctions, no auth required — powers the public landing-page listing."""
+    rows, total = await auctions.paginate_public(session, page, size, status_filter)
+    return AuctionPage(
+        items=[AuctionOut.of(*row) for row in rows],
+        total=total,
+        page=page,
+        size=size,
+    )
 
 @router.get("/{auction_id}", response_model=AuctionOut)
 async def get_auction(auction_id: uuid.UUID, session: DbSession, _: User = Viewer) -> AuctionOut:

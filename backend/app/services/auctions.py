@@ -206,6 +206,23 @@ async def paginate(
     )
     return [(row[0], row[1], row[2]) for row in rows.all()], total
 
+async def paginate_public(
+    session: AsyncSession, page: int, size: int, auction_status: AuctionStatus | None
+) -> tuple[list[AuctionRow], int]:
+    """Public auction listing (no auth) — only ever shows auctions nobody has closed yet,
+    so `ended` is never a valid filter here."""
+    condition = _open()
+    if auction_status and auction_status is not AuctionStatus.ENDED:
+        condition = and_(condition, _status_filter(auction_status))
+
+    query = _with_totals().where(condition)
+    count_query = select(func.count()).select_from(Auction).where(condition)
+
+    total = await session.scalar(count_query) or 0
+    rows = await session.execute(
+        query.order_by(Auction.starts_at.asc()).offset((page - 1) * size).limit(size)
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()], total
 
 async def update(
     session: AsyncSession, auction_id: uuid.UUID, data: UpdateAuctionRequest
