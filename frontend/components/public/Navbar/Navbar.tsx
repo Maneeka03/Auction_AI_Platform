@@ -53,7 +53,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                     <Link href="/login" className={`font-semibold transition ${ opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
                         Login
                     </Link>
-                    <Link href="/register"className="rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-7 py-3 font-semibold text-white transition hover:scale-105">
+                    <Link href="/signup"className="rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-7 py-3 font-semibold text-white transition hover:scale-105">
                         Sign Up
                     </Link>
                 </div>
@@ -85,7 +85,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                         <Link href="/login" className="rounded-full border border-violet-600 py-3 text-center font-semibold text-violet-600">
                             Login
                         </Link>
-                        <Link href="/register" className="rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 py-3 text-center font-semibold text-white">
+                        <Link href="/signup" className="rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 py-3 text-center font-semibold text-white">
                             Sign Up
                         </Link>
                     </div>
