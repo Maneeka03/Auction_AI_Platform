@@ -2,6 +2,8 @@
 
 import { Radio } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AdminShell } from "@/components/layout/AdminShell";
+import { RequirePermission } from "@/components/auth/RequirePermission";
 import { listAllAuctionRequests, reviewAuctionRequest } from "@/lib/api/auctionRequests";
 import { useAuth } from "@/lib/auth/session-context";
 import type { AuctionRequest, AuctionRequestStatus } from "@/types/auctionRequest";
@@ -23,7 +25,7 @@ export default function AdminAuctionRequestsPage() {
   const { accessToken } = useAuth();
   const [requests, setRequests] = useState<AuctionRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<AuctionRequestStatus | "all">("all");
+  const [filter, setFilter] = useState<AuctionRequestStatus | "all">("pending");
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [noteMap, setNoteMap] = useState<Record<string, string>>({});
 
@@ -55,6 +57,8 @@ export default function AdminAuctionRequestsPage() {
   }
 
   return (
+    <AdminShell>
+      <RequirePermission module="auction_management" need="full">
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold text-neutral-900">Auction Requests</h1>
@@ -155,5 +159,7 @@ export default function AdminAuctionRequestsPage() {
         </div>
       )}
     </div>
+      </RequirePermission>
+    </AdminShell>
   );
 }
