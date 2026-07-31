@@ -25,6 +25,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 
 type MenuKey = "apps" | "help" | "reports" | "messages" | "notifications" | "profile";
@@ -323,6 +324,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
         </div>
 
         {/* Notifications */}
+        <PushEnableButton />
         <NotificationBell />
 
         {/* Profile */}

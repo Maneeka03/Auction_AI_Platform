@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 
 const navLinks = [
@@ -73,6 +74,7 @@ export function BuyerTopbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <PushEnableButton />
           <NotificationBell />
           {session ? (
             <span

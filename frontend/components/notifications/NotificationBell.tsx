@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckCheck, Gavel, ShieldCheck, Trophy, XCircle } from "lucide-react";
+import { Bell, CheckCheck, Gavel, MessageSquare, ShieldCheck, Trophy, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { listNotifications, markNotificationsRead } from "@/lib/api/notifications";
@@ -14,6 +14,7 @@ const KIND_ICON: Record<NotificationKind, typeof Bell> = {
   property_approved: CheckCheck,
   property_rejected: XCircle,
   kyc_reviewed: ShieldCheck,
+  new_message: MessageSquare,
 };
 
 const KIND_COLOR: Record<NotificationKind, string> = {
@@ -23,6 +24,7 @@ const KIND_COLOR: Record<NotificationKind, string> = {
   property_approved: "bg-success-500/10 text-success-500",
   property_rejected: "bg-danger-500/10 text-danger-600",
   kyc_reviewed: "bg-brand-500/10 text-brand-600",
+  new_message: "bg-sky-500/10 text-sky-600",
 };
 
 function formatTime(iso: string): string {
