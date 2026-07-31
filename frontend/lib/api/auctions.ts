@@ -46,3 +46,15 @@ export function awardAuction(accessToken: string, auctionId: string, bidderId: s
 export function deleteAuction(accessToken: string, auctionId: string): Promise<void> {
   return apiClient.delete<void>(`${BASE}/${auctionId}`, { accessToken });
 }
+
+export function listPublicAuctions(
+  params: { page?: number; size?: number; status?: string } = {},
+): Promise<AuctionPage> {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.size) query.set("size", String(params.size));
+  if (params.status) query.set("status", params.status);
+
+  const queryString = query.toString();
+  return apiClient.get<AuctionPage>(`${BASE}/public${queryString ? `?${queryString}` : ""}`);
+}
