@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Empty base — all /api/* paths are proxied to the backend by Next.js rewrites.
+// This means no CORS and no rebuild needed when backend URLs change.
+const API_BASE_URL = "";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 export class ApiRequestError extends Error {

@@ -2,7 +2,6 @@
 
 import { CheckCircle2, Clock, FileText, Trash2, Upload, XCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BuyerTopbar } from "@/components/layout/BuyerTopbar";
 import { getMyKyc, submitKyc } from "@/lib/api/kyc";
 import { ApiRequestError } from "@/lib/api/client";
 import { uploadKycDocument } from "@/lib/utils/uploadKycDocument";
@@ -93,8 +92,6 @@ export default function KycPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <BuyerTopbar />
-
       <div className="mx-auto max-w-2xl space-y-5 p-6">
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">Identity Verification</h1>

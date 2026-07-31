@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { RequirePermission } from "@/components/auth/RequirePermission";
-import { BuyerTopbar } from "@/components/layout/BuyerTopbar";
 import { PropertyCard } from "@/components/properties/PropertyCard";
 import { PaymentModal } from "@/components/properties/PaymentModal";
 import { listProperties } from "@/lib/api/properties";
@@ -51,8 +50,6 @@ export default function BrowsePropertiesPage() {
   return (
     <RequirePermission module="asset_management" need="view">
       <div className="min-h-screen bg-neutral-50">
-        <BuyerTopbar />
-
         <div className="mx-auto max-w-6xl space-y-5 p-6">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Browse Properties</h1>

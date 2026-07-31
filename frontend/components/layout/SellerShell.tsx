@@ -2,8 +2,10 @@
 
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { NotificationPromptBanner } from "@/components/notifications/NotificationPromptBanner";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 import { SellerSidebar } from "@/components/layout/SellerSidebar";
 
@@ -21,11 +23,26 @@ export function SellerShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   async function handleSignOut() {
     await logout();
     router.push("/login");
   }
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [profileOpen]);
+
+  const userInitials = session ? initialsFromName(session.full_name) : "?";
 
   return (
     <div className="flex min-h-screen bg-neutral-50">
@@ -36,7 +53,10 @@ export function SellerShell({ children }: { children: ReactNode }) {
       />
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-4 sm:px-6">
+        <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white">
+          <NotificationPromptBanner />
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+          {/* Mobile hamburger */}
           <button
             type="button"
             onClick={() => setIsMobileNavOpen(true)}
@@ -46,6 +66,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
             <Menu size={19} />
           </button>
 
+          {/* Desktop sidebar toggle */}
           <button
             type="button"
             onClick={() => setIsSidebarOpen((prev) => !prev)}
@@ -56,23 +77,40 @@ export function SellerShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
+            <PushEnableButton />
             <NotificationBell />
-            {session ? (
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
-                title={session.full_name}
+
+            {/* Account menu */}
+            <div ref={profileRef} className="relative ml-1">
+              <button
+                type="button"
+                onClick={() => setProfileOpen((prev) => !prev)}
+                aria-label="Account menu"
+                aria-expanded={profileOpen}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
               >
-                {initialsFromName(session.full_name)}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              aria-label="Sign out"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100"
-            >
-              <LogOut size={16} />
-            </button>
+                {userInitials}
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success-500" />
+              </button>
+
+              {profileOpen ? (
+                <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium text-neutral-900">{session?.full_name}</p>
+                    <p className="text-xs text-neutral-500">{session?.email}</p>
+                  </div>
+                  <div className="my-1 border-t border-neutral-100" />
+                  <button
+                    type="button"
+                    onClick={() => { setProfileOpen(false); void handleSignOut(); }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger-600 hover:bg-danger-500/5"
+                  >
+                    <LogOut size={16} /> Sign Out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
           </div>
         </header>
 

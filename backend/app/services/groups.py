@@ -12,7 +12,8 @@ from app.schemas.messaging import (
     GroupMessageOut,
     GroupOut,
 )
-from app.services import users as user_svc
+from app.models.notification import NotificationKind
+from app.services import notifications, users as user_svc
 
 
 async def create(
@@ -122,12 +123,27 @@ async def send_message(
     session: AsyncSession, group_id: uuid.UUID, sender_id: uuid.UUID, body: str
 ) -> GroupMessageOut:
     await _assert_member(session, group_id, sender_id)
+    group = await session.get(GroupChat, group_id)
     sender = await session.get(User, sender_id)
     if sender is None or sender.status is not UserStatus.ACTIVE:
         raise AppError(status.HTTP_403_FORBIDDEN, "forbidden", "User not active.")
 
     msg = GroupMessage(group_id=group_id, sender_id=sender_id, body=body)
     session.add(msg)
+
+    # Notify every member except the sender.
+    members = await session.scalars(
+        select(GroupChatMember.user_id).where(GroupChatMember.group_id == group_id)
+    )
+    for member_id in members:
+        if member_id != sender_id:
+            notifications.push(
+                session,
+                member_id,
+                NotificationKind.NEW_MESSAGE,
+                f"New message in {group.name} from {sender.full_name}",
+            )
+
     await session.commit()
     return GroupMessageOut(
         id=msg.id,

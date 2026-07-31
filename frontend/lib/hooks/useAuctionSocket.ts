@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getAuction } from "@/lib/api/auctions";
 import type { Auction, AuctionSocketMessage } from "@/types/auction";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 
 const RECONNECT_DELAY_MS = 2000;
 const POLL_INTERVAL_MS = 4000;
