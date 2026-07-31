@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Proxy all /api/* requests to the backend so the browser never calls the backend
-  // directly. This eliminates CORS entirely and makes the same build work both locally
-  // and through any Cloudflare tunnel without rebuilding.
   async rewrites() {
     const backend = process.env.BACKEND_URL ?? "http://localhost:8000";
     return [
@@ -20,6 +17,11 @@ const nextConfig: NextConfig = {
         pathname: "/provenix/**",
       },
     ],
+  },
+
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
 };
 
