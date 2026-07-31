@@ -4,7 +4,8 @@ export type NotificationKind =
   | "auction_lost"
   | "property_approved"
   | "property_rejected"
-  | "kyc_reviewed";
+  | "kyc_reviewed"
+  | "new_message";
 
 export interface Notification {
   id: string;
