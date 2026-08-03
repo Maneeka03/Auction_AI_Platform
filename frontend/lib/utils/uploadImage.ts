@@ -7,9 +7,10 @@ export async function uploadImage(
   accessToken: string,
   file: File,
   purpose: UploadPurpose = "property",
+  contentType: string = file.type,
 ): Promise<string> {
   const presigned = await presignUpload(accessToken, {
-    content_type: file.type,
+    content_type: contentType,
     purpose,
   });
 

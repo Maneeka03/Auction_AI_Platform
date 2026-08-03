@@ -10,7 +10,7 @@ import { EditPropertyDrawer } from "@/components/properties/EditPropertyDrawer";
 import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { PropertyThumbnail } from "@/components/properties/PropertyThumbnail";
-import { createProperty, deleteProperty, listProperties, updateProperty } from "@/lib/api/properties";
+import { addPropertyImage, createProperty, deleteProperty, listProperties, updateProperty } from "@/lib/api/properties";
 import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { ApiRequestError } from "@/lib/api/client";
@@ -59,9 +59,12 @@ export default function ListingsPage() {
     [properties, page],
   );
 
-  async function handleCreate(payload: Parameters<typeof createProperty>[1]) {
+  async function handleCreate(payload: Parameters<typeof createProperty>[1], extraImageUrls: string[]) {
     if (!accessToken) return;
-    await createProperty(accessToken, payload);
+    const created = await createProperty(accessToken, payload);
+    for (const url of extraImageUrls) {
+      await addPropertyImage(accessToken, created.id, url);
+    }
     setShowAddDrawer(false);
     void fetchProperties();
   }

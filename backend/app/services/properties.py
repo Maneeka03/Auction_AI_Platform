@@ -43,6 +43,7 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
         category=category,
         description=data.description,
         image_url=data.image_url,
+        model_url=data.model_url,
         reserve_price=data.reserve_price,
         bedrooms=data.bedrooms,
         bathrooms=data.bathrooms,

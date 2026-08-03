@@ -23,6 +23,7 @@ export interface Property {
   reserve_price: string;
   description: string | null;
   image_url: string | null;
+  model_url: string | null;
   bedrooms: number | null;
   bathrooms: number | null;
   area_sqft: number | null;
@@ -49,6 +50,7 @@ export interface CreatePropertyRequest {
   reserve_price: string;
   description?: string | null;
   image_url?: string | null;
+  model_url?: string | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;
@@ -61,6 +63,7 @@ export interface UpdatePropertyRequest {
   reserve_price?: string;
   description?: string | null;
   image_url?: string | null;
+  model_url?: string | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;

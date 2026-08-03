@@ -32,6 +32,7 @@ class CreatePropertyRequest(BaseModel):
     reserve_price: Money
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=500)
+    model_url: str | None = Field(default=None, max_length=500)
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
@@ -47,6 +48,7 @@ class UpdatePropertyRequest(BaseModel):
     reserve_price: Money | None = None
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=500)
+    model_url: str | None = Field(default=None, max_length=500)
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
@@ -103,6 +105,7 @@ class PropertyOut(BaseModel):
     reserve_price: Decimal
     description: str | None
     image_url: str | None
+    model_url: str | None
     bedrooms: int | None
     bathrooms: int | None
     area_sqft: int | None
@@ -130,6 +133,7 @@ class PropertyOut(BaseModel):
             reserve_price=listing.reserve_price,
             description=listing.description,
             image_url=listing.image_url,
+            model_url=listing.model_url,
             bedrooms=listing.bedrooms,
             bathrooms=listing.bathrooms,
             area_sqft=listing.area_sqft,

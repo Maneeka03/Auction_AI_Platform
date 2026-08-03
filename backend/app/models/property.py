@@ -65,6 +65,8 @@ class Property(Base, TimestampMixin):
     )
     description: Mapped[str | None] = mapped_column(Text, default=None)
     image_url: Mapped[str | None] = mapped_column(String(500), default=None)
+    # A GLB 3D model for the listing, shown by the public detail page's 3D viewer. Public MinIO URL.
+    model_url: Mapped[str | None] = mapped_column(String(500), default=None)
     reserve_price: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     # Residential detail. Null on commercial lots, where they do not apply. Half-baths are not
     # modelled - bathrooms is a whole count.

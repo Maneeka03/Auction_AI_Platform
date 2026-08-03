@@ -4,7 +4,9 @@ from pydantic import BaseModel
 
 from app.services.uploads import ALLOWED_TYPES
 
-ContentType = Literal["image/jpeg", "image/png", "image/webp", "image/avif", "application/pdf"]
+ContentType = Literal[
+    "image/jpeg", "image/png", "image/webp", "image/avif", "application/pdf", "model/gltf-binary"
+]
 
 # Keeps the Literal above honest against the extension map the service actually uses: adding one
 # without the other would only fail later, on an upload.
