@@ -3,6 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { RequirePermission } from "@/components/auth/RequirePermission";
 import { getAiInsights } from "@/lib/api/reports";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -34,6 +35,7 @@ export default function AiInsightsPage() {
 
   return (
     <AdminShell>
+      <RequirePermission module="ai_configuration" need="view">
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-2">
           <Sparkles size={20} className="text-brand-500" />
@@ -62,6 +64,7 @@ export default function AiInsightsPage() {
           </>
         )}
       </div>
+      </RequirePermission>
     </AdminShell>
   );
 }

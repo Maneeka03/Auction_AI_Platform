@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { auctionManagerNav } from "@/lib/navigation/auctionManagerNav";
 import { superAdminNav } from "@/lib/navigation/superAdminNav";
 import { useAuth } from "@/lib/auth/session-context";
 
@@ -27,6 +28,12 @@ export function AdminSidebar({ isOpen, isMobileOpen, onCloseMobile }: AdminSideb
   const { session, isLoading } = useAuth();
 
   const isStaff = !isLoading && session ? session.roles.some((role) => STAFF_ROLES.has(role)) : false;
+  const isRestrictedStaff =
+    !isLoading && session
+      ? (session.roles.includes("auction_manager") || session.roles.includes("gemologist")) &&
+        !session.roles.includes("super_admin")
+      : false;
+  const nav = isRestrictedStaff ? auctionManagerNav : superAdminNav;
 
   if (!isStaff) {
     return null;
@@ -35,7 +42,7 @@ export function AdminSidebar({ isOpen, isMobileOpen, onCloseMobile }: AdminSideb
   function renderNav(showLabels: boolean, onNavigate?: () => void) {
     return (
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {superAdminNav.map((section) => (
+        {nav.map((section) => (
           <div key={section.title} className="mb-5">
             {showLabels ? (
               <p className="mb-1.5 px-2.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">

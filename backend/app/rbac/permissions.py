@@ -64,20 +64,24 @@ F, V, N = Access.FULL, Access.VIEW, Access.NONE
 # Columns 4-6 (legal, finance, gemologist) are PROVISIONAL: inferred from the client's 2-of-3
 # auction approval quorum and awaiting sign-off. Column 10 (agency_admin) owns only agency
 # administration and nothing operational. Every other column is client-confirmed.
+# Auction Manager (col 1): broad operational access; no approval seat (UI blocks votes),
+# no lead management, no AI configuration, and no user/KYC management.
+# Appraiser/Gemologist (col 5): identical permissions to Auction Manager; holds the "appraiser"
+# seat so they CAN approve/reject property listings on the Approvals page.
 # fmt: off
 _ROWS: dict[Module, tuple[Access, ...]] = {
-    Module.BUYER_CRM:             (F, F, V, N, N, N, N, N, V, N, F),
-    Module.SELLER_CRM:            (F, F, N, V, V, N, N, V, V, N, F),
-    Module.LEAD_MANAGEMENT:       (F, F, F, N, N, N, N, N, V, N, F),
-    Module.ASSET_MANAGEMENT:      (F, F, V, V, V, V, V, F, V, N, F),
-    Module.AUCTION_MANAGEMENT:    (F, F, N, V, V, V, V, V, V, N, F),
-    Module.BID_MANAGEMENT:        (F, F, N, N, V, N, F, V, V, N, F),
-    Module.MARKETING_CAMPAIGNS:   (F, V, F, N, N, N, N, N, V, N, F),
-    Module.AI_CONFIGURATION:      (F, V, V, N, N, N, N, N, V, N, F),
-    Module.PAYMENT_ESCROW:        (F, V, N, V, F, N, F, F, V, N, F),
-    Module.REPORTS:               (F, F, V, V, V, V, V, V, F, N, F),
-    Module.SYSTEM_SETTINGS:       (F, N, N, N, N, N, N, N, N, N, N),
-    Module.USER_MANAGEMENT:       (F, V, N, N, N, N, N, N, N, N, F),
+    Module.BUYER_CRM:             (F, F, V, N, N, F, N, N, V, N, F),
+    Module.SELLER_CRM:            (F, F, N, V, V, F, N, V, V, N, F),
+    Module.LEAD_MANAGEMENT:       (F, N, F, N, N, N, N, N, V, N, F),
+    Module.ASSET_MANAGEMENT:      (F, F, V, V, V, F, V, F, V, N, F),
+    Module.AUCTION_MANAGEMENT:    (F, F, N, V, V, F, V, V, V, N, F),
+    Module.BID_MANAGEMENT:        (F, F, N, N, V, F, F, V, V, N, F),
+    Module.MARKETING_CAMPAIGNS:   (F, F, F, N, N, F, N, N, V, N, F),
+    Module.AI_CONFIGURATION:      (F, N, V, N, N, N, N, N, V, N, F),
+    Module.PAYMENT_ESCROW:        (F, F, N, V, F, F, F, F, V, N, F),
+    Module.REPORTS:               (F, F, V, V, V, F, V, V, F, N, F),
+    Module.SYSTEM_SETTINGS:       (F, F, N, N, N, F, N, N, N, N, N),
+    Module.USER_MANAGEMENT:       (F, N, N, N, N, N, N, N, N, N, F),
     Module.NOTIFICATIONS:         (F, F, F, F, F, F, F, F, F, N, F),
     Module.AGENCY_ADMINISTRATION: (N, N, N, N, N, N, N, N, N, F, N),
 }
