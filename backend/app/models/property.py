@@ -95,6 +95,31 @@ class Property(Base, TimestampMixin):
     votes: Mapped[list["PropertyVote"]] = relationship(
         back_populates="listing", cascade="all, delete-orphan", lazy="selectin"
     )
+    images: Mapped[list["PropertyImage"]] = relationship(
+        back_populates="listing",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="PropertyImage.sort_order",
+    )
+
+
+class PropertyImage(Base):
+    """One photo in a listing's gallery. `image_url` is the public MinIO URL, same convention as
+    Property.image_url. sort_order controls display order (0 first, appended at the end on add)."""
+
+    __tablename__ = "property_images"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    property_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("properties.id", ondelete="CASCADE"), index=True
+    )
+    image_url: Mapped[str] = mapped_column(String(500))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    listing: Mapped[Property] = relationship(back_populates="images")
 
 
 class PropertyVote(Base):

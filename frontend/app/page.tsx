@@ -19,6 +19,7 @@ export default function Home() {
       <HowItWorks />
       {/* <TrustSection />
       <Testimonials /> */}
+      <Testimonials />
       <Footer />
     </>
   );

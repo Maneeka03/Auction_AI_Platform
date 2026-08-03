@@ -17,6 +17,7 @@ from app.models.watchlist import WatchlistItem
 from app.rbac.permissions import Role
 from app.schemas.property import CreatePropertyRequest, UpdatePropertyRequest
 from app.services import categories, escrow, kyc, wallets
+from app.models.property import PaymentMethod, Property, PropertyImage, PropertyStatus
 
 EARTH_KM = 6371
 
@@ -63,6 +64,26 @@ async def get(session: AsyncSession, property_id: uuid.UUID) -> Property:
         raise AppError(status.HTTP_404_NOT_FOUND, "property_not_found", "Property not found.")
     return listing
 
+async def add_image(session: AsyncSession, property_id: uuid.UUID, image_url: str) -> Property:
+    listing = await get(session, property_id)
+    next_order = len(listing.images)
+    session.add(PropertyImage(property_id=property_id, image_url=image_url, sort_order=next_order))
+    await session.commit()
+    session.expire_all()  # force a real reload — session.get() otherwise returns the pre-insert cached object
+    return await get(session, property_id)
+
+
+async def remove_image(session: AsyncSession, property_id: uuid.UUID, image_id: uuid.UUID) -> Property:
+    listing = await get(session, property_id)
+    image = next((img for img in listing.images if img.id == image_id), None)
+    if image is None:
+        raise AppError(
+            status.HTTP_404_NOT_FOUND, "image_not_found", "Image not found on this property."
+        )
+    await session.delete(image)
+    await session.commit()
+    session.expire_all()
+    return await get(session, property_id)
 
 async def paginate(
     session: AsyncSession,

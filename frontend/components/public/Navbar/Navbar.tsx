@@ -24,11 +24,11 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
             <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 lg:px-8">
                 <Link href="/" className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
-                        <span className="text-xl font-bold text-violet-700">A</span>
+                        <span className="text-xl font-bold text-violet-700">P</span>
                     </div>
                     <span className={`text-3xl font-bold transition ${ opaque ? "text-violet-700" : "text-white"}`}>
-                        Aucto
-                    </span>
+                        Provenix
+                    </span> 
                 </Link>
 
                 <nav className="hidden items-center gap-10 lg:flex">

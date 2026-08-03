@@ -9,6 +9,8 @@ import { useCategories } from "@/lib/hooks/useCategories";
 import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import type { Property, UpdatePropertyRequest } from "@/types/property";
+import PropertyGalleryUploader from "@/components/admin/PropertyGalleryUploader";
+import type { PropertyImage } from "@/types/property";
 
 interface EditPropertyDrawerProps {
   property: Property;
@@ -16,7 +18,11 @@ interface EditPropertyDrawerProps {
   onSave: (updates: UpdatePropertyRequest) => Promise<void>;
 }
 
-export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDrawerProps) {
+export function EditPropertyDrawer({
+  property,
+  onClose,
+  onSave,
+}: EditPropertyDrawerProps) {
   const { accessToken } = useAuth();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const [title, setTitle] = useState(property.title);
@@ -24,25 +30,38 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
   const [categoryId, setCategoryId] = useState(property.category_id);
   const [reservePrice, setReservePrice] = useState(property.reserve_price);
   const [status, setStatus] = useState<"draft" | "published">(
-    property.status === "draft" || property.status === "published" ? property.status : "draft",
+    property.status === "draft" || property.status === "published"
+      ? property.status
+      : "draft",
   );
   const [description, setDescription] = useState(property.description ?? "");
   const [bedrooms, setBedrooms] = useState(property.bedrooms?.toString() ?? "");
-  const [bathrooms, setBathrooms] = useState(property.bathrooms?.toString() ?? "");
-  const [areaSqft, setAreaSqft] = useState(property.area_sqft?.toString() ?? "");
+  const [bathrooms, setBathrooms] = useState(
+    property.bathrooms?.toString() ?? "",
+  );
+  const [areaSqft, setAreaSqft] = useState(
+    property.area_sqft?.toString() ?? "",
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(property.image_url);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    property.image_url,
+  );
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<PropertyImage[]>(property.images);
 
   const isSold = property.status === "sold";
   const selectedMain = categories.find(
-    (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
+    (main) =>
+      main.id === categoryId ||
+      main.children.some((child) => child.id === categoryId),
   );
-  const showResidentialFields = isRealEstateCategory(selectedMain?.name ?? property.category_name);
+  const showResidentialFields = isRealEstateCategory(
+    selectedMain?.name ?? property.category_name,
+  );
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -101,8 +120,10 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
         status,
         description,
         image_url: imageUrl,
-        bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
+        bedrooms:
+          showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
+        bathrooms:
+          showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
         area_sqft: areaSqft ? Number(areaSqft) : undefined,
       });
     } catch (err) {
@@ -122,16 +143,28 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
         className={`relative flex h-full w-full max-w-md flex-col bg-white shadow-xl transition-transform duration-200 ease-out ${isVisible ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-neutral-200 p-5">
-          <h2 className="text-lg font-semibold text-neutral-900">Edit Property</h2>
-          <button type="button" onClick={handleClose} aria-label="Close" className="text-neutral-400 hover:text-neutral-600">
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Edit Property
+          </h2>
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Close"
+            className="text-neutral-400 hover:text-neutral-600"
+          >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto p-5">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-1 flex-col overflow-y-auto p-5"
+        >
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Photo</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Photo
+              </label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -142,7 +175,11 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               />
               {imagePreview ? (
                 <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
-                  <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                   {!isSold ? (
                     <button
                       type="button"
@@ -169,7 +206,16 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
                 </button>
               )}
             </div>
-
+            {!isSold && accessToken && (
+              <div>
+                <PropertyGalleryUploader
+                  propertyId={property.id}
+                  accessToken={accessToken}
+                  images={images}
+                  onChange={setImages}
+                />
+              </div>
+            )}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
                 Title <span className="text-danger-500">*</span>
@@ -195,11 +241,20 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Category</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Category
+              </label>
               {categoriesLoading ? (
-                <p className="text-xs text-neutral-500">Loading categories...</p>
+                <p className="text-xs text-neutral-500">
+                  Loading categories...
+                </p>
               ) : (
-                <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} disabled={isSold} />
+                <CategorySelect
+                  categories={categories}
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  disabled={isSold}
+                />
               )}
             </div>
 
@@ -219,7 +274,9 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             {showResidentialFields ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bedrooms</label>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                    Bedrooms
+                  </label>
                   <input
                     type="number"
                     value={bedrooms}
@@ -229,7 +286,9 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">Bathrooms</label>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                    Bathrooms
+                  </label>
                   <input
                     type="number"
                     value={bathrooms}
@@ -242,7 +301,9 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             ) : null}
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Square Feet</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Square Feet
+              </label>
               <input
                 type="number"
                 value={areaSqft}
@@ -253,7 +314,9 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Status</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Status
+              </label>
               {isSold ? (
                 <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
                   Sold — set only by a purchase, cannot be edited here.
@@ -271,7 +334,9 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Description</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+                Description
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -297,7 +362,11 @@ export function EditPropertyDrawer({ property, onClose, onSave }: EditPropertyDr
               disabled={isSubmitting || isSold}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isUploadingImage ? "Uploading photo..." : isSubmitting ? "Saving..." : "Save Changes"}
+              {isUploadingImage
+                ? "Uploading photo..."
+                : isSubmitting
+                  ? "Saving..."
+                  : "Save Changes"}
             </button>
           </div>
         </form>
