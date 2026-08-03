@@ -13,8 +13,9 @@ const GLB_CONTENT_TYPE = "model/gltf-binary";
 
 interface AddPropertyDrawerProps {
   onClose: () => void;
-  // extraImageUrls are the gallery photos beyond the cover; the page attaches them after create.
-  onCreate: (payload: CreatePropertyRequest, extraImageUrls: string[]) => Promise<void>;
+  // galleryImageUrls are every uploaded photo; the page attaches them to the gallery after create,
+  // so one image or many are stored the same way (the first also becomes the cover image_url).
+  onCreate: (payload: CreatePropertyRequest, galleryImageUrls: string[]) => Promise<void>;
 }
 
 export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps) {
@@ -125,7 +126,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
           bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
           area_sqft: areaSqft ? Number(areaSqft) : undefined,
         },
-        imageUrls.slice(1),
+        imageUrls,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
