@@ -59,10 +59,10 @@ export default function ListingsPage() {
     [properties, page],
   );
 
-  async function handleCreate(payload: Parameters<typeof createProperty>[1], extraImageUrls: string[]) {
+  async function handleCreate(payload: Parameters<typeof createProperty>[1], galleryImageUrls: string[]) {
     if (!accessToken) return;
     const created = await createProperty(accessToken, payload);
-    for (const url of extraImageUrls) {
+    for (const url of galleryImageUrls) {
       await addPropertyImage(accessToken, created.id, url);
     }
     setShowAddDrawer(false);
