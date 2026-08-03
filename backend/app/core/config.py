@@ -118,6 +118,9 @@ class Settings(BaseSettings):
 
     # MinIO / S3
     s3_endpoint: str = "http://localhost:9000"
+    # Browser-reachable MinIO URL. Leave blank to use s3_endpoint (correct for localhost).
+    # Set PROVENIX_S3_PUBLIC_ENDPOINT when MinIO runs on a separate host (e.g. Docker).
+    s3_public_endpoint: str = ""
     s3_access_key: str = "minioadmin"
     s3_secret_key: str = "minioadmin"  # noqa: S105
     s3_bucket: str = "provenix"

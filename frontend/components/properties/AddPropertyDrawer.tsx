@@ -31,6 +31,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   const [areaSqft, setAreaSqft] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,14 +65,41 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     setTimeout(onClose, 200);
   }
 
-  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
-    if (files && files.length > 0) setImageFiles((prev) => [...prev, ...Array.from(files)]);
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files);
     event.target.value = "";
+
+    const startIndex = imageFiles.length;
+    setImageFiles((prev) => [...prev, ...newFiles]);
+    setImageUrls((prev) => [...prev, ...newFiles.map(() => null)]);
+
+    if (!accessToken) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const uploaded = await Promise.all(
+        newFiles.map((file) => uploadImage(accessToken, file, "property")),
+      );
+      setImageUrls((prev) => {
+        const next = [...prev];
+        uploaded.forEach((url, i) => { next[startIndex + i] = url; });
+        return next;
+      });
+    } catch {
+      setError("Image upload failed. Please try again.");
+      // Remove the failed files
+      setImageFiles((prev) => prev.slice(0, startIndex));
+      setImageUrls((prev) => prev.slice(0, startIndex));
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   function removeImage(index: number) {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleModelSelect(event: React.ChangeEvent<HTMLInputElement>) {
@@ -96,22 +124,24 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
 
     setIsSubmitting(true);
     try {
-      const imageUrls: string[] = [];
       let modelUrl: string | undefined;
-
-      if (accessToken && (imageFiles.length > 0 || modelFile)) {
+      if (accessToken && modelFile) {
         setIsUploading(true);
         try {
-          for (const file of imageFiles) {
-            imageUrls.push(await uploadImage(accessToken, file, "property"));
-          }
-          if (modelFile) {
-            modelUrl = await uploadImage(accessToken, modelFile, "property", GLB_CONTENT_TYPE);
-          }
+          const formData = new FormData();
+          formData.append("file", modelFile);
+          const res = await fetch(`/api/v1/uploads/file?purpose=property`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: formData,
+          });
+          if (res.ok) modelUrl = ((await res.json()) as { url: string }).url;
         } finally {
           setIsUploading(false);
         }
       }
+
+      const uploadedUrls = imageUrls.filter((u): u is string => u !== null);
 
       await onCreate(
         {
@@ -120,13 +150,13 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
           category_id: categoryId,
           reserve_price: reservePrice,
           description: description || undefined,
-          image_url: imageUrls[0],
+          image_url: uploadedUrls[0],
           model_url: modelUrl,
           bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
           bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
           area_sqft: areaSqft ? Number(areaSqft) : undefined,
         },
-        imageUrls,
+        uploadedUrls.slice(1),
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -340,10 +370,10 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isUploading ? "Uploading files..." : isSubmitting ? "Creating..." : "Add Property"}
+              {isUploading ? "Uploading image..." : isSubmitting ? "Creating..." : "Add Property"}
             </button>
           </div>
         </form>

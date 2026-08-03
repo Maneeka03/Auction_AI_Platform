@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, validation_error_handler
 from app.core.redis import redis
 from app.db.session import engine
+from app.services.uploads import configure_cors
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    configure_cors()
     yield
     await redis.aclose()
     await engine.dispose()
