@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Gavel, Star, TrendingUp, Tag, Users } from "lucide-react";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Property } from "@/types/property";
 import type { Auction } from "@/types/auction";
 
@@ -55,7 +56,7 @@ export default function AuctionPropertyCard({
       <div className="relative h-56 w-full overflow-hidden bg-neutral-100">
         {property.image_url ? (
           <Image
-            src={property.image_url}
+            src={resolveMinioUrl(property.image_url)!}
             alt={property.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"

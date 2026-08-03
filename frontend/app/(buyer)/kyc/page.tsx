@@ -118,7 +118,7 @@ export default function KycPage() {
               </div>
             ) : submission?.status === "pending" ? (
               <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-white p-5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-amber-600">
                   <Clock size={20} />
                 </span>
                 <div>

@@ -117,7 +117,7 @@ function StatusBadge({
 }) {
   if (status === "live" && endingSoon) {
     return (
-      <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600">
+      <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-amber-600">
         Ending Soon
       </span>
     );

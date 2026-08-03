@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getAuction } from "@/lib/api/auctions";
+import { getWsBase } from "@/lib/utils/wsBase";
 import type { Auction, AuctionSocketMessage } from "@/types/auction";
-
-const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 
 const RECONNECT_DELAY_MS = 2000;
 const POLL_INTERVAL_MS = 4000;
@@ -13,12 +12,14 @@ interface UseAuctionSocketResult {
   auction: Auction | null;
   connectionState: ConnectionState;
   lastEvent: AuctionSocketMessage["type"] | null;
+  eventCount: number;
 }
 
 export function useAuctionSocket(auctionId: string, accessToken: string | null): UseAuctionSocketResult {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [lastEvent, setLastEvent] = useState<AuctionSocketMessage["type"] | null>(null);
+  const [eventCount, setEventCount] = useState(0);
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +59,7 @@ export function useAuctionSocket(auctionId: string, accessToken: string | null):
       setConnectionState((prev) => (prev === "polling" ? prev : "connecting"));
 
       const socket = new WebSocket(
-        `${WS_BASE_URL}/api/v1/auctions/${auctionId}/ws?token=${encodeURIComponent(accessToken as string)}`,
+        `${getWsBase()}/api/v1/auctions/${auctionId}/ws?token=${encodeURIComponent(accessToken as string)}`,
       );
       socketRef.current = socket;
 
@@ -74,6 +75,7 @@ export function useAuctionSocket(auctionId: string, accessToken: string | null):
           const message: AuctionSocketMessage = JSON.parse(event.data);
           setAuction(message.auction);
           setLastEvent(message.type);
+          setEventCount((n) => n + 1);
         } catch {}
       };
 
@@ -102,5 +104,5 @@ export function useAuctionSocket(auctionId: string, accessToken: string | null):
     };
   }, [auctionId, accessToken, startPolling, stopPolling]);
 
-  return { auction, connectionState, lastEvent };
+  return { auction, connectionState, lastEvent, eventCount };
 }

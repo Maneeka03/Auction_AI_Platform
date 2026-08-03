@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, BedDouble, Bath, Ruler } from "lucide-react";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Property } from "@/types/property";
 
 interface FeaturedAssetCardProps {
@@ -15,7 +16,7 @@ export function FeaturedAssetCard({ property }: FeaturedAssetCardProps) {
     >
       <div className="relative h-60 overflow-hidden bg-neutral-100">
         {property.image_url ? (
-          <Image src={property.image_url} alt={property.title} fill sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+          <Image src={resolveMinioUrl(property.image_url)!} alt={property.title} fill sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized
           />
         ) : (

@@ -14,7 +14,7 @@ interface LeadBoardProps {
 
 const COLUMNS: { status: LeadStatus; label: string; barColor: string; dotColor: string }[] = [
   { status: "new", label: "New", barColor: "bg-sky-500", dotColor: "bg-sky-500" },
-  { status: "contacted", label: "Contacted", barColor: "bg-amber-500", dotColor: "bg-amber-500" },
+  { status: "contacted", label: "Contacted", barColor: "bg-blue-500", dotColor: "bg-blue-500" },
   { status: "qualified", label: "Qualified", barColor: "bg-purple-500", dotColor: "bg-purple-500" },
   { status: "won", label: "Won", barColor: "bg-success-500", dotColor: "bg-success-500" },
   { status: "lost", label: "Lost", barColor: "bg-danger-500", dotColor: "bg-danger-500" },

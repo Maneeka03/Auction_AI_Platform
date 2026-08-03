@@ -19,7 +19,7 @@ export const buyerNav: NavSection[] = [
   {
     title: "Discover",
     items: [
-      { label: "Browse Auctions", href: "/live-auctions", icon: Gavel },
+      { label: "Browse Auctions", href: "/browse-auctions", icon: Gavel },
       { label: "Recommended Assets", href: "/recommendations", icon: Sparkles },
     ],
   },

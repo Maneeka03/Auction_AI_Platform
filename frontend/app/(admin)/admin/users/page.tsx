@@ -54,7 +54,10 @@ export default function UserManagementPage() {
         role: roleFilter || undefined,
         status: statusFilter || undefined,
       });
-      setUsers(result.items);
+      const staffOnly = result.items.filter((u) =>
+        u.roles.some((r) => r !== "buyer" && r !== "seller"),
+      );
+      setUsers(staffOnly);
       setTotal(result.total);
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to load users.");

@@ -14,6 +14,7 @@ import { useAuctionSocket } from "@/lib/hooks/useAuctionSocket";
 import { useCountdown } from "@/lib/hooks/useCountdown";
 import { useAuth } from "@/lib/auth/session-context";
 import { can } from "@/lib/auth/permissions";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Bid } from "@/types/bid";
 
 function formatMoney(value: string | null): string {
@@ -26,7 +27,7 @@ export default function LiveBiddingRoomPage() {
   const router = useRouter();
   const { accessToken, session } = useAuth();
 
-  const { auction, connectionState, lastEvent } = useAuctionSocket(auctionId, accessToken);
+  const { auction, connectionState, eventCount } = useAuctionSocket(auctionId, accessToken);
   const countdown = useCountdown(auction?.ends_at ?? new Date().toISOString());
 
   const [bids, setBids] = useState<Bid[]>([]);
@@ -70,7 +71,7 @@ export default function LiveBiddingRoomPage() {
   useEffect(() => {
     if (!accessToken) return;
     void listBids(accessToken, auctionId).then(setBids).catch(() => {});
-  }, [accessToken, auctionId, lastEvent]);
+  }, [accessToken, auctionId, eventCount]);
 
   async function submitBid(amount: string) {
     if (!accessToken) return;
@@ -149,9 +150,9 @@ export default function LiveBiddingRoomPage() {
 
         {/* Image / gradient header */}
         <div className="relative h-52 overflow-hidden bg-neutral-900">
-          {auction.image_url ? (
+          {resolveMinioUrl(auction.image_url) ? (
             <img
-              src={auction.image_url}
+              src={resolveMinioUrl(auction.image_url)!}
               alt={auction.title}
               className="h-full w-full object-cover opacity-70"
             />
@@ -171,7 +172,8 @@ export default function LiveBiddingRoomPage() {
 
           {/* Status badges top-right */}
           <div className="absolute right-5 top-5 flex items-center gap-2">
-            <ConnectionStatusBadge state={connectionState} />
+            {/* Show connection badge only for non-live states (Connecting / Reconnecting / Polling) */}
+            {connectionState !== "live" && <ConnectionStatusBadge state={connectionState} />}
             {isLive && (
               <span className="flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white shadow">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />

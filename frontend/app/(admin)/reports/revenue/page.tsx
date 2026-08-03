@@ -285,7 +285,7 @@ function StatCard({
   const iconBg: Record<typeof accent, string> = {
     success: "bg-success-500/10 text-success-500",
     brand: "bg-brand-500/10 text-brand-600",
-    amber: "bg-amber-500/10 text-amber-600",
+    amber: "bg-blue-500/10 text-amber-600",
     sky: "bg-sky-500/10 text-sky-600",
   };
 

@@ -30,7 +30,7 @@ const STATE_LABEL: Record<EscrowState, string> = {
 };
 
 const STATE_BADGE: Record<EscrowState, string> = {
-  funds_locked: "bg-amber-500/10 text-amber-700",
+  funds_locked: "bg-blue-500/10 text-amber-700",
   asset_held: "bg-sky-500/10 text-sky-700",
   authenticated: "bg-purple-500/10 text-purple-700",
   released: "bg-success-500/10 text-success-500",

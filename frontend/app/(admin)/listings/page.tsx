@@ -15,8 +15,9 @@ import { exportToExcel } from "@/lib/utils/exportToExcel";
 import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { ApiRequestError } from "@/lib/api/client";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
+import { PropertyImagesDrawer } from "@/components/properties/PropertyImagesDrawer";
 import { useAuth } from "@/lib/auth/session-context";
-import type { Property } from "@/types/property";
+import type { Property, PropertyImage } from "@/types/property";
 
 function formatPrice(value: string): string {
   return `$${Number(value).toLocaleString()}`;
@@ -33,6 +34,7 @@ export default function ListingsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [managingImagesProperty, setManagingImagesProperty] = useState<Property | null>(null);
 
   const fetchProperties = useCallback(async () => {
     if (!accessToken) return;
@@ -84,6 +86,15 @@ export default function ListingsPage() {
         err instanceof ApiRequestError ? err.message : "Failed to delete property.",
       );
     }
+  }
+
+  function handleImagesUpdate(propertyId: string, images: PropertyImage[]) {
+    setProperties((prev) =>
+      prev.map((p) => (p.id === propertyId ? { ...p, images, image_url: images[0]?.image_url ?? p.image_url } : p)),
+    );
+    setManagingImagesProperty((prev) =>
+      prev?.id === propertyId ? { ...prev, images, image_url: images[0]?.image_url ?? prev.image_url } : prev,
+    );
   }
 
   function handleExport() {
@@ -211,6 +222,7 @@ export default function ListingsPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end">
                           <PropertyRowMenu
+                            onManageImages={() => setManagingImagesProperty(property)}
                             onEdit={() => setEditingProperty(property)}
                             onDelete={() => void handleDelete(property)}
                           />
@@ -241,6 +253,13 @@ export default function ListingsPage() {
             property={editingProperty}
             onClose={() => setEditingProperty(null)}
             onSave={handleSave}
+          />
+        ) : null}
+        {managingImagesProperty ? (
+          <PropertyImagesDrawer
+            property={managingImagesProperty}
+            onClose={() => setManagingImagesProperty(null)}
+            onUpdate={(images) => handleImagesUpdate(managingImagesProperty.id, images)}
           />
         ) : null}
       </RequirePermission>

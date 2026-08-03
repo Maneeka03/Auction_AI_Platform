@@ -1,7 +1,7 @@
 import { presignUpload } from "@/lib/api/uploads";
 import type { UploadPurpose } from "@/types/upload";
 
-const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_S3_PUBLIC_BASE_URL ?? "http://localhost:9000/provenix";
+const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_S3_PUBLIC_BASE_URL ?? "/minio/provenix";
 
 export async function uploadImage(
   accessToken: string,

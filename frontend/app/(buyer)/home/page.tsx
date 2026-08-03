@@ -1,19 +1,23 @@
 "use client";
 
-import { Bookmark, Gavel, MapPin, Package, Search, ShoppingBag, Sparkles, Star } from "lucide-react";
+import { Bookmark, Gavel, MapPin, Package, Search, ShoppingBag, Star } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { RibbonKpiCard } from "@/components/dashboard/RibbonKpiCard";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
-import { getBuyerDashboard, getRecommendations } from "@/lib/api/buyer";
+import { listAuctions } from "@/lib/api/auctions";
+import { getBuyerDashboard } from "@/lib/api/buyer";
 import { listProperties } from "@/lib/api/properties";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { useAuth } from "@/lib/auth/session-context";
+import type { Auction } from "@/types/auction";
 import type { RibbonKpi } from "@/types/dashboard";
 import type { BuyerDashboard } from "@/types/portal";
 import type { Property } from "@/types/property";
 
 const QUICK_LINKS = [
-  { label: "Browse Auctions", href: "/live-auctions", icon: Gavel, desc: "Join live auctions now" },
+  { label: "Browse Auctions", href: "/browse-auctions", icon: Gavel, desc: "Join live auctions now" },
   { label: "My Watchlist", href: "/watchlist", icon: Star, desc: "Track your saved items" },
   { label: "Previous Bids", href: "/bids", icon: Bookmark, desc: "Review your bid history" },
   { label: "Saved Searches", href: "/saved-searches", icon: Search, desc: "Your saved filters" },
@@ -28,16 +32,57 @@ function buildKpis(stats: BuyerDashboard): RibbonKpi[] {
   ];
 }
 
-function PropertyCard({ p }: { p: Property }) {
+function AuctionCard({ a }: { a: Auction }) {
+  const imgSrc = resolveMinioUrl(a.image_url);
+  const currentPrice = a.current_bid ?? a.opening_bid;
   return (
-    <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      {p.image_url ? (
-        <img src={p.image_url} alt={p.title} className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-105" />
-      ) : (
-        <div className="flex h-40 items-center justify-center bg-neutral-100">
-          <Package size={28} className="text-neutral-300" />
+    <Link href={`/live-auctions/${a.id}`} className="group block overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
+      <div className="relative h-40 w-full bg-neutral-100">
+        {imgSrc ? (
+          <Image src={imgSrc} alt={a.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Package size={28} className="text-neutral-300" />
+          </div>
+        )}
+        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-semibold text-white shadow">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+          Live
+        </span>
+      </div>
+      <div className="p-4">
+        <span className="inline-flex rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">
+          {a.category_name}
+        </span>
+        <p className="mt-1.5 truncate text-sm font-semibold text-neutral-900">{a.title}</p>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-neutral-400">
+          <MapPin size={11} /> {a.address}
+        </p>
+        <div className="mt-3">
+          <p className="text-xs text-neutral-400">Current bid</p>
+          <p className="text-sm font-bold text-brand-600">${Number(currentPrice).toLocaleString()}</p>
         </div>
-      )}
+      </div>
+    </Link>
+  );
+}
+
+function ListingCard({ p }: { p: Property }) {
+  const imgSrc = resolveMinioUrl(p.image_url);
+  return (
+    <Link href={`/properties/${p.id}`} className="group block overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
+      <div className="relative h-40 w-full bg-neutral-100">
+        {imgSrc ? (
+          <Image src={imgSrc} alt={p.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Package size={28} className="text-neutral-300" />
+          </div>
+        )}
+        <span className="absolute left-2 top-2 rounded-full bg-brand-500 px-2 py-0.5 text-xs font-semibold text-white shadow">
+          Listed
+        </span>
+      </div>
       <div className="p-4">
         <span className="inline-flex rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">
           {p.category_name}
@@ -46,16 +91,12 @@ function PropertyCard({ p }: { p: Property }) {
         <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-neutral-400">
           <MapPin size={11} /> {p.address}
         </p>
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-sm font-bold text-brand-600">
-            ${Number(p.reserve_price).toLocaleString()}
-          </p>
-          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-            Live
-          </span>
+        <div className="mt-3">
+          <p className="text-xs text-neutral-400">Reserve price</p>
+          <p className="text-sm font-bold text-brand-600">${Number(p.reserve_price).toLocaleString()}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -67,10 +108,7 @@ function SkeletonCard() {
         <div className="h-3 w-16 rounded bg-neutral-100" />
         <div className="h-4 w-3/4 rounded bg-neutral-100" />
         <div className="h-3 w-1/2 rounded bg-neutral-100" />
-        <div className="flex justify-between pt-1">
-          <div className="h-4 w-20 rounded bg-neutral-100" />
-          <div className="h-4 w-10 rounded bg-neutral-100" />
-        </div>
+        <div className="h-4 w-20 rounded bg-neutral-100 pt-1" />
       </div>
     </div>
   );
@@ -81,8 +119,8 @@ export default function BuyerHomePage() {
   const firstName = session?.full_name.split(" ")[0] ?? "there";
 
   const [stats, setStats] = useState<BuyerDashboard | null>(null);
-  const [newListings, setNewListings] = useState<Property[]>([]);
-  const [recommendations, setRecommendations] = useState<Property[]>([]);
+  const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
+  const [publishedListings, setPublishedListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,24 +129,29 @@ export default function BuyerHomePage() {
     setLoading(true);
     Promise.all([
       getBuyerDashboard(accessToken),
-      listProperties(accessToken, { status: "published", size: 6 }),
-      getRecommendations(accessToken, 6).catch(() => [] as Property[]),
+      listAuctions(accessToken, { status: "live", size: 3 }),
+      listProperties(accessToken, { status: "published", size: 3 }),
     ])
-      .then(([dash, page, recs]) => {
+      .then(([dash, auctionsPage, propsPage]) => {
         setStats(dash);
-        setNewListings(page.items);
-        setRecommendations(recs);
+        // Live auctions take priority; fill remaining slots up to 3 with published listings
+        const lives = auctionsPage.items.slice(0, 3);
+        const remaining = Math.max(0, 3 - lives.length);
+        setLiveAuctions(lives);
+        setPublishedListings(propsPage.items.slice(0, remaining));
       })
       .catch(() => setError("Failed to load dashboard."))
       .finally(() => setLoading(false));
   }, [accessToken]);
+
+  const totalItems = liveAuctions.length + publishedListings.length;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       <WelcomeBanner
         name={firstName}
         message="Discover auctions, track your bids, and win your next asset."
-        primaryAction={{ label: "Browse Auctions", href: "/live-auctions" }}
+        primaryAction={{ label: "Browse Auctions", href: "/browse-auctions" }}
         secondaryAction={{ label: "My Watchlist", href: "/watchlist" }}
       />
 
@@ -154,16 +197,21 @@ export default function BuyerHomePage() {
         </div>
       </div>
 
-      {/* New Listings */}
+      {/* Recommended Properties & Assets */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">New Listings</h2>
-            <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-              Just Added
-            </span>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">
+              Recommended Properties & Assets
+            </h2>
+            {liveAuctions.length > 0 && (
+              <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+                {liveAuctions.length} Live
+              </span>
+            )}
           </div>
-          <Link href="/properties" className="text-xs font-medium text-brand-600 hover:text-brand-700">
+          <Link href="/browse-auctions" className="text-xs font-medium text-brand-600 hover:text-brand-700">
             Browse all →
           </Link>
         </div>
@@ -172,43 +220,26 @@ export default function BuyerHomePage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        ) : newListings.length === 0 ? (
+        ) : totalItems === 0 ? (
           <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center">
             <Package size={28} className="mx-auto mb-2 text-neutral-300" />
-            <p className="text-sm text-neutral-500">No published listings yet. Check back soon.</p>
+            <p className="text-sm text-neutral-500">No active auctions or listings right now. Check back soon.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {newListings.map((p) => <PropertyCard key={p.id} p={p} />)}
+            {liveAuctions.map((a) => <AuctionCard key={a.id} a={a} />)}
+            {publishedListings.map((p) => <ListingCard key={p.id} p={p} />)}
           </div>
         )}
       </div>
 
-      {/* Recommended */}
-      {recommendations.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Recommended for You</h2>
-              <Sparkles size={14} className="text-brand-400" />
-            </div>
-            <Link href="/recommendations" className="text-xs font-medium text-brand-600 hover:text-brand-700">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recommendations.map((p) => <PropertyCard key={p.id} p={p} />)}
-          </div>
-        </div>
-      )}
-
-      {!loading && stats?.active_bids === 0 && stats?.purchases === 0 && newListings.length === 0 && (
+      {!loading && stats?.active_bids === 0 && stats?.purchases === 0 && totalItems === 0 && (
         <div className="rounded-xl border border-neutral-200 bg-white p-10 text-center">
           <ShoppingBag size={32} className="mx-auto mb-3 text-neutral-300" />
           <p className="text-sm font-medium text-neutral-600">Your dashboard is empty</p>
           <p className="mt-1 text-xs text-neutral-400">Start by browsing live auctions and placing your first bid.</p>
           <Link
-            href="/live-auctions"
+            href="/browse-auctions"
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600"
           >
             <Gavel size={15} /> Browse Auctions

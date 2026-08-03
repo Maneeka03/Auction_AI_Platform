@@ -1,6 +1,8 @@
-import { CalendarPlus, Gavel, Lock, Pencil, Trash2, Users, XCircle } from "lucide-react";
+import Image from "next/image";
+import { CalendarPlus, Gavel, Lock, Package, Pencil, Trash2, Users, XCircle } from "lucide-react";
 import type { Auction } from "@/types/auction";
 import { buildGoogleCalendarUrl } from "@/lib/utils/googleCalendar";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 
 const statusStyles: Record<Auction["status"], string> = {
   live: "bg-danger-500/10 text-danger-600",
@@ -43,95 +45,114 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
     endsAt: auction.ends_at,
   });
 
+  const imageUrl = resolveMinioUrl(auction.image_url);
+
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
-          <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{auction.title}</h3>
-          <p className="text-xs text-neutral-500">{auction.address}</p>
-        </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[auction.status]}`}>
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      {/* Thumbnail — single status badge here, no duplicate in the header */}
+      <div className="relative h-44 w-full bg-neutral-100">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={auction.title}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Package size={32} className="text-neutral-300" />
+          </div>
+        )}
+        <span
+          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${statusStyles[auction.status]}`}
+        >
           {auction.status === "live" ? (
-            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-danger-500 align-middle" />
+            <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-danger-500 align-middle" />
           ) : null}
           {statusLabels[auction.status]}
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p className="text-xs text-neutral-500">Current Bid</p>
-          <p className="font-semibold text-neutral-900">{formatMoney(auction.current_bid)}</p>
+      <div className="p-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
+        <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{auction.title}</h3>
+        <p className="text-xs text-neutral-500">{auction.address}</p>
+
+        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-neutral-500">Current Bid</p>
+            <p className="font-semibold text-neutral-900">{formatMoney(auction.current_bid)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-neutral-500">Reserve Price</p>
+            <p className="font-semibold text-neutral-900">{formatMoney(auction.reserve_price)}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs text-neutral-500">Reserve Price</p>
-          <p className="font-semibold text-neutral-900">{formatMoney(auction.reserve_price)}</p>
+
+        <p className="mt-3 text-xs text-neutral-500">
+          {formatDateTime(auction.starts_at)} – {formatDateTime(auction.ends_at)}
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span
+            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
+              auction.room_access === "invite_only"
+                ? "bg-blue-500/10 text-amber-700"
+                : "bg-sky-500/10 text-sky-700"
+            }`}
+          >
+            {auction.room_access === "invite_only" ? <Lock size={11} /> : <Users size={11} />}
+            {auction.room_access === "invite_only" ? "Invite Only" : "Open to Everyone"}
+          </span>
+          <span
+            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
+              auction.bidder_count > 0 ? "bg-success-500/10 text-success-500" : "bg-neutral-100 text-neutral-600"
+            }`}
+          >
+            <Gavel size={11} />
+            {auction.bidder_count} bidders
+          </span>
         </div>
-      </div>
 
-      <p className="mt-3 text-xs text-neutral-500">
-        {formatDateTime(auction.starts_at)} – {formatDateTime(auction.ends_at)}
-      </p>
-
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span
-          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
-            auction.room_access === "invite_only"
-              ? "bg-amber-500/10 text-amber-700"
-              : "bg-sky-500/10 text-sky-700"
-          }`}
+        <a
+          href={calendarUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
         >
-          {auction.room_access === "invite_only" ? <Lock size={11} /> : <Users size={11} />}
-          {auction.room_access === "invite_only" ? "Invite Only" : "Open to Everyone"}
-        </span>
-        <span
-          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
-            auction.bidder_count > 0 ? "bg-success-500/10 text-success-500" : "bg-neutral-100 text-neutral-600"
-          }`}
-        >
-          <Gavel size={11} />
-          {auction.bidder_count} bidders
-        </span>
-      </div>
+          <CalendarPlus size={15} /> Add to Google Calendar
+        </a>
 
-      
-       <a href={calendarUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-      >
-        <CalendarPlus size={15} /> Add to Google Calendar
-      </a>
+        {canManage && auction.status !== "ended" ? (
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit?.(auction)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            >
+              <Pencil size={14} /> Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onEndAuction?.(auction)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-danger-200 py-2 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
+            >
+              <XCircle size={14} /> End Auction
+            </button>
+          </div>
+        ) : null}
 
-      {canManage && auction.status !== "ended" ? (
-        <div className="mt-2 flex gap-2">
+        {canManage && auction.bidder_count === 0 ? (
           <button
             type="button"
-            onClick={() => onEdit?.(auction)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            onClick={() => onDelete?.(auction)}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-danger-200 py-2 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
           >
-            <Pencil size={14} /> Edit
+            <Trash2 size={14} /> Delete Auction
           </button>
-          <button
-            type="button"
-            onClick={() => onEndAuction?.(auction)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-danger-200 py-2 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
-          >
-            <XCircle size={14} /> End Auction
-          </button>
-        </div>
-      ) : null}
-
-      {canManage && auction.bidder_count === 0 ? (
-        <button
-          type="button"
-          onClick={() => onDelete?.(auction)}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-danger-200 py-2 text-sm font-medium text-danger-600 hover:bg-danger-500/5"
-        >
-          <Trash2 size={14} /> Delete Auction
-        </button>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

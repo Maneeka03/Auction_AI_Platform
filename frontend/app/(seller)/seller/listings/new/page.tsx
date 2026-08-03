@@ -1,20 +1,24 @@
 "use client";
 
-import { ArrowLeft, ImagePlus } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, ImagePlus, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listCategories } from "@/lib/api/categories";
 import { createListing } from "@/lib/api/seller";
+import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
 import type { CategoryTree } from "@/types/category";
 
 export default function NewListingPage() {
   const { accessToken } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form fields
@@ -23,7 +27,8 @@ export default function NewListingPage() {
   const [categoryId, setCategoryId] = useState("");
   const [reservePrice, setReservePrice] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [areaSqft, setAreaSqft] = useState("");
@@ -35,11 +40,37 @@ export default function NewListingPage() {
       .catch(() => null);
   }, [accessToken]);
 
-  // Flatten category tree for the select dropdown
   const flatCategories = categories.flatMap((parent) => [
     { id: parent.id, label: parent.name, isParent: true },
     ...parent.children.map((child) => ({ id: child.id, label: `  ${child.name}`, isParent: false })),
   ]);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !accessToken) return;
+
+    // Local preview immediately
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+    setImageUrl(null);
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadImage(accessToken, file, "property");
+      setImageUrl(url);
+    } catch {
+      setError("Image upload failed. Please try again.");
+      setImagePreview(null);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function clearImage() {
+    setImageUrl(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +78,10 @@ export default function NewListingPage() {
 
     if (!title.trim() || !address.trim() || !categoryId || !reservePrice) {
       setError("Title, address, category, and reserve price are required.");
+      return;
+    }
+    if (isUploading) {
+      setError("Please wait — image is still uploading.");
       return;
     }
 
@@ -59,7 +94,7 @@ export default function NewListingPage() {
         category_id: categoryId,
         reserve_price: reservePrice,
         description: description.trim() || null,
-        image_url: imageUrl.trim() || null,
+        image_url: imageUrl ?? null,
         bedrooms: bedrooms ? Number(bedrooms) : null,
         bathrooms: bathrooms ? Number(bathrooms) : null,
         area_sqft: areaSqft ? Number(areaSqft) : null,
@@ -91,7 +126,7 @@ export default function NewListingPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
           <h2 className="text-sm font-semibold text-neutral-700">Basic Information</h2>
 
           <div>
@@ -167,9 +202,11 @@ export default function NewListingPage() {
         </div>
 
         {/* Property Details */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-neutral-700">Property Details <span className="text-xs font-normal text-neutral-400">(optional)</span></h2>
-
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-neutral-700">
+            Property Details{" "}
+            <span className="text-xs font-normal text-neutral-400">(optional)</span>
+          </h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-700">Bedrooms</label>
@@ -207,38 +244,81 @@ export default function NewListingPage() {
           </div>
         </div>
 
-        {/* Image */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-neutral-700">Image <span className="text-xs font-normal text-neutral-400">(optional)</span></h2>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-700">Image URL</label>
-            <div className="flex gap-2">
-              <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                className="h-10 flex-1 rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt="preview"
-                  className="h-10 w-10 rounded-lg border border-neutral-200 object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        {/* Image upload from device */}
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-neutral-700">
+            Property Image{" "}
+            <span className="text-xs font-normal text-neutral-400">(optional)</span>
+          </h2>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {imagePreview ? (
+            <div className="relative">
+              <div className="relative h-52 w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-300">
-                  <ImagePlus size={16} />
-                </div>
-              )}
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <Loader2 size={24} className="animate-spin text-white" />
+                    <span className="ml-2 text-sm font-medium text-white">Uploading…</span>
+                  </div>
+                )}
+                {!isUploading && imageUrl && (
+                  <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-green-500 px-2.5 py-1 text-xs font-semibold text-white">
+                    ✓ Uploaded
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={clearImage}
+                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-neutral-700 text-white hover:bg-neutral-900"
+              >
+                <X size={12} />
+              </button>
             </div>
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-36 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-neutral-400 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-500"
+            >
+              <ImagePlus size={28} />
+              <span className="text-sm font-medium">Click to upload from your device</span>
+              <span className="text-xs">PNG, JPG, WEBP up to 10 MB</span>
+            </button>
+          )}
+
+          {imagePreview && !isUploading && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs text-brand-600 hover:underline"
+            >
+              Change image
+            </button>
+          )}
         </div>
 
         {/* Approval notice */}
         <div className="rounded-lg border border-brand-100 bg-brand-50 p-4 text-xs text-brand-700">
-          <p className="font-semibold mb-1">What happens after you submit?</p>
-          <p>Your listing goes to the approval panel — Director, Appraiser, and Legal & Finance each review it. Once 2 of 3 approve, it goes live automatically.</p>
+          <p className="mb-1 font-semibold">What happens after you submit?</p>
+          <p>
+            Your listing goes to the approval panel — Director, Appraiser, and Legal &amp; Finance each review
+            it. Once <strong>2 of 3 approve</strong>, it becomes eligible for auction creation automatically.
+          </p>
         </div>
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -252,7 +332,7 @@ export default function NewListingPage() {
           </Link>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
           >
             {isSubmitting ? "Submitting…" : "Submit Listing"}
