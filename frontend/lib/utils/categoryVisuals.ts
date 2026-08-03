@@ -15,7 +15,7 @@ export function getCategoryIcon(categoryName: string): LucideIcon {
 
 const COLOR_PALETTE = [
   "bg-brand-500/10 text-brand-600",
-  "bg-amber-500/10 text-amber-600",
+  "bg-blue-500/10 text-amber-600",
   "bg-emerald-500/10 text-emerald-600",
   "bg-sky-500/10 text-sky-600",
   "bg-purple-500/10 text-purple-600",

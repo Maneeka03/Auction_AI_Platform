@@ -3,7 +3,7 @@ import type { ConnectionState } from "@/lib/hooks/useAuctionSocket";
 const config: Record<ConnectionState, { label: string; className: string; pulse: boolean }> = {
   connecting: { label: "Connecting...", className: "bg-neutral-100 text-neutral-500", pulse: false },
   live: { label: "Live", className: "bg-danger-500/10 text-danger-600", pulse: true },
-  reconnecting: { label: "Reconnecting...", className: "bg-amber-500/10 text-amber-600", pulse: false },
+  reconnecting: { label: "Reconnecting...", className: "bg-blue-500/10 text-amber-600", pulse: false },
   polling: { label: "Updating periodically", className: "bg-sky-500/10 text-sky-600", pulse: false },
 };
 

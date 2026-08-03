@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getCategoryIcon } from "@/lib/utils/categoryVisuals";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 
 interface PropertyThumbnailProps {
   imageUrl: string | null;
@@ -10,7 +11,7 @@ export function PropertyThumbnail({ imageUrl, categoryName }: PropertyThumbnailP
   if (imageUrl) {
     return (
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-        <Image src={imageUrl} alt="" fill sizes="36px" unoptimized className="object-cover" />
+        <Image src={resolveMinioUrl(imageUrl)!} alt="" fill sizes="36px" unoptimized className="object-cover" />
       </span>
     );
   }

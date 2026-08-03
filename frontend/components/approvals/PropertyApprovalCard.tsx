@@ -4,7 +4,7 @@ import type { ApproverSeat, Property, PropertyStatus } from "@/types/property";
 const SEATS: ApproverSeat[] = ["director", "appraiser", "legal_finance"];
 
 const outcomeBadge: Record<PropertyStatus, { label: string; className: string }> = {
-  draft: { label: "Awaiting Approval", className: "bg-amber-500/10 text-amber-600" },
+  draft: { label: "Awaiting Approval", className: "bg-blue-500/10 text-amber-600" },
   published: { label: "Approved — Live", className: "bg-success-500/10 text-success-500" },
   rejected: { label: "Rejected", className: "bg-danger-500/10 text-danger-600" },
   sold: { label: "Sold", className: "bg-brand-500/10 text-brand-600" },

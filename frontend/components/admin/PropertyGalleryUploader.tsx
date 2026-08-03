@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { uploadImage } from "@/lib/utils/uploadImage";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { addPropertyImage, removePropertyImage } from "@/lib/api/properties";
 import type { PropertyImage } from "@/types/property";
 
@@ -77,7 +78,7 @@ export default function PropertyGalleryUploader({
               className="group relative h-24 overflow-hidden rounded-lg bg-neutral-100"
             >
               <Image
-                src={img.image_url}
+                src={resolveMinioUrl(img.image_url)!}
                 alt=""
                 fill
                 className="object-cover"

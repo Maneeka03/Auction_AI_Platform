@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BedDouble, Bath, Ruler, Gavel, Users, Star, TrendingUp, Tag } from "lucide-react";
 import { listPublicAuctions } from "@/lib/api/auctions";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { getPublicProperty } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -36,7 +37,9 @@ function timeRemaining(endsAt: string, now: number): string {
     return `${hours}h ${mins}m ${secs}s`;
 }
 function formatMoney(value: string | null): string {return value ? `$${Number(value).toLocaleString()}` : "—";}
-function targetFor(auctionId: string, loggedIn: boolean): string {return loggedIn ? `/live-auctions/${auctionId}` : "/login";}
+function targetFor(auctionId: string, loggedIn: boolean): string {
+  return loggedIn ? `/live-auctions/${auctionId}` : `/login?redirect=/live-auctions/${auctionId}`;
+}
 
 export default function UpcomingAuctions() {
 
@@ -59,7 +62,7 @@ export default function UpcomingAuctions() {
         setError(null);
 
         try {
-            const page = await listPublicAuctions({size: 6, status: activeTab === "all" ? undefined : activeTab,});
+            const page = await listPublicAuctions({size: 5, status: activeTab === "all" ? undefined : activeTab,});
             const withProperties = await Promise.all(
                 page.items.map(async (auction) => {
                     try {
@@ -119,7 +122,7 @@ export default function UpcomingAuctions() {
                             >
                                 <div className="relative h-56 w-full shrink-0 overflow-hidden bg-neutral-100 md:h-auto md:w-72">
                                     {auction.image_url ? (
-                                        <Image src={auction.image_url} alt={auction.title} fill
+                                        <Image src={resolveMinioUrl(auction.image_url)!} alt={auction.title} fill
                                             className="object-cover transition-transform duration-500 group-hover:scale-105"
                                             unoptimized
                                         />

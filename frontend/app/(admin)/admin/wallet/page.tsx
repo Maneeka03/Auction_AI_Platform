@@ -107,7 +107,7 @@ export default function AdminWalletPage() {
               {transactions.length === 0 ? (
                 <p className="py-6 text-center text-sm text-neutral-400">No activity yet.</p>
               ) : (
-                <ul className="mt-3 divide-y divide-neutral-100">
+                <ul className="mt-3 max-h-96 divide-y divide-neutral-100 overflow-y-auto pr-1">
                   {transactions.map((entry) => {
                     const amountValue = Number(entry.amount);
                     return (

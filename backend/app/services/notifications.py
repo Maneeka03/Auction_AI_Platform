@@ -90,3 +90,13 @@ async def mark_read(session: AsyncSession, user_id: uuid.UUID, ids: list[uuid.UU
 
     await session.execute(query.values(read_at=datetime.now(UTC)))
     await session.commit()
+
+
+async def delete_one(session: AsyncSession, user_id: uuid.UUID, notification_id: uuid.UUID) -> bool:
+    """Delete a single notification. Returns False when it doesn't belong to user_id."""
+    row = await session.get(Notification, notification_id)
+    if row is None or row.user_id != user_id:
+        return False
+    await session.delete(row)
+    await session.commit()
+    return True

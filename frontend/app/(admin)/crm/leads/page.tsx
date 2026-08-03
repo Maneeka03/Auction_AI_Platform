@@ -21,7 +21,7 @@ import type { Lead, LeadStatus } from "@/types/crm";
 
 const STATUS_BADGE: Record<LeadStatus, string> = {
   new: "bg-sky-500/10 text-sky-700",
-  contacted: "bg-amber-500/10 text-amber-700",
+  contacted: "bg-blue-500/10 text-amber-700",
   qualified: "bg-purple-500/10 text-purple-700",
   won: "bg-success-500/10 text-success-500",
   lost: "bg-neutral-100 text-neutral-500",

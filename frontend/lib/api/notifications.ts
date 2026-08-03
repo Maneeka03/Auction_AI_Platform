@@ -17,3 +17,7 @@ export function listNotifications(
 export function markNotificationsRead(accessToken: string, payload: MarkReadRequest = {}): Promise<void> {
   return apiClient.post<void>(`${BASE}/read`, payload, { accessToken });
 }
+
+export function dismissNotification(accessToken: string, id: string): Promise<void> {
+  return apiClient.delete<void>(`${BASE}/${id}`, { accessToken });
+}

@@ -4,6 +4,7 @@ from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
+from app.models.listing import Listing
 from app.models.notification import NotificationKind
 from app.models.property import QUORUM, Property, PropertyStatus, PropertyVote, seat_of
 from app.models.user import User
@@ -56,6 +57,16 @@ async def cast(
             ),
             f"{listing.title} was {listing.status.value} by the review panel.",
             property_id=listing.id,
+        )
+
+    # Auto-create a Listing record when the property reaches the published state
+    if listing.status is PropertyStatus.PUBLISHED and listing.listing is None:
+        session.add(
+            Listing(
+                property_id=listing.id,
+                status="active",
+                reserve_price=listing.reserve_price,
+            )
         )
 
     await session.commit()

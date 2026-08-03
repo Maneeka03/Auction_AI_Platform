@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyApprovalCard } from "@/components/approvals/PropertyApprovalCard";
+import { PropertyDetailModal } from "@/components/approvals/PropertyDetailModal";
 import { listProperties, voteOnProperty } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -33,6 +34,7 @@ export default function ApprovalsPage() {
   const [error, setError] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [detailProperty, setDetailProperty] = useState<Property | null>(null);
 
   const currentUserSeat = session ? resolveApproverSeat(session.roles) : undefined;
 
@@ -61,6 +63,7 @@ export default function ApprovalsPage() {
     try {
       const updated = await voteOnProperty(accessToken, propertyId, { approved });
       setProperties((prev) => prev.map((p) => (p.id === propertyId ? updated : p)));
+      if (detailProperty?.id === propertyId) setDetailProperty(updated);
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to cast vote.");
     } finally {
@@ -93,7 +96,7 @@ export default function ApprovalsPage() {
           </div>
 
           {!currentUserSeat ? (
-            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+            <p className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs text-amber-700">
               Your account doesn&apos;t hold an approval seat (Director, Appraiser, or Legal &amp; Finance), so
               you can view this queue but not vote on it.
             </p>
@@ -125,15 +128,38 @@ export default function ApprovalsPage() {
           ) : (
             <div className="space-y-4">
               {filtered.map((property) => (
-                <PropertyApprovalCard
+                <div
                   key={property.id}
-                  property={property}
-                  currentUserSeat={currentUserSeat}
-                  onVote={handleVote}
-                  isVoting={votingId === property.id}
-                />
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("button")) return;
+                    setDetailProperty(property);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setDetailProperty(property);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <PropertyApprovalCard
+                    property={property}
+                    currentUserSeat={currentUserSeat}
+                    onVote={handleVote}
+                    isVoting={votingId === property.id}
+                  />
+                </div>
               ))}
             </div>
+          )}
+
+          {detailProperty && (
+            <PropertyDetailModal
+              property={detailProperty}
+              currentUserSeat={currentUserSeat}
+              onVote={handleVote}
+              isVoting={votingId === detailProperty.id}
+              onClose={() => setDetailProperty(null)}
+            />
           )}
         </div>
       </RequirePermission>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { FeaturedAssetCard } from "@/components/public/FeaturedAssets/FeaturedAssetCard";
@@ -11,6 +11,8 @@ import AuctionPropertyCard from "@/components/public/BrowseProperties/AuctionPro
 import PriceRangeSlider from "@/components/public/BrowseProperties/PriceRangeSlider";
 import { listPublicProperties } from "@/lib/api/properties";
 import { listPublicAuctions } from "@/lib/api/auctions";
+import { listPublicCategories } from "@/lib/api/categories";
+import type { CategoryTree } from "@/types/category";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
@@ -49,6 +51,9 @@ export default function BrowsePropertiesPage() {
     new Set(),
   );
   const [favorited, setFavorited] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<CategoryTree[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const priceBounds = useMemo(() => {
     if (properties.length === 0) return { min: 0, max: 10_000_000 };
@@ -78,12 +83,32 @@ export default function BrowsePropertiesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const [propertyPage, auctionPage] = await Promise.all([
+        const [propertyPage, auctionPage, cats] = await Promise.all([
           listPublicProperties({ size: 100 }),
           listPublicAuctions({ size: 100 }),
+          listPublicCategories(),
         ]);
         if (!active) return;
         setProperties(propertyPage.items);
+        setCategories(cats);
+
+        const catId = new URLSearchParams(window.location.search).get("category");
+        if (catId) {
+          const matchedParent = cats.find((c) => c.id === catId);
+          if (matchedParent) {
+            // parent category clicked — select parent + all its children
+            setSelectedCategories(
+              new Set([catId, ...matchedParent.children.map((ch) => ch.id)]),
+            );
+            setExpandedCategories(new Set([catId]));
+          } else {
+            // subcategory clicked — select just that child, expand its parent
+            setSelectedCategories(new Set([catId]));
+            const parentCat = cats.find((c) => c.children.some((ch) => ch.id === catId));
+            if (parentCat) setExpandedCategories(new Set([parentCat.id]));
+          }
+        }
+
         const map = new Map<string, Auction>();
         for (const auction of auctionPage.items)
           map.set(auction.property_id, auction);
@@ -113,6 +138,38 @@ export default function BrowsePropertiesPage() {
     setPage(1);
   }
 
+  function toggleCategory(id: string, hasChildren: boolean) {
+    const isChecking = !selectedCategories.has(id);
+    const next = new Set(selectedCategories);
+    if (isChecking) {
+      next.add(id);
+      if (hasChildren) {
+        const cat = categories.find((c) => c.id === id);
+        cat?.children.forEach((ch) => next.add(ch.id));
+      }
+    } else {
+      next.delete(id);
+      if (hasChildren) {
+        const cat = categories.find((c) => c.id === id);
+        cat?.children.forEach((ch) => next.delete(ch.id));
+      }
+    }
+    setSelectedCategories(next);
+    setPage(1);
+    if (hasChildren && isChecking) {
+      setExpandedCategories((prev) => new Set([...prev, id]));
+    }
+  }
+
+  function toggleExpanded(id: string) {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   function toggleFavorite(id: string) {
     setFavorited((prev) => {
       const next = new Set(prev);
@@ -128,6 +185,9 @@ export default function BrowsePropertiesPage() {
         search &&
         !property.title.toLowerCase().includes(search.toLowerCase())
       )
+        return false;
+
+      if (selectedCategories.size > 0 && !selectedCategories.has(property.category_id))
         return false;
 
       if (priceRange) {
@@ -175,6 +235,7 @@ export default function BrowsePropertiesPage() {
   }, [
     properties,
     search,
+    selectedCategories,
     priceRange,
     auctionTypes,
     endingWithin,
@@ -247,6 +308,83 @@ export default function BrowsePropertiesPage() {
                 </p>
               )}
             </div>
+
+            {categories.length > 0 && (
+              <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-neutral-900">Category</h3>
+                  {selectedCategories.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedCategories(new Set()); setPage(1); }}
+                      className="text-xs text-violet-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {categories.map((cat) => {
+                    const isChecked = selectedCategories.has(cat.id);
+                    const isExpanded = expandedCategories.has(cat.id);
+                    const hasChildren = cat.children.length > 0;
+                    return (
+                      <div key={cat.id}>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`cat-${cat.id}`}
+                            checked={isChecked}
+                            onChange={() => toggleCategory(cat.id, hasChildren)}
+                            className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-500"
+                          />
+                          <label
+                            htmlFor={`cat-${cat.id}`}
+                            className="flex-1 cursor-pointer select-none text-sm font-medium text-neutral-800"
+                          >
+                            {cat.name}
+                          </label>
+                          {hasChildren && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpanded(cat.id)}
+                              className="rounded p-0.5 text-neutral-400 hover:text-neutral-700"
+                              aria-label={isExpanded ? "Collapse" : "Expand"}
+                            >
+                              {isExpanded ? (
+                                <ChevronDown size={14} />
+                              ) : (
+                                <ChevronRight size={14} />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        {hasChildren && isExpanded && (
+                          <div className="ml-2 mt-2 space-y-2 rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2">
+                            {cat.children.map((child) => (
+                              <label
+                                key={child.id}
+                                className="flex cursor-pointer items-center gap-2 text-sm text-neutral-600"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategories.has(child.id)}
+                                  onChange={() =>
+                                    toggleSet(selectedCategories, child.id, setSelectedCategories)
+                                  }
+                                  className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-500"
+                                />
+                                {child.name}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
               <h3 className="text-lg font-bold text-neutral-900">

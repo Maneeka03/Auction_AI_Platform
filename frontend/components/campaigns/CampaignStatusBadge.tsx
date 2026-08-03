@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<CampaignStatus, string> = {
 
 const STATUS_STYLE: Record<CampaignStatus, string> = {
   draft: "bg-neutral-100 text-neutral-500",
-  scheduled: "bg-amber-500/10 text-amber-700",
+  scheduled: "bg-blue-500/10 text-amber-700",
   sent: "bg-success-500/10 text-success-500",
   archived: "bg-neutral-100 text-neutral-400",
 };

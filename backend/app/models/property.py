@@ -101,6 +101,9 @@ class Property(Base, TimestampMixin):
         lazy="selectin",
         order_by="PropertyImage.sort_order",
     )
+    listing: Mapped["Listing | None"] = relationship(  # noqa: F821
+        "Listing", back_populates="property", cascade="all, delete-orphan", lazy="selectin", uselist=False
+    )
 
 
 class PropertyImage(Base):

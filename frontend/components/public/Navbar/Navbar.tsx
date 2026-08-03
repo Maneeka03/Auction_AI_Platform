@@ -35,7 +35,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                     <Link href="/" className={`font-medium transition ${ opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
                         Home
                     </Link>
-                    <Link href="/assets" className={`font-medium transition ${opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
+                    <Link href="/browse-properties" className={`font-medium transition ${opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
                         Browse Assets
                     </Link>
                     <Link href="/live-auctions" className={`font-medium transition ${ opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
@@ -69,7 +69,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                     <Link href="/" className="py-3 text-lg font-medium border-b border-gray-100">
                         Home
                     </Link>
-                    <Link href="/assets" className="py-3 text-lg font-medium border-b border-gray-100">
+                    <Link href="/browse-properties" className="py-3 text-lg font-medium border-b border-gray-100">
                         Browse Assets
                     </Link>
                     <Link href="/live-auctions"className="py-3 text-lg font-medium border-b border-gray-100">

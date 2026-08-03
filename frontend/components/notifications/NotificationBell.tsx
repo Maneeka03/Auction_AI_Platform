@@ -2,10 +2,10 @@
 
 // MessageSquare removed — new_message notifications moved to the Messages icon
 // import { Bell, CheckCheck, Gavel, MessageSquare, ShieldCheck, Trophy, XCircle } from "lucide-react";
-import { Bell, CheckCheck, Gavel, ShieldCheck, Trophy, XCircle } from "lucide-react";
+import { Bell, CheckCheck, Gavel, ShieldCheck, Trophy, X, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { listNotifications, markNotificationsRead } from "@/lib/api/notifications";
+import { dismissNotification, listNotifications, markNotificationsRead } from "@/lib/api/notifications";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Notification, NotificationKind } from "@/types/notification";
 
@@ -17,7 +17,7 @@ import type { Notification, NotificationKind } from "@/types/notification";
 //   kyc_reviewed: ShieldCheck, new_message: MessageSquare,
 // };
 // const KIND_COLOR: Record<NotificationKind, string> = {
-//   outbid: "bg-amber-500/10 text-amber-600", auction_won: "bg-success-500/10 text-success-500",
+//   outbid: "bg-blue-500/10 text-amber-600", auction_won: "bg-success-500/10 text-success-500",
 //   auction_lost: "bg-neutral-100 text-neutral-500", property_approved: "bg-success-500/10 text-success-500",
 //   property_rejected: "bg-danger-500/10 text-danger-600", kyc_reviewed: "bg-brand-500/10 text-brand-600",
 //   new_message: "bg-sky-500/10 text-sky-600",
@@ -35,7 +35,7 @@ const KIND_ICON: Record<BellNotificationKind, typeof Bell> = {
 };
 
 const KIND_COLOR: Record<BellNotificationKind, string> = {
-  outbid: "bg-amber-500/10 text-amber-600",
+  outbid: "bg-blue-500/10 text-amber-600",
   auction_won: "bg-success-500/10 text-success-500",
   auction_lost: "bg-neutral-100 text-neutral-500",
   property_approved: "bg-success-500/10 text-success-500",
@@ -142,6 +142,18 @@ export function NotificationBell() {
     }
   }
 
+  async function handleDismiss(e: React.MouseEvent, notification: Notification) {
+    e.stopPropagation();
+    if (!accessToken) return;
+    setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+    if (!notification.read_at) setUnread((prev) => Math.max(0, prev - 1));
+    try {
+      await dismissNotification(accessToken, notification.id);
+    } catch {
+      void fetchNotifications();
+    }
+  }
+
   return (
     <>
       <button
@@ -189,29 +201,41 @@ export function NotificationBell() {
                     const Icon = KIND_ICON[notification.kind as BellNotificationKind];
                     const isUnread = !notification.read_at;
                     return (
-                      <button
+                      <div
                         key={notification.id}
-                        type="button"
-                        onClick={() => void handleMarkOneRead(notification)}
-                        className={`flex w-full items-start gap-3 border-b border-neutral-50 px-4 py-3 text-left last:border-0 hover:bg-neutral-50 ${
+                        className={`group relative flex w-full items-start gap-3 border-b border-neutral-50 px-4 py-3 text-left last:border-0 hover:bg-neutral-50 ${
                           isUnread ? "bg-brand-50/40" : ""
                         }`}
                       >
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KIND_COLOR[notification.kind as BellNotificationKind]}`}
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkOneRead(notification)}
+                          className="flex flex-1 items-start gap-3 text-left"
                         >
-                          <Icon size={14} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className={`block text-sm ${isUnread ? "font-medium text-neutral-900" : "text-neutral-600"}`}>
-                            {notification.message}
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KIND_COLOR[notification.kind as BellNotificationKind]}`}
+                          >
+                            <Icon size={14} />
                           </span>
-                          <span className="mt-0.5 block text-xs text-neutral-400">
-                            {formatTime(notification.created_at)}
+                          <span className="min-w-0 flex-1 pr-5">
+                            <span className={`block text-sm ${isUnread ? "font-medium text-neutral-900" : "text-neutral-600"}`}>
+                              {notification.message}
+                            </span>
+                            <span className="mt-0.5 block text-xs text-neutral-400">
+                              {formatTime(notification.created_at)}
+                            </span>
                           </span>
-                        </span>
-                        {isUnread ? <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-500" /> : null}
-                      </button>
+                          {isUnread ? <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-500" /> : null}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => void handleDismiss(e, notification)}
+                          aria-label="Dismiss notification"
+                          className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-neutral-300 opacity-0 transition hover:bg-neutral-100 hover:text-neutral-600 group-hover:opacity-100"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
                     );
                   })
                 )}

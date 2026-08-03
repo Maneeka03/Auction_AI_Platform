@@ -42,7 +42,7 @@ export default function AdminAuctionRoomPage() {
       <RequirePermission module="auction_management" need="view">
         {!isSuperAdmin ? (
           <div className="flex flex-col items-center justify-center gap-3 p-16 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-amber-600">
               <ShieldAlert size={22} />
             </span>
             <h2 className="text-lg font-semibold text-neutral-900">Super admins only</h2>

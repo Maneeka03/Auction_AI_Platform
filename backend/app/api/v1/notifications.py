@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Query, status
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import DbSession, requires
 from app.models.user import User
@@ -30,3 +32,12 @@ async def mark_notifications_read(
     payload: MarkReadRequest, session: DbSession, actor: User = Recipient
 ) -> None:
     await notifications.mark_read(session, actor.id, payload.ids)
+
+
+@router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_notification(
+    notification_id: uuid.UUID, session: DbSession, actor: User = Recipient
+) -> None:
+    deleted = await notifications.delete_one(session, actor.id, notification_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")

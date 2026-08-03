@@ -20,6 +20,7 @@ import {
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { getPublicProperty, listPublicProperties } from "@/lib/api/properties";
+import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { listPublicAuctions } from "@/lib/api/auctions";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -61,7 +62,7 @@ export default function PropertyDetailPage() {
     try {
       const listing = await getPublicProperty(params.id);
       setProperty(listing);
-      setActiveImage(listing.image_url ?? listing.images[0]?.image_url ?? null);
+      setActiveImage(resolveMinioUrl(listing.image_url ?? listing.images[0]?.image_url ?? null));
 
       const sameCategory = await listPublicProperties({
         category_id: listing.category_id,
@@ -111,7 +112,9 @@ export default function PropertyDetailPage() {
     ? [
         property.image_url,
         ...property.images.map((img) => img.image_url),
-      ].filter(
+      ]
+      .map(resolveMinioUrl)
+      .filter(
         (url, index, all): url is string => !!url && all.indexOf(url) === index,
       )
     : [];
@@ -259,7 +262,15 @@ export default function PropertyDetailPage() {
               </button>
 
               <Link
-                href="/login"
+                href={
+                  session
+                    ? relatedAuction
+                      ? `/live-auctions/${relatedAuction.id}`
+                      : "/browse-auctions"
+                    : relatedAuction
+                      ? `/login?redirect=/live-auctions/${relatedAuction.id}`
+                      : "/login?redirect=/browse-auctions"
+                }
                 className="mt-3 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
               >
                 Book Now
@@ -318,7 +329,9 @@ export default function PropertyDetailPage() {
 
                   <Link
                     href={
-                      session ? `/live-auctions/${relatedAuction.id}` : "/login"
+                      session
+                        ? `/live-auctions/${relatedAuction.id}`
+                        : `/login?redirect=/live-auctions/${relatedAuction.id}`
                     }
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-brand-500 px-6 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-500 hover:text-white"
                   >
@@ -381,7 +394,7 @@ export default function PropertyDetailPage() {
                   <div className="relative h-40 w-full overflow-hidden bg-neutral-100">
                     {item.image_url ? (
                       <Image
-                        src={item.image_url}
+                        src={resolveMinioUrl(item.image_url)!}
                         alt={item.title}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
