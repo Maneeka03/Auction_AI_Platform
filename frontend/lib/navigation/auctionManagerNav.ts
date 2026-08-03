@@ -10,17 +10,14 @@ import {
   PackageSearch,
   Radio,
   Settings,
-  ShieldCheck,
-  Sparkles,
   TrendingUp,
-  UserCog,
   Users,
   UserSquare2,
   Wallet,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
 
-export const superAdminNav: NavSection[] = [
+export const auctionManagerNav: NavSection[] = [
   {
     title: "Overview",
     items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
@@ -43,7 +40,6 @@ export const superAdminNav: NavSection[] = [
     items: [
       { label: "Buyers", href: "/crm/buyers", icon: Users },
       { label: "Sellers", href: "/crm/sellers", icon: UserSquare2 },
-      { label: "Leads", href: "/crm/leads", icon: TrendingUp },
     ],
   },
   {
@@ -55,7 +51,6 @@ export const superAdminNav: NavSection[] = [
     items: [
       { label: "Revenue", href: "/reports/revenue", icon: TrendingUp },
       { label: "Auction Activity", href: "/reports/auction-activity", icon: Gavel },
-      { label: "AI Insights", href: "/reports/ai-insights", icon: Sparkles },
     ],
   },
   {
@@ -64,10 +59,6 @@ export const superAdminNav: NavSection[] = [
   },
   {
     title: "Administration",
-    items: [
-      { label: "Staff Management", href: "/admin/users", icon: UserCog },
-      { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
-    ],
+    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }],
   },
 ];

@@ -11,7 +11,7 @@ const roleLabels: Record<StaffRole, string> = {
   marketing: "Marketing",
   legal: "Legal",
   finance: "Finance",
-  gemologist: "Gemologist",
+  gemologist: "Appraiser",
   executive: "Executive",
 };
 

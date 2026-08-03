@@ -1,0 +1,15 @@
+  PID TTY           TIME CMD
+  881 ttys001    0:00.03 /bin/zsh -l
+  895 ttys002    0:00.07 /bin/zsh -il
+  896 ttys003    0:00.03 /bin/zsh -il
+  897 ttys004    0:00.04 /bin/zsh -il
+ 4710 ttys004    0:00.23 npm run dev   
+ 4729 ttys004    0:00.09 node /Users/aanalmehta/Desktop/Auction_AI_Platform/frontend/node_modules/.bin/cross-env NODE_OPTIONS=--max-old-space-size=8192 next dev
+ 4730 ttys004    0:00.29 node /Users/aanalmehta/Desktop/Auction_AI_Platform/frontend/node_modules/.bin/next dev
+ 4731 ttys004    0:15.32 next-server (v16.2.10) 
+ 5055 ttys004    0:00.49 node /Users/aanalmehta/Desktop/Auction_AI_Platform/frontend/.next/dev/build/56416d4ae4ce586f.js 50348
+  898 ttys005    0:00.03 /bin/zsh -il
+  899 ttys006    0:00.06 /bin/zsh -il
+  972 ttys007    0:00.02 /bin/zsh -i
+ 1236 ttys008    0:00.03 /bin/zsh -i
+ 2767 ttys009    0:00.04 /bin/zsh -il
