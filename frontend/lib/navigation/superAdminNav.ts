@@ -8,6 +8,7 @@ import {
   Megaphone,
   MessageSquare,
   PackageSearch,
+  Radio,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -34,6 +35,7 @@ export const superAdminNav: NavSection[] = [
       { label: "Escrow", href: "/admin/escrow", icon: Coins },
       { label: "Wallet", href: "/wallet", icon: Wallet },
       { label: "Live Auctions", href: "/auctions", icon: Gavel },
+      { label: "Auction Requests", href: "/admin/auction-requests", icon: Radio },
     ],
   },
   {
