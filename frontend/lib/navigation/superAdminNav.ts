@@ -29,13 +29,13 @@ export const superAdminNav: NavSection[] = [
     title: "Auctions",
     items: [
       { label: "Approvals", href: "/approvals", icon: BadgeCheck },
+      { label: "Auction Requests", href: "/admin/auction-requests", icon: Radio },
       { label: "Listings", href: "/listings", icon: PackageSearch },
       { label: "Categories", href: "/admin/categories", icon: FolderTree },
       { label: "Browse Properties", href: "/admin/properties", icon: Home },
       { label: "Escrow", href: "/admin/escrow", icon: Coins },
       { label: "Wallet", href: "/admin/wallet", icon: Wallet },
       { label: "Live Auctions", href: "/auctions", icon: Gavel },
-      { label: "Auction Requests", href: "/admin/auction-requests", icon: Radio },
     ],
   },
   {
