@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, X } from "lucide-react";
+import { Box, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CategorySelect } from "@/components/categories/CategorySelect";
 import { useAuth } from "@/lib/auth/session-context";
@@ -9,9 +9,12 @@ import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import type { CreatePropertyRequest } from "@/types/property";
 
+const GLB_CONTENT_TYPE = "model/gltf-binary";
+
 interface AddPropertyDrawerProps {
   onClose: () => void;
-  onCreate: (payload: CreatePropertyRequest) => Promise<void>;
+  // extraImageUrls are the gallery photos beyond the cover; the page attaches them after create.
+  onCreate: (payload: CreatePropertyRequest, extraImageUrls: string[]) => Promise<void>;
 }
 
 export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps) {
@@ -25,13 +28,15 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [areaSqft, setAreaSqft] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [modelFile, setModelFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modelInputRef = useRef<HTMLInputElement>(null);
 
   const selectedMain = categories.find(
     (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
@@ -44,14 +49,14 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   }, []);
 
   useEffect(() => {
-    if (!imageFile) {
-      setImagePreview(null);
+    if (imageFiles.length === 0) {
+      setImagePreviews([]);
       return;
     }
-    const url = URL.createObjectURL(imageFile);
-    setImagePreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [imageFile]);
+    const urls = imageFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [imageFiles]);
 
   function handleClose() {
     setIsVisible(false);
@@ -59,8 +64,19 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   }
 
   function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (files && files.length > 0) setImageFiles((prev) => [...prev, ...Array.from(files)]);
+    event.target.value = "";
+  }
+
+  function removeImage(index: number) {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleModelSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (file) setImageFile(file);
+    if (file) setModelFile(file);
+    event.target.value = "";
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -72,35 +88,45 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
       return;
     }
 
+    if ((imageFiles.length > 0 || modelFile) && !accessToken) {
+      setError("You must be signed in to upload files.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      let imageUrl: string | undefined;
+      const imageUrls: string[] = [];
+      let modelUrl: string | undefined;
 
-      if (imageFile) {
-        if (!accessToken) {
-          setError("You must be signed in to upload an image.");
-          setIsSubmitting(false);
-          return;
-        }
-        setIsUploadingImage(true);
+      if (accessToken && (imageFiles.length > 0 || modelFile)) {
+        setIsUploading(true);
         try {
-          imageUrl = await uploadImage(accessToken, imageFile, "property");
+          for (const file of imageFiles) {
+            imageUrls.push(await uploadImage(accessToken, file, "property"));
+          }
+          if (modelFile) {
+            modelUrl = await uploadImage(accessToken, modelFile, "property", GLB_CONTENT_TYPE);
+          }
         } finally {
-          setIsUploadingImage(false);
+          setIsUploading(false);
         }
       }
 
-      await onCreate({
-        title,
-        address,
-        category_id: categoryId,
-        reserve_price: reservePrice,
-        description: description || undefined,
-        image_url: imageUrl,
-        bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
-        area_sqft: areaSqft ? Number(areaSqft) : undefined,
-      });
+      await onCreate(
+        {
+          title,
+          address,
+          category_id: categoryId,
+          reserve_price: reservePrice,
+          description: description || undefined,
+          image_url: imageUrls[0],
+          model_url: modelUrl,
+          bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
+          bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
+          area_sqft: areaSqft ? Number(areaSqft) : undefined,
+        },
+        imageUrls.slice(1),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -127,24 +153,40 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto p-5">
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Photo</label>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Photos</label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              {imagePreview ? (
-                <div className="relative h-36 w-full overflow-hidden rounded-lg border border-neutral-200">
-                  <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+              {imagePreviews.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div
+                      key={preview}
+                      className="relative h-24 overflow-hidden rounded-lg border border-neutral-200"
+                    >
+                      <img src={preview} alt="" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute right-1 top-1 rounded-full bg-neutral-900/60 p-1 text-white hover:bg-neutral-900/80"
+                        aria-label="Remove photo"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
-                    onClick={() => setImageFile(null)}
-                    className="absolute right-2 top-2 rounded-full bg-neutral-900/60 p-1 text-white hover:bg-neutral-900/80"
-                    aria-label="Remove photo"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex h-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-neutral-300 text-neutral-400 hover:border-brand-300 hover:text-brand-500"
                   >
-                    <X size={14} />
+                    <ImagePlus size={20} />
+                    <span className="text-xs">Add more</span>
                   </button>
                 </div>
               ) : (
@@ -154,7 +196,42 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
                   className="flex h-36 w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 text-neutral-400 hover:border-brand-300 hover:text-brand-500"
                 >
                   <ImagePlus size={22} />
-                  <span className="text-xs">Click to upload a photo</span>
+                  <span className="text-xs">Click to upload one or more photos</span>
+                </button>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">3D Model (.glb)</label>
+              <input
+                ref={modelInputRef}
+                type="file"
+                accept=".glb,model/gltf-binary"
+                onChange={handleModelSelect}
+                className="hidden"
+              />
+              {modelFile ? (
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Box size={16} className="shrink-0 text-brand-500" />
+                    <span className="truncate">{modelFile.name}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setModelFile(null)}
+                    className="shrink-0 text-neutral-400 hover:text-neutral-600"
+                    aria-label="Remove model"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => modelInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-neutral-300 py-3 text-sm text-neutral-400 hover:border-brand-300 hover:text-brand-500"
+                >
+                  <Box size={18} /> Upload a .glb model
                 </button>
               )}
             </div>
@@ -265,7 +342,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               disabled={isSubmitting}
               className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
-              {isUploadingImage ? "Uploading photo..." : isSubmitting ? "Creating..." : "Add Property"}
+              {isUploading ? "Uploading files..." : isSubmitting ? "Creating..." : "Add Property"}
             </button>
           </div>
         </form>

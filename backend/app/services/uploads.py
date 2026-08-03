@@ -14,6 +14,7 @@ ALLOWED_TYPES: dict[str, str] = {
     "image/webp": ".webp",
     "image/avif": ".avif",
     "application/pdf": ".pdf",
+    "model/gltf-binary": ".glb",
 }
 
 

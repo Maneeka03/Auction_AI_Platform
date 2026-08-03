@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, X } from "lucide-react";
+import { Box, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CategorySelect } from "@/components/categories/CategorySelect";
 import { Select } from "@/components/ui/Select";
@@ -11,6 +11,8 @@ import { uploadImage } from "@/lib/utils/uploadImage";
 import type { Property, UpdatePropertyRequest } from "@/types/property";
 import PropertyGalleryUploader from "@/components/admin/PropertyGalleryUploader";
 import type { PropertyImage } from "@/types/property";
+
+const GLB_CONTENT_TYPE = "model/gltf-binary";
 
 interface EditPropertyDrawerProps {
   property: Property;
@@ -46,11 +48,13 @@ export function EditPropertyDrawer({
   const [imagePreview, setImagePreview] = useState<string | null>(
     property.image_url,
   );
+  const [modelFile, setModelFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modelInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<PropertyImage[]>(property.images);
 
   const isSold = property.status === "sold";
@@ -85,6 +89,12 @@ export function EditPropertyDrawer({
     if (file) setImageFile(file);
   }
 
+  function handleModelSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) setModelFile(file);
+    event.target.value = "";
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
@@ -97,16 +107,20 @@ export function EditPropertyDrawer({
     setIsSubmitting(true);
     try {
       let imageUrl: string | undefined;
+      let modelUrl: string | undefined;
 
-      if (imageFile) {
+      if (imageFile || modelFile) {
         if (!accessToken) {
-          setError("You must be signed in to upload an image.");
+          setError("You must be signed in to upload files.");
           setIsSubmitting(false);
           return;
         }
         setIsUploadingImage(true);
         try {
-          imageUrl = await uploadImage(accessToken, imageFile, "property");
+          if (imageFile) imageUrl = await uploadImage(accessToken, imageFile, "property");
+          if (modelFile) {
+            modelUrl = await uploadImage(accessToken, modelFile, "property", GLB_CONTENT_TYPE);
+          }
         } finally {
           setIsUploadingImage(false);
         }
@@ -120,6 +134,7 @@ export function EditPropertyDrawer({
         status,
         description,
         image_url: imageUrl,
+        model_url: modelUrl,
         bedrooms:
           showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
         bathrooms:
@@ -216,6 +231,44 @@ export function EditPropertyDrawer({
                 />
               </div>
             )}
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">3D Model (.glb)</label>
+              <input
+                ref={modelInputRef}
+                type="file"
+                accept=".glb,model/gltf-binary"
+                onChange={handleModelSelect}
+                disabled={isSold}
+                className="hidden"
+              />
+              {modelFile ? (
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Box size={16} className="shrink-0 text-brand-500" />
+                    <span className="truncate">{modelFile.name}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setModelFile(null)}
+                    className="shrink-0 text-neutral-400 hover:text-neutral-600"
+                    aria-label="Remove model"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSold}
+                  onClick={() => modelInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-neutral-300 py-3 text-sm text-neutral-400 hover:border-brand-300 hover:text-brand-500 disabled:opacity-60"
+                >
+                  <Box size={18} /> {property.model_url ? "Replace 3D model" : "Upload a .glb model"}
+                </button>
+              )}
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
                 Title <span className="text-danger-500">*</span>

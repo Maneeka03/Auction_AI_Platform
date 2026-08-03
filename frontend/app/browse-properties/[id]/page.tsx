@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
+import { ModelViewer } from "@/components/properties/ModelViewer";
 import { getPublicProperty, listPublicProperties } from "@/lib/api/properties";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { listPublicAuctions } from "@/lib/api/auctions";
@@ -45,6 +46,7 @@ export default function PropertyDetailPage() {
   const { session } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [show3d, setShow3d] = useState(false);
   const [similar, setSimilar] = useState<Property[]>([]);
   const [relatedAuction, setRelatedAuction] = useState<Auction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +121,8 @@ export default function PropertyDetailPage() {
       )
     : [];
 
+  const modelUrl = property ? resolveMinioUrl(property.model_url) : null;
+
   function formatDate(value: string): string {
     const date = new Date(value);
     const day = date.getDate();
@@ -172,7 +176,9 @@ export default function PropertyDetailPage() {
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <div>
               <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-neutral-200 md:h-[480px]">
-                {activeImage ? (
+                {show3d && modelUrl ? (
+                  <ModelViewer src={modelUrl} className="h-full w-full" />
+                ) : activeImage ? (
                   <Image
                     src={activeImage}
                     alt={property.title}
@@ -195,7 +201,10 @@ export default function PropertyDetailPage() {
                   {gallery.map((url) => (
                     <button
                       key={url}
-                      onClick={() => setActiveImage(url)}
+                      onClick={() => {
+                        setShow3d(false);
+                        setActiveImage(url);
+                      }}
                       className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                         activeImage === url
                           ? "border-brand-500"
@@ -252,14 +261,24 @@ export default function PropertyDetailPage() {
                 )}
               </div>
 
-              <button
-                type="button"
-                disabled
-                title="Real 3D viewing isn't built yet"
-                className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border-2 border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-400"
-              >
-                <Box size={16} /> 3D View — Coming Soon
-              </button>
+              {modelUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setShow3d((value) => !value)}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-brand-500 px-6 py-3 text-sm font-semibold text-brand-600 transition hover:bg-brand-500 hover:text-white"
+                >
+                  <Box size={16} /> {show3d ? "View in 2D" : "3D View"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Real 3D viewing isn't built yet"
+                  className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border-2 border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-400"
+                >
+                  <Box size={16} /> 3D View — Coming Soon
+                </button>
+              )}
 
               <Link
                 href={
