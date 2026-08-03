@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
 import { Button } from "@/components/ui/Button";
@@ -25,7 +26,9 @@ const INITIAL_VALUES: RegisterPayload = {
 };
 
 export default function SignupPage() {
-  const [values, setValues] = useState<RegisterPayload>(INITIAL_VALUES);
+  const searchParams = useSearchParams();
+  const initialRole = searchParams.get("role") === "seller" ? "seller" : "buyer";
+  const [values, setValues] = useState<RegisterPayload>({ ...INITIAL_VALUES, role: initialRole });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [termsError, setTermsError] = useState<string | null>(null);

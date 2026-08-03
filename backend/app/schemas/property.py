@@ -9,6 +9,7 @@ from app.models.property import (
     ApproverRole,
     PaymentMethod,
     Property,
+    PropertyImage,
     PropertyStatus,
     PropertyVote,
 )
@@ -78,6 +79,20 @@ class VoteOut(BaseModel):
         )
 
 
+class PropertyImageOut(BaseModel):
+    id: uuid.UUID
+    image_url: str
+    sort_order: int
+
+    @classmethod
+    def of(cls, image: PropertyImage) -> "PropertyImageOut":
+        return cls(id=image.id, image_url=image.image_url, sort_order=image.sort_order)
+
+
+class AddPropertyImageRequest(BaseModel):
+    image_url: str = Field(min_length=1, max_length=500)
+
+
 class PropertyOut(BaseModel):
     id: uuid.UUID
     title: str
@@ -100,6 +115,7 @@ class PropertyOut(BaseModel):
     paid_amount: Decimal | None
     purchased_at: datetime | None
     votes: list[VoteOut]
+    images: list[PropertyImageOut]
     created_at: datetime
 
     @classmethod
@@ -126,6 +142,7 @@ class PropertyOut(BaseModel):
             paid_amount=listing.paid_amount,
             purchased_at=listing.purchased_at,
             votes=[VoteOut.of(vote) for vote in listing.votes],
+            images=[PropertyImageOut.of(img) for img in listing.images],
             created_at=listing.created_at,
         )
 

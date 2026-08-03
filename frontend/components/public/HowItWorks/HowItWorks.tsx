@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { UserPlus, Gavel, ShieldCheck } from "lucide-react";
 
 const STEPS = [
@@ -20,8 +21,15 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-neutral-50 py-20">
-      <div className="mx-auto w-full max-w-[1600px] px-8">
+    <section className="relative overflow-hidden py-20">
+      <Image
+        src="/images/how-it-works/real-bg.png"
+        alt=""
+        fill
+        className="object-cover object-center"
+      />
+
+      <div className="relative z-10 mx-auto w-full max-w-[1600px] px-8">
         <div className="text-center">
           <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
             How It Works
@@ -31,8 +39,7 @@ export default function HowItWorks() {
         </div>
 
         <div className="relative mt-14 grid grid-cols-1 gap-10 md:grid-cols-3">
-          {/* connecting line, desktop only */}
-          <div className="absolute left-0 right-0 top-8 hidden h-0.5 bg-neutral-200 md:block" />
+          <div className="absolute left-0 right-0 top-8 hidden h-0.5 bg-white/70 md:block" />
 
           {STEPS.map((step, index) => {
             const Icon = step.icon;

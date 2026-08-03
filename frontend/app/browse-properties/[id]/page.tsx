@@ -1,133 +1,417 @@
 "use client";
 
-import { ArrowLeft, Bath, BedDouble, MapPin, Ruler } from "lucide-react";
 import Image from "next/image";
-// Link removed — back button now uses router.back() to return to referrer (e.g. /recommendations)
-// import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ApiRequestError } from "@/lib/api/client";
-import { getPublicProperty } from "@/lib/api/properties";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  BedDouble,
+  Bath,
+  Ruler,
+  Box,
+  Gavel,
+  ShieldCheck,
+  Lock,
+  TrendingUp,
+  Tag,
+  Users,
+} from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
+import Footer from "@/components/public/Footer/Footer";
+import { getPublicProperty, listPublicProperties } from "@/lib/api/properties";
+import { listPublicAuctions } from "@/lib/api/auctions";
+import { ApiRequestError } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
+import type { Auction } from "@/types/auction";
 
-function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700">
-      {icon}
-      {label}
-    </span>
-  );
+function formatMoney(value: string | null): string {
+  return value ? `$${Number(value).toLocaleString()}` : "—";
 }
 
-export default function PublicPropertyDetailPage() {
+function timeRemaining(endsAt: string, now: number): string {
+  const diff = new Date(endsAt).getTime() - now;
+  if (diff <= 0) return "Ended";
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  const mins = Math.floor((diff % 3_600_000) / 60_000);
+  return days > 0 ? `${days}d ${hours}h` : `${hours}h ${mins}m`;
+}
+
+export default function PropertyDetailPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
+  const { session } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<Property[]>([]);
+  const [relatedAuction, setRelatedAuction] = useState<Auction | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    getPublicProperty(params.id)
-      .then(setProperty)
-      .catch((err) =>
-        setError(err instanceof ApiRequestError ? err.message : "Failed to load property."),
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const listing = await getPublicProperty(params.id);
+      setProperty(listing);
+      setActiveImage(listing.image_url ?? listing.images[0]?.image_url ?? null);
+
+      const sameCategory = await listPublicProperties({
+        category_id: listing.category_id,
+        size: 12,
+      });
+      const candidates = sameCategory.items.filter(
+        (item) => item.id !== listing.id,
       );
+
+      if (candidates.length < 4) {
+        const broader = await listPublicProperties({ size: 12 });
+        const seen = new Set(candidates.map((item) => item.id));
+        for (const item of broader.items) {
+          if (item.id !== listing.id && !seen.has(item.id)) {
+            candidates.push(item);
+            seen.add(item.id);
+          }
+        }
+      }
+
+      setSimilar(candidates.slice(0, 4));
+
+      try {
+        const auctionPage = await listPublicAuctions({ size: 50 });
+        setRelatedAuction(
+          auctionPage.items.find((a) => a.property_id === listing.id) ?? null,
+        );
+      } catch {
+        setRelatedAuction(null); 
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Failed to load property.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, [params.id]);
 
-  function handleBookNow() {
-    router.push("/login?redirect=/recommendations");
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const gallery = property
+    ? [
+        property.image_url,
+        ...property.images.map((img) => img.image_url),
+      ].filter(
+        (url, index, all): url is string => !!url && all.indexOf(url) === index,
+      )
+    : [];
+
+  function formatDate(value: string): string {
+    const date = new Date(value);
+    const day = date.getDate();
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 && day !== 12
+          ? "nd"
+          : day % 10 === 3 && day !== 13
+            ? "rd"
+            : "th";
+    const month = date.toLocaleDateString("en-US", { month: "short" });
+    const year = date.getFullYear();
+    return `${day}${suffix} ${month} ${year}`;
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-neutral-50 ">
       <Navbar solid />
-      <main className="mx-auto w-full max-w-[1200px] px-8 pt-32 pb-12">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
+      <div
+        className="relative w-full overflow-hidden pt-16"
+        style={{ aspectRatio: "1812 / 629" }}
+      >
+        <Image
+          src="/images/property-detail/hero-bg.png"
+          alt=""
+          fill
+          className="object-cover object-top"
+          priority
+        />
+      </div>
+
+      <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-12">
+        <Link
+          href="/browse-properties"
+          className="mb-5 inline-flex w-fit items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-sm text-white backdrop-blur-sm transition hover:bg-black/35"
         >
-          <ArrowLeft size={15} /> Back
-        </button>
+          <ArrowLeft size={16} /> Back to Browse Assets
+        </Link>
+        <h1 className="mb-5 text-3xl font-bold text-white md:text-4xl">
+          {isLoading ? "Loading..." : (property?.title ?? "Property not found")}
+        </h1>
 
-        {error ? (
-          <p className="mt-8 text-red-500">{error}</p>
-        ) : !property ? (
-          <p className="mt-8 text-neutral-500">Loading property...</p>
+        {isLoading ? (
+          <p className="text-sm text-neutral-500">Loading property...</p>
+        ) : error || !property ? (
+          <p className="text-sm text-danger-600">
+            {error ?? "Property not found."}
+          </p>
         ) : (
-          <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-            <div className="relative h-[420px] overflow-hidden rounded-2xl bg-neutral-100">
-              {property.image_url ? (
-                <Image
-                  src={property.image_url}
-                  alt={property.title}
-                  fill
-                  sizes="(max-width:1024px) 100vw, 60vw"
-                  className="object-cover"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-neutral-400">
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
+            <div>
+              <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-neutral-200 md:h-[480px]">
+                {activeImage ? (
+                  <Image
+                    src={activeImage}
+                    alt={property.title}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-neutral-400">
+                    No image available
+                  </div>
+                )}
+                <span className="absolute left-4 top-4 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
                   {property.category_name}
-                </div>
-              )}
-              <span className="absolute left-4 top-4 rounded-full bg-brand-500 px-3 py-1 text-xs font-semibold capitalize text-white">
-                {property.category_name}
-              </span>
-            </div>
-
-            <div className="flex flex-col">
-              <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
-                {property.title}
-              </h1>
-              <div className="mt-3 flex items-center gap-2 text-neutral-500">
-                <MapPin className="h-4 w-4" />
-                <span>{property.address}</span>
+                </span>
               </div>
 
-              <p className="mt-6 text-3xl font-bold tracking-tight text-brand-600">
-                ${Number(property.reserve_price).toLocaleString()}
+              {gallery.length > 1 && (
+                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+                  {gallery.map((url) => (
+                    <button
+                      key={url}
+                      onClick={() => setActiveImage(url)}
+                      className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                        activeImage === url
+                          ? "border-brand-500"
+                          : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <Image
+                        src={url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!isLoading && property && (
+                <div className="mt-10">
+                  <h2 className="text-lg font-semibold text-neutral-900">
+                    About this property
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-600">
+                    {property.description ?? "No description provided."}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-10">
+              <p className="flex items-center gap-2 text-sm text-neutral-500">
+                {property.address}
+              </p>
+              <p className="mt-3 text-3xl font-bold text-brand-600">
+                {formatMoney(property.reserve_price)}
               </p>
 
-              {property.bedrooms !== null || property.bathrooms !== null || property.area_sqft !== null ? (
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {property.bedrooms !== null ? (
-                    <Feature icon={<BedDouble className="h-4 w-4" />} label={`${property.bedrooms} Beds`} />
-                  ) : null}
-                  {property.bathrooms !== null ? (
-                    <Feature icon={<Bath className="h-4 w-4" />} label={`${property.bathrooms} Baths`} />
-                  ) : null}
-                  {property.area_sqft !== null ? (
-                    <Feature icon={<Ruler className="h-4 w-4" />} label={`${property.area_sqft.toLocaleString()} sqft`} />
-                  ) : null}
-                </div>
-              ) : null}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {property.bedrooms != null && (
+                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                    <BedDouble size={15} /> {property.bedrooms} Beds
+                  </span>
+                )}
+                {property.bathrooms != null && (
+                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                    <Bath size={15} /> {property.bathrooms} Baths
+                  </span>
+                )}
+                {property.area_sqft != null && (
+                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                    <Ruler size={15} /> {property.area_sqft.toLocaleString()}{" "}
+                    sqft
+                  </span>
+                )}
+              </div>
 
               <button
                 type="button"
-                onClick={handleBookNow}
-                className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                disabled
+                title="Real 3D viewing isn't built yet"
+                className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border-2 border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-400"
+              >
+                <Box size={16} /> 3D View — Coming Soon
+              </button>
+
+              <Link
+                href="/login"
+                className="mt-3 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
               >
                 Book Now
-              </button>
-              {property.seller_name ? (
-                <p className="mt-3 text-center text-xs text-neutral-400">
-                  Listed by {property.seller_name}
-                </p>
-              ) : null}
+              </Link>
+
+              {relatedAuction && (
+                <div className="mt-8 rounded-2xl border border-neutral-200 p-6">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                    <Gavel size={16} className="text-brand-600" /> This property
+                    is up for auction
+                  </h3>
+                  <div className="mt-4 flex items-center gap-6 border-b border-dashed border-neutral-200 pb-4">
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-success-500">
+                        <TrendingUp size={13} /> Current Bid
+                      </p>
+                      <p className="mt-0.5 font-semibold text-neutral-900">
+                        {formatMoney(relatedAuction.current_bid)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-danger-500">
+                        <Tag size={13} /> Reserve
+                      </p>
+                      <p className="mt-0.5 font-semibold text-neutral-900">
+                        {formatMoney(relatedAuction.reserve_price)}
+                      </p>
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      <p className="flex items-center gap-1.5">
+                        <Users size={13} /> {relatedAuction.bidder_count} bidder
+                        {relatedAuction.bidder_count === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {relatedAuction.status === "live" ? (
+                    <>
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-danger-600">
+                        Bidding ends in
+                      </p>
+                      <p className="text-lg font-bold text-danger-600">
+                        {timeRemaining(relatedAuction.ends_at, now)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-sky-600">
+                        Upcoming Auction
+                      </p>
+                      <p className="text-lg font-bold text-sky-600">
+                        Starts On: {formatDate(relatedAuction.starts_at)}
+                      </p>
+                    </>
+                  )}
+
+                  <Link
+                    href={
+                      session ? `/live-auctions/${relatedAuction.id}` : "/login"
+                    }
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-brand-500 px-6 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-500 hover:text-white"
+                  >
+                    <Gavel size={15} /> Go to Live Auction
+                  </Link>
+                </div>
+              )}
+
+              <div className="mt-8 rounded-2xl border border-neutral-200 p-6">
+                <h3 className="text-sm font-semibold text-neutral-900">
+                  Key Details
+                </h3>
+                <dl className="mt-4 space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-neutral-500">Category</dt>
+                    <dd className="font-medium text-neutral-900">
+                      {property.category_name}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-neutral-500">Status</dt>
+                    <dd className="font-medium capitalize text-neutral-900">
+                      {property.status}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-neutral-500">Listed</dt>
+                    <dd className="font-medium text-neutral-900">
+                      {formatDate(property.created_at)}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-xs font-medium text-green-600">
+                  <ShieldCheck size={13} className="text-green-600" /> KYC
+                  Verified Sellers
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1.5 text-xs font-medium text-neutral-600">
+                  <Lock size={13} className="text-brand-600" /> Escrow Protected
+                </span>
+              </div>
             </div>
           </div>
         )}
 
-        {property?.description ? (
-          <section className="mt-12 max-w-3xl">
-            <h2 className="text-lg font-semibold text-neutral-900">About this property</h2>
-            <p className="mt-3 whitespace-pre-line leading-relaxed text-neutral-600">
-              {property.description}
-            </p>
-          </section>
-        ) : null}
-      </main>
-    </>
+        {!isLoading && similar.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-neutral-900">
+              Similar Properties
+            </h2>
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {similar.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/browse-properties/${item.id}`}
+                  className="group overflow-hidden rounded-2xl border border-neutral-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="relative h-40 w-full overflow-hidden bg-neutral-100">
+                    {item.image_url ? (
+                      <Image
+                        src={item.image_url}
+                        alt={item.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+                        {item.category_name}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="truncate text-sm font-semibold text-neutral-900">
+                      {item.title}
+                    </h3>
+                    <p className="truncate text-xs text-neutral-500">
+                      {item.address}
+                    </p>
+                    <p className="mt-2 font-semibold text-brand-600">
+                      {formatMoney(item.reserve_price)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Footer />
+    </div>
   );
 }

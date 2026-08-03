@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Phone, Mail, MapPin } from "lucide-react";
 
-
 function FacebookIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -80,7 +79,6 @@ const CONTACT = {
   address: "Democountry, AB",
 };
 
-
 const AUCTION_CATEGORIES = [
   "Ending Now",
   "Fine Jewellery",
@@ -120,18 +118,18 @@ export default function Footer() {
   }
 
   return (
-    <footer className="relative overflow-hidden pt-24 mt-20">
+    <footer className="relative overflow-hidden pt-24 mt-8">
       <div
         className="absolute inset-x-0 bottom-0 top-32 overflow-hidden"
         style={{ clipPath: "polygon(0 22%, 100% 0%, 100% 100%, 0% 100%)" }}
       >
         <Image
-  src="/images/footer/footer-bg.jpg"
-  alt=""
-  fill
-  className="object-cover object-top"
-/>
-<div className="absolute inset-0 bg-gradient-to-b from-brand-700/20 via-brand-700/35 to-brand-900/55" />
+          src="/images/footer/footer-bg.jpg"
+          alt=""
+          fill
+          className="object-cover object-top"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-700/20 via-brand-700/35 to-brand-900/55" />
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 opacity-70">
@@ -159,7 +157,7 @@ export default function Footer() {
           />
           <div className="w-full text-center md:text-left">
             <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
-              Subscribe to Aucto
+              Subscribe to Provenix
             </span>
             <h2 className="mt-2 text-3xl font-bold text-neutral-900">
               To Get Exclusive Benefits

@@ -75,7 +75,6 @@ export function purchaseProperty(
   return apiClient.post<Property>(`${BASE}/${propertyId}/purchase`, payload, { accessToken });
 }
 
-
 export function voteOnProperty(
   accessToken: string,
   propertyId: string,
@@ -84,6 +83,21 @@ export function voteOnProperty(
   return apiClient.post<Property>(`${BASE}/${propertyId}/votes`, payload, { accessToken });
 }
 
+export function addPropertyImage(
+  accessToken: string,
+  propertyId: string,
+  imageUrl: string,
+): Promise<Property> {
+  return apiClient.post<Property>(`${BASE}/${propertyId}/images`, { image_url: imageUrl }, { accessToken });
+}
+
+export function removePropertyImage(
+  accessToken: string,
+  propertyId: string,
+  imageId: string,
+): Promise<Property> {
+  return apiClient.delete<Property>(`${BASE}/${propertyId}/images/${imageId}`, { accessToken });
+}
 
 export function deleteProperty(accessToken: string, propertyId: string): Promise<void> {
   return apiClient.delete<void>(`${BASE}/${propertyId}`, { accessToken });

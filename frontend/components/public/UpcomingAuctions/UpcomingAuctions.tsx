@@ -88,7 +88,7 @@ export default function UpcomingAuctions() {
     return (
         <section className="relative py-20">
             <div className="relative z-20 mx-auto w-full max-w-[1600px] px-8">
-                <div className="text-center">
+                <div className="text-center -mt-5 mb-5">
                     <h2 className="text-4xl font-bold text-neutral-900">Upcoming Auctions</h2>
                     <p className="mt-3 text-neutral-500">
                         You are welcome to attend and join in the action at any of our upcoming auctions.

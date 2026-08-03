@@ -8,6 +8,11 @@ export interface PropertyVote {
   approved: boolean;
   decided_at: string;
 }
+export interface PropertyImage {
+  id: string;
+  image_url: string;
+  sort_order: number;
+}
 export interface Property {
   id: string;
   title: string;
@@ -28,6 +33,7 @@ export interface Property {
   paid_amount: string | null;
   purchased_at: string | null;
   votes: PropertyVote[];
+  images: PropertyImage[];
   created_at: string;
 }
 export interface PropertyPage {

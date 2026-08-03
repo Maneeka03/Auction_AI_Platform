@@ -10,6 +10,7 @@ from app.models.user import User
 from app.rbac.permissions import Access, Module, can
 from app.schemas.crm import PropertyAnalyticsOut
 from app.schemas.property import (
+    AddPropertyImageRequest,
     CreatePropertyRequest,
     PropertyOut,
     PropertyPage,
@@ -145,6 +146,26 @@ async def delete_property(property_id: uuid.UUID, session: DbSession, _: User = 
     await properties.delete(session, property_id)
 
 
+@router.post(
+    "/{property_id}/images", response_model=PropertyOut, status_code=status.HTTP_201_CREATED
+)
+async def add_property_image(
+    property_id: uuid.UUID,
+    payload: AddPropertyImageRequest,
+    session: DbSession,
+    _: User = Manager,
+) -> PropertyOut:
+    """Attach one photo to a listing's gallery. Call after uploading via POST /uploads/presign."""
+    return PropertyOut.of(await properties.add_image(session, property_id, payload.image_url))
+
+
+@router.delete("/{property_id}/images/{image_id}", response_model=PropertyOut)
+async def remove_property_image(
+    property_id: uuid.UUID, image_id: uuid.UUID, session: DbSession, _: User = Manager
+) -> PropertyOut:
+    return PropertyOut.of(await properties.remove_image(session, property_id, image_id))
+
+
 @router.post("/{property_id}/views", status_code=status.HTTP_204_NO_CONTENT)
 async def record_view(property_id: uuid.UUID, session: DbSession, actor: CurrentUser) -> None:
     """Log that the current user looked at this listing, feeding its interest analytics."""
@@ -164,5 +185,3 @@ async def property_analytics(
             "You can only view analytics for your own listings.",
         )
     return await analytics.for_property(session, property_id)
-
-
