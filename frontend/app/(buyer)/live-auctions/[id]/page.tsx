@@ -118,14 +118,13 @@ export default function LiveBiddingRoomPage() {
 
       {/* Top bar: back + watchlist */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => router.back()}
+        <Link
+          href="/browse-auctions"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
         >
           <ArrowLeft size={15} />
           Back to Browse Auctions
-        </button>
+        </Link>
 
         {auction?.property_id ? (
           <button

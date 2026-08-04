@@ -4,9 +4,10 @@ import { Clock, Gavel, MapPin, Package, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PaymentModal } from "@/components/properties/PaymentModal";
 import { listAuctions } from "@/lib/api/auctions";
-import { listProperties } from "@/lib/api/properties";
+import { getProperty, listProperties } from "@/lib/api/properties";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Auction } from "@/types/auction";
@@ -159,12 +160,26 @@ function SkeletonCard() {
 
 export default function RecommendationsPage() {
   const { accessToken } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
   const [upcomingAuctions, setUpcomingAuctions] = useState<Auction[]>([]);
   const [listings, setListings] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<Property | null>(null);
+
+  // Auto-open PaymentModal when redirected from landing page with ?buy=<id>
+  useEffect(() => {
+    const buyId = searchParams.get("buy");
+    if (!buyId || !accessToken) return;
+    getProperty(accessToken, buyId)
+      .then((property) => {
+        setPurchasing(property);
+        router.replace("/recommendations", { scroll: false });
+      })
+      .catch(() => {});
+  }, [accessToken, searchParams, router]);
 
   useEffect(() => {
     if (!accessToken) return;

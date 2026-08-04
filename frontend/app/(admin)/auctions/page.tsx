@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -25,6 +25,7 @@ const tabs: { key: FilterTab; label: string }[] = [
 
 export default function LiveAuctionsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { accessToken, session } = useAuth();
   const isSuperAdmin = session?.roles.includes("super_admin") ?? false;
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
@@ -58,6 +59,17 @@ export default function LiveAuctionsPage() {
   useEffect(() => {
     void fetchAuctions();
   }, [fetchAuctions]);
+
+  // Auto-open edit drawer when redirected from landing page with ?edit=<id>
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || auctions.length === 0) return;
+    const target = auctions.find((a) => a.id === editId);
+    if (target) {
+      setEditingAuction(target);
+      router.replace("/auctions", { scroll: false });
+    }
+  }, [searchParams, auctions, router]);
 
   async function handleCreate(payload: Parameters<typeof createAuction>[1]) {
     if (!accessToken) return;

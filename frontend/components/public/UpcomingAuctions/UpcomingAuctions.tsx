@@ -12,6 +12,7 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Auction, AuctionStatus } from "@/types/auction";
 import type { Property } from "@/types/property";
+import type { Session } from "@/types/auth";
 
 type FilterTab = "all" | AuctionStatus;
 
@@ -37,8 +38,13 @@ function timeRemaining(endsAt: string, now: number): string {
     return `${hours}h ${mins}m ${secs}s`;
 }
 function formatMoney(value: string | null): string {return value ? `$${Number(value).toLocaleString()}` : "—";}
-function targetFor(auctionId: string, loggedIn: boolean): string {
-  return loggedIn ? `/live-auctions/${auctionId}` : `/login?redirect=/live-auctions/${auctionId}`;
+const APPRAISER_MANAGER_ROLES = ["auction_manager", "gemologist"];
+
+function targetFor(auctionId: string, session: Session | null): string {
+  if (!session) return `/login?redirect=/live-auctions/${auctionId}`;
+  if (session.roles.includes("super_admin")) return `/auctions/${auctionId}`;
+  if (session.roles.some((r) => APPRAISER_MANAGER_ROLES.includes(r))) return `/auctions?edit=${auctionId}`;
+  return `/live-auctions/${auctionId}`;
 }
 
 export default function UpcomingAuctions() {
@@ -115,8 +121,8 @@ export default function UpcomingAuctions() {
                     : rows.length === 0 ? (
                         <p className="py-10 text-center text-sm text-neutral-500">No auctions in this category right now.</p>
                     ) : (rows.map(({ auction, property }, index) => (
-                            <div key={auction.id} role="button" tabIndex={0} onClick={() => router.push(targetFor(auction.id, !!session))}
-                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(targetFor(auction.id, !!session));}}
+                            <div key={auction.id} role="button" tabIndex={0} onClick={() => router.push(targetFor(auction.id, session))}
+                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(targetFor(auction.id, session));}}
                                 style={{ animationDelay: `${index * 80}ms`, animationFillMode: "backwards" }}
                                 className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-neutral-200 shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 hover:-translate-y-1 hover:shadow-xl md:flex-row"
                             >
@@ -218,7 +224,7 @@ export default function UpcomingAuctions() {
                                         Increments of{" "}
                                         {auction.increments.length? `$${Number(Math.min(...auction.increments.map(Number))).toLocaleString()}`: "—"}
                                     </div>
-                                    <Link href={targetFor(auction.id, !!session)} onClick={(e) => e.stopPropagation()}
+                                    <Link href={targetFor(auction.id, session)} onClick={(e) => e.stopPropagation()}
                                         className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
                                     >
                                         <Gavel size={15} /> Submit A Bid

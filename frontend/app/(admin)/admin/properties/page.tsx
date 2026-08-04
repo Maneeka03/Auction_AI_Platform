@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { PropertyCard } from "@/components/properties/PropertyCard";
-import { PaymentModal } from "@/components/properties/PaymentModal";
 import { listProperties } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -17,7 +16,6 @@ export default function AdminBrowsePropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [purchasingProperty, setPurchasingProperty] = useState<Property | null>(null);
 
   const fetchProperties = useCallback(async () => {
     if (!accessToken) return;
@@ -99,19 +97,16 @@ export default function AdminBrowsePropertiesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} onBuyNow={setPurchasingProperty} />
+              <PropertyCard
+                key={property.id}
+                property={property}
+                detailHref={`/admin/properties/${property.id}`}
+                onBuyNow={() => {}}
+              />
             ))}
           </div>
         )}
       </div>
-
-      {purchasingProperty ? (
-        <PaymentModal
-          property={purchasingProperty}
-          onClose={() => setPurchasingProperty(null)}
-          onConfirm={() => void fetchProperties()}
-        />
-      ) : null}
     </AdminShell>
   );
 }

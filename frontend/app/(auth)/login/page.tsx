@@ -43,7 +43,33 @@ export default function LoginPage() {
       );
       const isSeller = session.roles.includes("seller");
       const redirect = searchParams.get("redirect");
-      const destination = isStaff ? "/dashboard" : isSeller ? "/seller/dashboard" : (redirect ?? "/home");
+
+      let destination: string;
+      if (isStaff) {
+        if (redirect?.startsWith("/browse-properties/")) {
+          destination = redirect.replace("/browse-properties/", "/admin/properties/");
+        } else if (redirect?.startsWith("/live-auctions/")) {
+          const auctionId = redirect.slice("/live-auctions/".length);
+          const isAppraiserOrManager = session.roles.some((r) =>
+            ["auction_manager", "gemologist"].includes(r),
+          );
+          destination = isAppraiserOrManager
+            ? `/auctions?edit=${auctionId}`
+            : `/auctions/${auctionId}`;
+        } else {
+          destination = "/dashboard";
+        }
+      } else if (isSeller) {
+        destination = "/seller/dashboard";
+      } else {
+        if (redirect?.startsWith("/browse-properties/")) {
+          const propertyId = redirect.slice("/browse-properties/".length);
+          destination = `/properties/${propertyId}?buy=true`;
+        } else {
+          destination = redirect ?? "/home";
+        }
+      }
+
       router.push(destination);
       router.refresh();
     } catch (error) {
