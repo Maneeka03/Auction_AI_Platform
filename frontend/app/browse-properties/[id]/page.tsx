@@ -276,7 +276,7 @@ export default function PropertyDetailPage() {
                   title="Real 3D viewing isn't built yet"
                   className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border-2 border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-400"
                 >
-                  <Box size={16} /> 3D View — Coming Soon
+                  <Box size={16} /> 3D View 
                 </button>
               )}
 

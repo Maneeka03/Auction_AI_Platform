@@ -4,9 +4,14 @@ export async function uploadImage(
   accessToken: string,
   file: File,
   purpose: UploadPurpose = "property",
+  contentType: string = file.type,
 ): Promise<string> {
+
+  const uploadFile =
+    contentType !== file.type ? new File([file], file.name, { type: contentType }) : file;
+
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", uploadFile);
 
   const response = await fetch(`/api/v1/uploads/file?purpose=${encodeURIComponent(purpose)}`, {
     method: "POST",
