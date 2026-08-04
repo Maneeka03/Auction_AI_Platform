@@ -112,7 +112,7 @@ export default function BuyerPropertyDetailPage() {
             {/* Two-column layout */}
             <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
               {/* Left — image / 3D viewer */}
-              <div className="relative overflow-hidden rounded-2xl bg-neutral-100" style={{ minHeight: "420px" }}>
+              <div className="relative overflow-hidden rounded-2xl bg-white" style={{ minHeight: "420px" }}>
                 {show3d && resolveMinioUrl(property.model_url) ? (
                   <ModelViewer
                     src={resolveMinioUrl(property.model_url)!}
@@ -124,7 +124,7 @@ export default function BuyerPropertyDetailPage() {
                     alt={property.title}
                     fill
                     sizes="(max-width: 1024px) 100vw, 640px"
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                   />
                 ) : (

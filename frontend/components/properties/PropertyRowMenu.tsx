@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 interface PropertyRowMenuProps {
   onEdit: () => void;
   onDelete: () => void;
-  onManageImages: () => void;
+  onManageImages?: () => void;
 }
 
 const MENU_WIDTH = 144;
@@ -68,16 +68,18 @@ export function PropertyRowMenu({ onEdit, onDelete, onManageImages }: PropertyRo
               style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
               className="z-50 rounded-lg border border-neutral-200 bg-white p-1 shadow-lg"
             >
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onManageImages();
-                }}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
-              >
-                <Images size={14} /> Manage Images
-              </button>
+              {onManageImages && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    onManageImages();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                >
+                  <Images size={14} /> Manage Images
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {

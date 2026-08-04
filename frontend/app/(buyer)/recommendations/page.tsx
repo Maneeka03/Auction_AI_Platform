@@ -49,9 +49,9 @@ function LiveAuctionCard({ a }: { a: Auction }) {
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
       <Link href={`/live-auctions/${a.id}`} className="block" onClick={() => markViewed(a.id)}>
-        <div className="relative h-44 w-full bg-neutral-100">
+        <div className="relative h-44 w-full bg-white">
           {imgSrc ? (
-            <Image src={imgSrc} alt={a.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+            <Image src={imgSrc} alt={a.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
           ) : (
             <div className="flex h-full items-center justify-center">
               <Package size={28} className="text-neutral-300" />
@@ -92,9 +92,9 @@ function UpcomingAuctionCard({ a }: { a: Auction }) {
   const imgSrc = resolveMinioUrl(a.image_url);
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <div className="relative h-44 w-full bg-neutral-100">
+      <div className="relative h-44 w-full bg-white">
         {imgSrc ? (
-          <Image src={imgSrc} alt={a.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+          <Image src={imgSrc} alt={a.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
         ) : (
           <div className="flex h-full items-center justify-center">
             <Package size={28} className="text-neutral-300" />
@@ -135,9 +135,9 @@ function ListingCard({ p, onBuyNow }: { p: Property; onBuyNow: (p: Property) => 
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
       <Link href={`/properties/${p.id}`} className="block" onClick={() => markViewed(p.id)}>
-        <div className="relative h-44 w-full bg-neutral-100">
+        <div className="relative h-44 w-full bg-white">
           {imgSrc ? (
-            <Image src={imgSrc} alt={p.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+            <Image src={imgSrc} alt={p.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
           ) : (
             <div className="flex h-full items-center justify-center">
               <Package size={28} className="text-neutral-300" />

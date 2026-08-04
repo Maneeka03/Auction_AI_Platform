@@ -53,13 +53,13 @@ export default function AuctionPropertyCard({
       }
       className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
-      <div className="relative h-56 w-full overflow-hidden bg-neutral-100">
+      <div className="relative h-56 w-full overflow-hidden bg-white">
         {property.image_url ? (
           <Image
             src={resolveMinioUrl(property.image_url)!}
             alt={property.title}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-contain transition-transform duration-500 group-hover:scale-105"
             unoptimized
           />
         ) : (

@@ -89,19 +89,19 @@ const AUCTION_CATEGORIES = [
 ];
 
 const ABOUT_LINKS = [
-  { label: "About Aucto", href: "#" },
-  { label: "How It Works", href: "#" },
-  { label: "Careers", href: "#" },
-  { label: "Press", href: "#" },
-  { label: "Our Blog", href: "#" },
+  { label: "About Aucto", href: "/about" },
+  { label: "How It Works", href: "/how-it-works" },
+  { label: "Careers", href: "/careers" },
+  { label: "Press", href: "/press" },
+  { label: "Our Blog", href: "/blog" },
 ];
 
 const HELP_LINKS = [
   { label: "Your Account", href: "/login" },
-  { label: "Safe & Secure", href: "#" },
-  { label: "Shipping Information", href: "#" },
-  { label: "Contact Us", href: "#" },
-  { label: "Help & FAQ", href: "#" },
+  { label: "Safe & Secure", href: "/safe-and-secure" },
+  { label: "Shipping Information", href: "/shipping" },
+  { label: "Contact Us", href: "/contact" },
+  { label: "Help & FAQ", href: "/faq" },
 ];
 
 const PAYMENT_BADGES = ["PayPal", "Visa", "Discover", "Mastercard"];
