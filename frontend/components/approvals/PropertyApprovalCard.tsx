@@ -33,7 +33,14 @@ export function PropertyApprovalCard({
     <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{property.category_name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{property.category_name}</p>
+            {property.category_name?.toLowerCase() === "other" && (
+              <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">
+                Other — Needs Category
+              </span>
+            )}
+          </div>
           <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{property.title}</h3>
           <p className="text-xs text-neutral-500">{property.address}</p>
           <p className="mt-1 text-sm text-neutral-500">

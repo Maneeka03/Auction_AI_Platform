@@ -37,9 +37,9 @@ function AuctionCard({ a }: { a: Auction }) {
   const currentPrice = a.current_bid ?? a.opening_bid;
   return (
     <Link href={`/live-auctions/${a.id}`} className="group block overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <div className="relative h-40 w-full bg-neutral-100">
+      <div className="relative h-40 w-full bg-white">
         {imgSrc ? (
-          <Image src={imgSrc} alt={a.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+          <Image src={imgSrc} alt={a.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
         ) : (
           <div className="flex h-full items-center justify-center">
             <Package size={28} className="text-neutral-300" />
@@ -71,9 +71,9 @@ function ListingCard({ p }: { p: Property }) {
   const imgSrc = resolveMinioUrl(p.image_url);
   return (
     <Link href={`/properties/${p.id}`} className="group block overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <div className="relative h-40 w-full bg-neutral-100">
+      <div className="relative h-40 w-full bg-white">
         {imgSrc ? (
-          <Image src={imgSrc} alt={p.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
+          <Image src={imgSrc} alt={p.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
         ) : (
           <div className="flex h-full items-center justify-center">
             <Package size={28} className="text-neutral-300" />

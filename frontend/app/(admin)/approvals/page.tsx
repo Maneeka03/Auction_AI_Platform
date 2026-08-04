@@ -159,6 +159,11 @@ export default function ApprovalsPage() {
               onVote={handleVote}
               isVoting={votingId === detailProperty.id}
               onClose={() => setDetailProperty(null)}
+              accessToken={accessToken ?? undefined}
+              onPropertyUpdated={(updated) => {
+                setProperties((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+                setDetailProperty(updated);
+              }}
             />
           )}
         </div>

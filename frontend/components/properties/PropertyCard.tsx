@@ -14,9 +14,9 @@ export function PropertyCard({ property, onBuyNow, detailHref }: PropertyCardPro
 
   const cardContent = (
     <>
-      <div className="relative h-40 bg-neutral-100">
+      <div className="relative h-40 bg-white">
         {property.image_url ? (
-          <Image src={resolveMinioUrl(property.image_url)!} alt={property.title} fill sizes="400px" unoptimized className="object-cover" />
+          <Image src={resolveMinioUrl(property.image_url)!} alt={property.title} fill sizes="400px" unoptimized className="object-contain" />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-neutral-400 capitalize">
             {property.category_name} photo

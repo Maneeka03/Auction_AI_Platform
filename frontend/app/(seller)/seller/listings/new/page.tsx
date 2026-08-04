@@ -5,7 +5,7 @@ import { ArrowLeft, Box, ImagePlus, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { listCategories } from "@/lib/api/categories";
+import { listCategories, createCategory } from "@/lib/api/categories";
 import { createListing } from "@/lib/api/seller";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
@@ -100,6 +100,15 @@ export default function NewListingPage() {
     if (glbInputRef.current) glbInputRef.current.value = "";
   }
 
+  async function resolveOtherCategoryId(): Promise<string> {
+    const cats = await listCategories(accessToken!);
+    const flat = cats.flatMap((c) => [c, ...c.children]);
+    const existing = flat.find((c) => c.name.toLowerCase() === "other");
+    if (existing) return existing.id;
+    const created = await createCategory(accessToken!, { name: "Other" });
+    return created.id;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -120,12 +129,20 @@ export default function NewListingPage() {
     if (!accessToken) return;
     setIsSubmitting(true);
     try {
+      let finalCategoryId = categoryId;
+      let finalDescription = description.trim() || null;
+
+      if (categoryId === "__other__") {
+        finalCategoryId = await resolveOtherCategoryId();
+        finalDescription = "[Category: Other]\n\n" + (description.trim() || "") || null;
+      }
+
       await createListing(accessToken, {
         title: title.trim(),
         address: address.trim(),
-        category_id: categoryId,
+        category_id: finalCategoryId,
         reserve_price: reservePrice,
-        description: description.trim() || null,
+        description: finalDescription,
         image_url: imageUrl ?? null,
         model_url: glbUrl ?? null,
         bedrooms: bedrooms ? Number(bedrooms) : null,
@@ -193,7 +210,7 @@ export default function NewListingPage() {
               </label>
               <select
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
+                onChange={(e) => { setCategoryId(e.target.value); }}
                 className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">Select category</option>
@@ -202,6 +219,7 @@ export default function NewListingPage() {
                     {c.label}
                   </option>
                 ))}
+                <option value="__other__">Other</option>
               </select>
             </div>
             <div>

@@ -196,7 +196,7 @@ export default function PropertyDetailPage() {
         ) : (
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <div>
-              <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-neutral-200 md:h-[480px]">
+              <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-white md:h-[480px]">
                 {show3d && modelUrl ? (
                   <ModelViewer src={modelUrl} className="h-full w-full" />
                 ) : activeImage ? (
@@ -204,7 +204,7 @@ export default function PropertyDetailPage() {
                     src={activeImage}
                     alt={property.title}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                   />
                 ) : (
@@ -236,7 +236,7 @@ export default function PropertyDetailPage() {
                         src={url}
                         alt=""
                         fill
-                        className="object-cover"
+                        className="object-contain bg-white"
                         unoptimized
                       />
                     </button>
@@ -429,13 +429,13 @@ export default function PropertyDetailPage() {
                   href={`/browse-properties/${item.id}`}
                   className="group overflow-hidden rounded-2xl border border-neutral-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <div className="relative h-40 w-full overflow-hidden bg-neutral-100">
+                  <div className="relative h-40 w-full overflow-hidden bg-white">
                     {item.image_url ? (
                       <Image
                         src={resolveMinioUrl(item.image_url)!}
                         alt={item.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-contain transition-transform duration-500 group-hover:scale-105"
                         unoptimized
                       />
                     ) : (

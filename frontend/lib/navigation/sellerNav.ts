@@ -1,7 +1,6 @@
 import {
   Clock,
   FileText,
-  FolderPlus,
   Gavel,
   LayoutDashboard,
   MessageSquare,
@@ -21,7 +20,6 @@ export const sellerNav: NavSection[] = [
     title: "Listings",
     items: [
       { label: "My Listings", href: "/seller/listings", icon: Package },
-      { label: "Propose Category", href: "/seller/categories", icon: FolderPlus },
       { label: "Pending Verification", href: "/seller/pending", icon: Clock },
       { label: "Active Auctions", href: "/seller/auctions", icon: Gavel },
     ],
