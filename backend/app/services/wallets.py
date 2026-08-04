@@ -10,6 +10,8 @@ from app.core.errors import AppError
 from app.models.auction import Auction, Bid
 from app.models.property import Property
 from app.models.wallet import Wallet, WalletEntry, WalletEntryKind
+from app.models.user import User, UserRole, UserStatus
+from app.rbac.permissions import Role
 
 CENTS = Decimal("0.01")
 
@@ -78,6 +80,57 @@ async def held(
     total: Decimal = await session.scalar(query)
     return total.quantize(CENTS, rounding=ROUND_HALF_UP)
 
+async def list_buyers(
+    session: AsyncSession, page: int, size: int, search: str | None
+) -> tuple[list[tuple[User, Decimal, Decimal]], int]:
+    """Every buyer with their wallet balance and current held-for-bids exposure.
+
+    Mirrors held()'s own logic (highest bid per still-open auction, rounded per auction) but
+    computed for every buyer in one query rather than one call per row.
+    """
+    base = select(User).where(
+        User.status != UserStatus.DELETED, User.role_rows.any(UserRole.role == Role.BUYER)
+    )
+    if search:
+        pattern = f"%{search.lower()}%"
+        base = base.where(
+            func.lower(User.email).like(pattern) | func.lower(User.full_name).like(pattern)
+        )
+
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+
+    top = (
+        select(
+            Bid.bidder_id.label("bidder_id"),
+            Bid.auction_id.label("auction_id"),
+            func.max(Bid.amount).label("amount"),
+        )
+        .group_by(Bid.bidder_id, Bid.auction_id)
+        .subquery()
+    )
+    held_per_user = (
+        select(
+            top.c.bidder_id.label("uid"),
+            func.coalesce(
+                func.sum(func.round(top.c.amount * Auction.token_percent / 100, 2)), 0
+            ).label("held"),
+        )
+        .select_from(top)
+        .join(Auction, Auction.id == top.c.auction_id)
+        .where(Auction.ended_at.is_(None))
+        .group_by(top.c.bidder_id)
+        .subquery()
+    )
+
+    rows = await session.execute(
+        base.add_columns(func.coalesce(Wallet.balance, 0), func.coalesce(held_per_user.c.held, 0))
+        .outerjoin(Wallet, Wallet.user_id == User.id)
+        .outerjoin(held_per_user, held_per_user.c.uid == User.id)
+        .order_by(User.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()], total
 
 async def spendable(
     session: AsyncSession, wallet: Wallet, exclude_auction_id: uuid.UUID | None = None

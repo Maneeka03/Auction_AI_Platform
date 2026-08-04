@@ -12,6 +12,7 @@ from app.api.v1 import (
     crm,
     dev,
     escrow,
+    faqs,
     groups,
     kyc,
     me,
@@ -58,6 +59,7 @@ api_router.include_router(reviews.router)
 api_router.include_router(tasks.router)
 api_router.include_router(auction_requests.router)
 api_router.include_router(admin.router)
+api_router.include_router(faqs.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)
