@@ -4,14 +4,13 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 interface Props {
   src: string;
   className?: string;
 }
 
-// A self-contained three.js viewer for a GLB model: the whole scene lives inside one effect so it
-// is created on mount and fully torn down on unmount, with no state leaking between the two.
 export function ModelViewer({ src, className }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
 
@@ -31,10 +30,21 @@ export function ModelViewer({ src, className }: Props) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(width, height);
+    // Without these, PBR materials (anything metallic/glass from Principled BSDF) render
+    // too dark and without correct color - this is what was making the ring look near-black.
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     host.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-    const key = new THREE.DirectionalLight(0xffffff, 2);
+    // Metallic and glass-like materials reflect their surroundings far more than they show
+    // direct light - without an environment map they have nothing to reflect and read as
+    // nearly black. This generates a simple synthetic room to reflect, no HDRI file needed.
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const key = new THREE.DirectionalLight(0xffffff, 2.5);
     key.position.set(5, 10, 7.5);
     scene.add(key);
 
@@ -45,7 +55,6 @@ export function ModelViewer({ src, className }: Props) {
 
     new GLTFLoader().load(src, (gltf) => {
       const model = gltf.scene;
-      // Recenter on the origin and scale to a consistent size, so any model frames the same way.
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
@@ -76,6 +85,7 @@ export function ModelViewer({ src, className }: Props) {
       observer.disconnect();
       controls.dispose();
       renderer.dispose();
+      pmremGenerator.dispose();
       if (host.contains(renderer.domElement)) host.removeChild(renderer.domElement);
     };
   }, [src]);
