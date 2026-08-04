@@ -256,7 +256,6 @@ export default function Footer() {
               </li>
             </ul>
             <div className="mt-6 flex gap-3">
-              {/* TODO: point these at the real social profiles */}
               <Link
                 href="#"
                 aria-label="Facebook"

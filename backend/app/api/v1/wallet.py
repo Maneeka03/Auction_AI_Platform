@@ -5,6 +5,7 @@ from app.models.user import User
 from app.rbac.permissions import Access, Module
 from app.schemas.wallet import TopUpRequest, WalletEntryOut, WalletOut, WithdrawRequest
 from app.services import wallets
+from app.schemas.wallet import BuyerWalletOut, BuyerWalletPage, TopUpRequest, WalletEntryOut, WalletOut, WithdrawRequest
 
 router = APIRouter(prefix="/wallet", tags=["wallet"])
 
@@ -45,3 +46,20 @@ async def list_transactions(
 ) -> list[WalletEntryOut]:
     rows = await wallets.history(session, actor.id, limit)
     return [WalletEntryOut.of(entry, related_to) for entry, related_to in rows]
+
+@router.get("/buyers", response_model=BuyerWalletPage)
+async def list_buyer_wallets(
+    session: DbSession,
+    page: int = Query(1, ge=1),
+    size: int = Query(25, ge=1, le=100),
+    search: str | None = Query(None, max_length=120),
+    _: User = Owner,
+) -> BuyerWalletPage:
+    """Every buyer's wallet at a glance, for finance/admin oversight."""
+    rows, total = await wallets.list_buyers(session, page, size, search)
+    return BuyerWalletPage(
+        items=[BuyerWalletOut.of(user.id, user.full_name, user.email, balance, held) for user, balance, held in rows],
+        total=total,
+        page=page,
+        size=size,
+    )

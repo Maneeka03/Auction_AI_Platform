@@ -30,16 +30,11 @@ export function ModelViewer({ src, className }: Props) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(width, height);
-    // Without these, PBR materials (anything metallic/glass from Principled BSDF) render
-    // too dark and without correct color - this is what was making the ring look near-black.
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     host.appendChild(renderer.domElement);
 
-    // Metallic and glass-like materials reflect their surroundings far more than they show
-    // direct light - without an environment map they have nothing to reflect and read as
-    // nearly black. This generates a simple synthetic room to reflect, no HDRI file needed.
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 

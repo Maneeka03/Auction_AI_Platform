@@ -18,3 +18,18 @@ export interface TopUpRequest {
 export interface WithdrawRequest {
   amount: string;
 }
+
+export interface BuyerWallet {
+  id: string;
+  full_name: string;
+  email: string;
+  balance: string;
+  held: string;
+  available: string;
+}
+export interface BuyerWalletPage {
+  items: BuyerWallet[];
+  total: number;
+  page: number;
+  size: number;
+}

@@ -10,71 +10,28 @@ import {
   Menu,
   Minimize2,
   MessageSquare,
-  Moon,
   PackageSearch,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
-  Sun,
   UserCircle,
   Users,
-  X,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-// PushEnableButton removed from navbar — now in /admin/settings Notifications tab
-// import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
 
 type MenuKey = "apps" | "help" | "reports" | "messages" | "notifications" | "profile";
 
 const appLinks = [
-  { label: "Auctions", description: "Browse live and upcoming", href: "/dashboard", icon: Gavel },
-  { label: "Listings", description: "Review submitted items", href: "/dashboard", icon: PackageSearch },
-  { label: "Buyers", description: "Buyer directory", href: "/dashboard", icon: Users },
-  { label: "Sellers", description: "Seller directory", href: "/dashboard", icon: UserCircle },
+  { label: "Auctions", description: "Browse live and upcoming", href: "/auctions", icon: Gavel },
+  { label: "Listings", description: "Review submitted items", href: "/listings", icon: PackageSearch },
+  { label: "Buyers", description: "Buyer directory", href: "/crm/buyers", icon: Users },
+  { label: "Sellers", description: "Seller directory", href: "/crm/sellers", icon: UserCircle },
 ];
-
-const initialMessages = [
-  {
-    id: "msg-1",
-    name: "Ann McClure",
-    detail: "mentioned you on Lot #142 verification",
-    time: "20 min ago",
-    color: "bg-success-500/15 text-success-500",
-    avatarSrc: "/images/avatars/ann-mcclure.jpg",
-  },
-  {
-    id: "msg-2",
-    name: "Robert Chen",
-    detail: "Any update on the reserve price?",
-    time: "1 hr ago",
-    color: "bg-danger-500/15 text-danger-600",
-    avatarSrc: undefined,
-  },
-];
-
-function PersonAvatar({ name, color, avatarSrc }: { name: string; color: string; avatarSrc?: string }) {
-  if (avatarSrc) {
-    return (
-      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-neutral-100">
-        <Image src={avatarSrc} alt={name} fill sizes="32px" className="object-cover" />
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${color}`}
-    >
-      {initialsFromName(name)}
-    </span>
-  );
-}
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -97,12 +54,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
   const unreadMsgCount = useUnreadMessageCount();
   const [isDark, setIsDark] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [messages, setMessages] = useState(initialMessages);
   const containerRef = useRef<HTMLElement>(null);
-
-  function dismissMessage(id: string) {
-    setMessages((prev) => prev.filter((message) => message.id !== id));
-  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -183,15 +135,6 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
           {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
         </button>
 
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          aria-label="Toggle dark mode"
-          className="hidden h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 md:flex"
-        >
-          {isDark ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
-
         {/* Apps quick-nav */}
         <div className="relative hidden sm:block">
           <button
@@ -236,7 +179,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
           </button>
           {openMenu === "help" ? (
             <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
-              <Link href="/help/faq" onClick={() => setOpenMenu(null)} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
+              <Link href="/admin/faqs" onClick={() => setOpenMenu(null)} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
                 FAQ
               </Link>
               <Link href="/help/contact" onClick={() => setOpenMenu(null)} className="block rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
@@ -279,7 +222,6 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             className="relative flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100"
           >
             <MessageSquare size={17} />
-            {/* OLD hardcoded dot: <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger-500" /> */}
             {unreadMsgCount > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[10px] font-semibold text-white">
                 {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
@@ -291,35 +233,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
               <div className="border-b border-neutral-100 px-4 py-3 text-sm font-semibold text-neutral-900">
                 Messages
               </div>
-              {messages.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-neutral-500">No new messages</p>
-              ) : (
-                <ul>
-                  {messages.map((message) => (
-                    <li
-                      key={message.id}
-                      className="group relative flex items-start gap-3 border-b border-neutral-50 px-4 py-3 last:border-0 hover:bg-neutral-50"
-                    >
-                      <PersonAvatar name={message.name} color={message.color} avatarSrc={message.avatarSrc} />
-                      <div className="pr-5">
-                        <p className="text-sm text-neutral-900">
-                          <span className="font-medium">{message.name}</span>{" "}
-                          <span className="text-neutral-600">{message.detail}</span>
-                        </p>
-                        <p className="mt-0.5 text-xs text-neutral-400">{message.time}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => dismissMessage(message.id)}
-                        aria-label={`Dismiss message from ${message.name}`}
-                        className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-neutral-400 opacity-0 transition-opacity hover:bg-neutral-200 hover:text-neutral-700 group-hover:opacity-100"
-                      >
-                        <X size={13} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <p className="px-4 py-6 text-center text-sm text-neutral-500">No new messages</p>
               <Link
                 href="/messages"
                 onClick={() => setOpenMenu(null)}
@@ -332,7 +246,6 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
         </div>
 
         {/* Notifications */}
-        {/* PushEnableButton moved to /admin/settings → Notifications tab */}
         <NotificationBell />
 
         {/* Profile */}

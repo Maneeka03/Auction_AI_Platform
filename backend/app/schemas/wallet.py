@@ -46,3 +46,28 @@ class WalletEntryOut(BaseModel):
             related_to=related_to,
             created_at=entry.created_at,
         )
+class BuyerWalletOut(BaseModel):
+    id: uuid.UUID
+    full_name: str
+    email: str
+    balance: Decimal
+    held: Decimal
+    available: Decimal
+
+    @classmethod
+    def of(cls, user_id: uuid.UUID, full_name: str, email: str, balance: Decimal, held: Decimal) -> "BuyerWalletOut":
+        return cls(
+            id=user_id,
+            full_name=full_name,
+            email=email,
+            balance=balance,
+            held=held,
+            available=balance - held,
+        )
+
+
+class BuyerWalletPage(BaseModel):
+    items: list[BuyerWalletOut]
+    total: int
+    page: int
+    size: int

@@ -1,16 +1,16 @@
 "use client";
 
-import { Minus, Plus, RefreshCw } from "lucide-react";
+import { Minus, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { AddFundsModal } from "@/components/wallet/AddFundsModal";
 import { WithdrawModal } from "@/components/wallet/WithdrawModal";
 import { TransactionIcon } from "@/components/wallet/TransactionIcon";
 import { WalletBalanceCard } from "@/components/wallet/WalletBalanceCard";
-import { getWallet, listWalletTransactions } from "@/lib/api/wallet";
+import { getWallet, listBuyerWallets, listWalletTransactions } from "@/lib/api/wallet";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
-import type { WalletEntry, WalletEntryKind, WalletSummary } from "@/types/wallet";
+import type { BuyerWallet, WalletEntry, WalletEntryKind, WalletSummary } from "@/types/wallet";
 
 const typeLabels: Record<WalletEntryKind, string> = {
   deposit: "Deposit",
@@ -19,6 +19,8 @@ const typeLabels: Record<WalletEntryKind, string> = {
   purchase: "Purchase",
   withdrawal: "Withdrawal",
 };
+
+const BUYER_PAGE_SIZE = 10;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -39,6 +41,12 @@ export default function AdminWalletPage() {
   const [showAddFunds, setShowAddFunds] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
+  const [buyerWallets, setBuyerWallets] = useState<BuyerWallet[]>([]);
+  const [buyerSearch, setBuyerSearch] = useState("");
+  const [buyerPage, setBuyerPage] = useState(1);
+  const [buyerTotal, setBuyerTotal] = useState(0);
+  const [isLoadingBuyers, setIsLoadingBuyers] = useState(true);
+
   const fetchWallet = useCallback(async () => {
     if (!accessToken) return;
     setIsLoading(true);
@@ -57,13 +65,34 @@ export default function AdminWalletPage() {
     }
   }, [accessToken]);
 
+  const fetchBuyerWallets = useCallback(async () => {
+    if (!accessToken) return;
+    setIsLoadingBuyers(true);
+    try {
+      const page = await listBuyerWallets(accessToken, {
+        page: buyerPage,
+        size: BUYER_PAGE_SIZE,
+        search: buyerSearch || undefined,
+      });
+      setBuyerWallets(page.items);
+      setBuyerTotal(page.total);
+    } catch {
+    } finally {
+      setIsLoadingBuyers(false);
+    }
+  }, [accessToken, buyerPage, buyerSearch]);
+
   useEffect(() => {
     void fetchWallet();
   }, [fetchWallet]);
 
+  useEffect(() => {
+    void fetchBuyerWallets();
+  }, [fetchBuyerWallets]);
+
   return (
     <AdminShell>
-      <div className="mx-auto max-w-4xl space-y-5 p-6">
+      <div className="mx-auto max-w-7xl space-y-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Wallet</h1>
@@ -129,6 +158,88 @@ export default function AdminWalletPage() {
                     );
                   })}
                 </ul>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-neutral-900">Buyer Wallets</h2>
+                <div className="relative w-full max-w-xs">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    value={buyerSearch}
+                    onChange={(e) => {
+                      setBuyerSearch(e.target.value);
+                      setBuyerPage(1);
+                    }}
+                    placeholder="Search buyers..."
+                    className="w-full rounded-lg border border-neutral-200 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {isLoadingBuyers ? (
+                <p className="py-6 text-center text-sm text-neutral-400">Loading buyers...</p>
+              ) : buyerWallets.length === 0 ? (
+                <p className="py-6 text-center text-sm text-neutral-400">No buyers found.</p>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-100 text-left text-xs text-neutral-500">
+                        <th className="w-2/5 pb-2 pr-4 font-medium">Buyer</th>
+                        <th className="w-1/5 pb-2 pr-4 font-medium">Available to Spend</th>
+                        <th className="w-1/5 pb-2 pr-4 font-medium">Held for Active Bids</th>
+                        <th className="w-1/5 pb-2 font-medium">Wallet Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {buyerWallets.map((buyer) => (
+                        <tr key={buyer.id} className="border-b border-neutral-50 last:border-0">
+                          <td className="py-3 pr-4">
+                            <p className="font-medium text-neutral-900">{buyer.full_name}</p>
+                            <p className="text-xs text-neutral-500">{buyer.email}</p>
+                          </td>
+                          <td className="py-3 pr-4 font-medium text-neutral-900">
+                            ${Number(buyer.available).toLocaleString()}
+                          </td>
+                          <td className="py-3 pr-4 font-medium text-amber-600">
+                            ${Number(buyer.held).toLocaleString()}
+                          </td>
+                          <td className="py-3 font-medium text-neutral-900">
+                            ${Number(buyer.balance).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {buyerTotal > BUYER_PAGE_SIZE && (
+                    <div className="mt-4 flex items-center justify-between text-sm text-neutral-500">
+                      <span>
+                        Page {buyerPage} of {Math.ceil(buyerTotal / BUYER_PAGE_SIZE)}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setBuyerPage((p) => Math.max(1, p - 1))}
+                          disabled={buyerPage === 1}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBuyerPage((p) => p + 1)}
+                          disabled={buyerPage * BUYER_PAGE_SIZE >= buyerTotal}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </>
