@@ -21,7 +21,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             href={`/browse-properties?category=${category.id}`}
             className="flex-1 transition hover:-translate-y-0.5"
           >
-            <h3 className="text-xl font-semibold hover:text-purple-600 transition">
+            <h3 className="text-xl font-semibold transition hover:text-purple-600">
               {category.name}
             </h3>
             <p className="mt-2 text-sm text-gray-500">Explore available assets</p>

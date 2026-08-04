@@ -124,6 +124,12 @@ export default function LiveAuctionsPage() {
 
       <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-16">
         <div className="mb-6 text-white">
+          <Link
+            href="/"
+            className="mb-4 inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-sm text-white backdrop-blur-sm transition hover:bg-black/35"
+          >
+            ← Back to Home
+          </Link>
           <h1 className="mt-2 text-4xl font-bold">Live Auctions</h1>
           <p className="mt-2 text-purple-100">
             {!isLoading && rows.length > 0

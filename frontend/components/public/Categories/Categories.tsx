@@ -12,18 +12,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function Categories(){
 
   const [categories, setCategories] = useState<CategoryTree[]>([]);
-  const autoplay = useRef(Autoplay({delay: 2000, stopOnInteraction: false,stopOnMouseEnter: true,}));
+  const autoplay = useRef(Autoplay({delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true}));
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     dragFree: false,
     loop: true,
-  },[autoplay.current])
+  }, [autoplay.current]);
 
   useEffect(() => {
     async function loadCategories() {
       try {
-        const data = await listPublicCategories();
-        setCategories(data);
+        const data: CategoryTree[] = await listPublicCategories();
+        // Show newest categories first so seller-added categories appear at the front
+        const sorted = [...data].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        setCategories(sorted);
       } catch (error) {
         console.error("Failed to load categories:", error);
       }
@@ -39,13 +43,13 @@ export default function Categories(){
             <span className="text-m font-bold uppercase tracking-[0.2em] text-brand-500">Categories</span>
             <h2 className="mt-2 text-4xl font-bold text-neutral-900">Browse Categories</h2>
           </div>
-          
+
           <div className="flex items-center gap-3 mt-4">
             <button onClick={() => {emblaApi?.scrollPrev(); autoplay.current.reset();}}
               className="h-7 w-10 rounded-xl border shadow hover:bg-purple-600 hover:text-white transition">
               <ChevronLeft size={20}/>
             </button>
-            <button onClick={() => {emblaApi?.scrollNext();autoplay.current.reset();}}
+            <button onClick={() => {emblaApi?.scrollNext(); autoplay.current.reset();}}
               className="h-7 w-10 mr-8 rounded-xl border shadow hover:bg-purple-600 hover:text-white transition">
               <ChevronRight size={20} />
             </button>

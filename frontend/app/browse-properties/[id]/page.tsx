@@ -21,6 +21,7 @@ import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { ModelViewer } from "@/components/properties/ModelViewer";
 import { getPublicProperty, listPublicProperties } from "@/lib/api/properties";
+import { listPublicCategories } from "@/lib/api/categories";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { listPublicAuctions } from "@/lib/api/auctions";
 import { ApiRequestError } from "@/lib/api/client";
@@ -66,25 +67,45 @@ export default function PropertyDetailPage() {
       setProperty(listing);
       setActiveImage(resolveMinioUrl(listing.image_url ?? listing.images[0]?.image_url ?? null));
 
-      const sameCategory = await listPublicProperties({
-        category_id: listing.category_id,
-        size: 12,
-      });
-      const candidates = sameCategory.items.filter(
-        (item) => item.id !== listing.id,
+      // Fetch same-category, a broader set, and the category tree in parallel.
+      const [sameCategory, broader, categoryTree] = await Promise.all([
+        listPublicProperties({ category_id: listing.category_id, size: 20 }),
+        listPublicProperties({ size: 50 }),
+        listPublicCategories(),
+      ]);
+
+      // Find which parent category contains the current listing's category.
+      const parentCategory = categoryTree.find((parent) =>
+        parent.children.some((child) => child.id === listing.category_id),
+      );
+      // Sibling categories = other children of the same parent.
+      const siblingIds = new Set(
+        (parentCategory?.children ?? [])
+          .map((c) => c.id)
+          .filter((id) => id !== listing.category_id),
       );
 
-      if (candidates.length < 4) {
-        const broader = await listPublicProperties({ size: 12 });
-        const seen = new Set(candidates.map((item) => item.id));
-        for (const item of broader.items) {
-          if (item.id !== listing.id && !seen.has(item.id)) {
-            candidates.push(item);
-            seen.add(item.id);
-          }
+      // Priority scoring:
+      // 0 = exact same subcategory (or category if it has no parent)
+      // 1 = sibling subcategory (different child of same parent)
+      // 2 = anything else
+      function score(item: Property): number {
+        if (item.category_id === listing.category_id) return 0;
+        if (siblingIds.has(item.category_id)) return 1;
+        return 2;
+      }
+
+      const seen = new Set<string>([listing.id]);
+      const candidates: Property[] = [];
+
+      for (const item of [...sameCategory.items, ...broader.items]) {
+        if (!seen.has(item.id)) {
+          candidates.push(item);
+          seen.add(item.id);
         }
       }
 
+      candidates.sort((a, b) => score(a) - score(b));
       setSimilar(candidates.slice(0, 4));
 
       try {

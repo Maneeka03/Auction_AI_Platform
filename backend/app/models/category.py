@@ -43,3 +43,4 @@ class Category(Base, TimestampMixin):
     )
 
     children: Mapped[list["Category"]] = relationship(cascade="all, delete-orphan", lazy="selectin")
+

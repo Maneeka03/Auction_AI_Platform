@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
@@ -32,6 +33,7 @@ const ENDING_WINDOWS: Record<EndingWithinFilter, number> = {
 
 export default function BrowsePropertiesPage() {
   const { session } = useAuth();
+  const searchParams = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [auctionByProperty, setAuctionByProperty] = useState<
     Map<string, Auction>
@@ -92,23 +94,6 @@ export default function BrowsePropertiesPage() {
         setProperties(propertyPage.items);
         setCategories(cats);
 
-        const catId = new URLSearchParams(window.location.search).get("category");
-        if (catId) {
-          const matchedParent = cats.find((c) => c.id === catId);
-          if (matchedParent) {
-            // parent category clicked — select parent + all its children
-            setSelectedCategories(
-              new Set([catId, ...matchedParent.children.map((ch) => ch.id)]),
-            );
-            setExpandedCategories(new Set([catId]));
-          } else {
-            // subcategory clicked — select just that child, expand its parent
-            setSelectedCategories(new Set([catId]));
-            const parentCat = cats.find((c) => c.children.some((ch) => ch.id === catId));
-            if (parentCat) setExpandedCategories(new Set([parentCat.id]));
-          }
-        }
-
         const map = new Map<string, Auction>();
         for (const auction of auctionPage.items)
           map.set(auction.property_id, auction);
@@ -129,6 +114,23 @@ export default function BrowsePropertiesPage() {
       active = false;
     };
   }, []);
+
+  // Reactively apply ?category=<id> from URL — works on first load AND when
+  // Next.js reuses the component across soft navigations (e.g., slider → browse-properties).
+  useEffect(() => {
+    const catId = searchParams.get("category");
+    if (!catId || categories.length === 0) return;
+    const matchedParent = categories.find((c) => c.id === catId);
+    if (matchedParent) {
+      setSelectedCategories(new Set([catId, ...matchedParent.children.map((ch) => ch.id)]));
+      setExpandedCategories(new Set([catId]));
+    } else {
+      setSelectedCategories(new Set([catId]));
+      const parentCat = categories.find((c) => c.children.some((ch) => ch.id === catId));
+      if (parentCat) setExpandedCategories(new Set([parentCat.id]));
+    }
+    setPage(1);
+  }, [searchParams, categories]);
 
   function toggleSet<T>(set: Set<T>, value: T, setter: (s: Set<T>) => void) {
     const next = new Set(set);
@@ -270,6 +272,12 @@ export default function BrowsePropertiesPage() {
 
       <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-16">
         <div className="mb-6 text-white">
+          <Link
+            href="/"
+            className="mb-4 inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-sm text-white backdrop-blur-sm transition hover:bg-black/35"
+          >
+            ← Back to Home
+          </Link>
           <h1 className="mt-2 text-4xl font-bold">Explore All Properties</h1>
           <p className="mt-2 text-purple-100">
             {filtered.length > 0

@@ -1,13 +1,34 @@
 "use client";
 
 import Image from "next/image";
-import { Bath, BedDouble, Check, CheckCircle2, Ruler, X, XCircle } from "lucide-react";
+import { Bath, BedDouble, Box, Check, CheckCircle2, Ruler, X, XCircle } from "lucide-react";
 import { useState } from "react";
 import { ApproverSeatChip } from "@/components/approvals/ApproverSeatChip";
+import { ModelViewer } from "@/components/properties/ModelViewer";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { ApproverSeat, Property } from "@/types/property";
 
 const SEATS: ApproverSeat[] = ["director", "appraiser", "legal_finance"];
+
+function parseDescription(raw: string | null): { text: string | null; fields: Array<{ label: string; value: string }> } {
+  if (!raw) return { text: null, fields: [] };
+  const SEP = "--- Custom Fields ---";
+  const idx = raw.indexOf(SEP);
+  if (idx === -1) return { text: raw, fields: [] };
+  const text = raw.slice(0, idx).trim() || null;
+  const fields = raw
+    .slice(idx + SEP.length)
+    .trim()
+    .split("\n")
+    .map((line) => {
+      const colonIdx = line.indexOf(":");
+      return colonIdx === -1
+        ? null
+        : { label: line.slice(0, colonIdx).trim(), value: line.slice(colonIdx + 1).trim() };
+    })
+    .filter((f): f is { label: string; value: string } => f !== null && !!f.label);
+  return { text, fields };
+}
 
 interface Props {
   property: Property;
@@ -24,6 +45,8 @@ export function PropertyDetailModal({ property, currentUserSeat, onVote, isVotin
   ].filter((url): url is string => !!url);
 
   const [activeImage, setActiveImage] = useState(gallery[0] ?? null);
+
+  const { text: descriptionText, fields: customFields } = parseDescription(property.description);
 
   const approvedCount = property.votes.filter((v) => v.approved).length;
   const myVote = currentUserSeat ? property.votes.find((v) => v.seat === currentUserSeat) : undefined;
@@ -140,10 +163,38 @@ export function PropertyDetailModal({ property, currentUserSeat, onVote, isVotin
             </div>
 
             {/* Description */}
-            {property.description && (
+            {descriptionText && (
               <div>
                 <p className="mb-1.5 text-sm font-semibold text-neutral-700">Description</p>
-                <p className="text-sm leading-relaxed text-neutral-600">{property.description}</p>
+                <p className="text-sm leading-relaxed text-neutral-600">{descriptionText}</p>
+              </div>
+            )}
+
+            {/* Custom Fields */}
+            {customFields.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-neutral-700">Custom Product Fields</p>
+                <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-100 bg-neutral-50 px-4">
+                  {customFields.map((f) => (
+                    <div key={f.label} className="flex items-center justify-between py-2 text-sm">
+                      <span className="font-medium text-neutral-600">{f.label}</span>
+                      <span className="text-neutral-800">{f.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3D Model */}
+            {resolveMinioUrl(property.model_url) && (
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-neutral-700">
+                  <Box size={14} /> 3D Model Preview
+                </p>
+                <ModelViewer
+                  src={resolveMinioUrl(property.model_url)!}
+                  className="h-56 w-full rounded-xl overflow-hidden"
+                />
               </div>
             )}
 

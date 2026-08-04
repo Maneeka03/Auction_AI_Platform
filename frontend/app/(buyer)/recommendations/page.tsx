@@ -13,12 +13,42 @@ import { useAuth } from "@/lib/auth/session-context";
 import type { Auction } from "@/types/auction";
 import type { Property } from "@/types/property";
 
+// Persist clicked item IDs in localStorage so they surface first on next visit.
+function markViewed(id: string) {
+  try {
+    const prev: string[] = JSON.parse(localStorage.getItem("provenix_viewed") ?? "[]");
+    const updated = [id, ...prev.filter((v) => v !== id)].slice(0, 100);
+    localStorage.setItem("provenix_viewed", JSON.stringify(updated));
+  } catch {}
+}
+
+function readViewed(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("provenix_viewed") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+// Sort items so previously-clicked ones appear first (most recent click = index 0).
+function prioritize<T extends { id: string }>(items: T[], viewedIds: string[]): T[] {
+  if (viewedIds.length === 0) return items;
+  return [...items].sort((a, b) => {
+    const ai = viewedIds.indexOf(a.id);
+    const bi = viewedIds.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
+
 function LiveAuctionCard({ a }: { a: Auction }) {
   const imgSrc = resolveMinioUrl(a.image_url);
   const currentPrice = a.current_bid ?? a.opening_bid;
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <Link href={`/live-auctions/${a.id}`} className="block">
+      <Link href={`/live-auctions/${a.id}`} className="block" onClick={() => markViewed(a.id)}>
         <div className="relative h-44 w-full bg-neutral-100">
           {imgSrc ? (
             <Image src={imgSrc} alt={a.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
@@ -104,7 +134,7 @@ function ListingCard({ p, onBuyNow }: { p: Property; onBuyNow: (p: Property) => 
   const imgSrc = resolveMinioUrl(p.image_url);
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <Link href={`/properties/${p.id}`} className="block">
+      <Link href={`/properties/${p.id}`} className="block" onClick={() => markViewed(p.id)}>
         <div className="relative h-44 w-full bg-neutral-100">
           {imgSrc ? (
             <Image src={imgSrc} alt={p.title} fill className="object-cover transition-transform duration-200 group-hover:scale-105" unoptimized />
@@ -168,6 +198,12 @@ export default function RecommendationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<Property | null>(null);
+  const [viewedIds, setViewedIds] = useState<string[]>([]);
+
+  // Read last-clicked order from localStorage on mount.
+  useEffect(() => {
+    setViewedIds(readViewed());
+  }, []);
 
   // Auto-open PaymentModal when redirected from landing page with ?buy=<id>
   useEffect(() => {
@@ -239,9 +275,9 @@ export default function RecommendationsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {liveAuctions.map((a) => <LiveAuctionCard key={a.id} a={a} />)}
-            {upcomingAuctions.map((a) => <UpcomingAuctionCard key={a.id} a={a} />)}
-            {listings.map((p) => <ListingCard key={p.id} p={p} onBuyNow={setPurchasing} />)}
+            {prioritize(liveAuctions, viewedIds).map((a) => <LiveAuctionCard key={a.id} a={a} />)}
+            {prioritize(upcomingAuctions, viewedIds).map((a) => <UpcomingAuctionCard key={a.id} a={a} />)}
+            {prioritize(listings, viewedIds).map((p) => <ListingCard key={p.id} p={p} onBuyNow={setPurchasing} />)}
           </div>
         )}
       </div>
