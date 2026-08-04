@@ -9,6 +9,7 @@ import { listCategories } from "@/lib/api/categories";
 import { createListing } from "@/lib/api/seller";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
+import { CategoryFieldsInput } from "@/components/categories/CategoryFieldsInput";
 import type { CategoryTree } from "@/types/category";
 
 export default function NewListingPage() {
@@ -33,9 +34,7 @@ export default function NewListingPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [glbUrl, setGlbUrl] = useState<string | null>(null);
   const [glbFileName, setGlbFileName] = useState<string | null>(null);
-  const [bedrooms, setBedrooms] = useState("");
-  const [bathrooms, setBathrooms] = useState("");
-  const [areaSqft, setAreaSqft] = useState("");
+  const [attributes, setAttributes] = useState<Record<string, string | number | boolean | null>>({});
 
   useEffect(() => {
     if (!accessToken) return;
@@ -45,9 +44,19 @@ export default function NewListingPage() {
   }, [accessToken]);
 
   const flatCategories = categories.flatMap((parent) => [
-    { id: parent.id, label: parent.name, isParent: true },
+    {
+      id: parent.id,
+      label: parent.slug === "others" ? "Others — can't find your category?" : parent.name,
+      isParent: true,
+    },
     ...parent.children.map((child) => ({ id: child.id, label: `  ${child.name}`, isParent: false })),
   ]);
+
+  // Fields are defined on the main category; a subcategory inherits its parent's fields.
+  const selectedMain = categories.find(
+    (m) => m.id === categoryId || m.children.some((c) => c.id === categoryId),
+  );
+  const dynamicFields = selectedMain?.fields ?? [];
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -108,6 +117,11 @@ export default function NewListingPage() {
       setError("Title, address, category, and reserve price are required.");
       return;
     }
+    const missing = dynamicFields.find((f) => f.required && !attributes[f.field_key]);
+    if (missing) {
+      setError(`${missing.label} is required.`);
+      return;
+    }
     if (isUploading) {
       setError("Please wait — image is still uploading.");
       return;
@@ -128,9 +142,7 @@ export default function NewListingPage() {
         description: description.trim() || null,
         image_url: imageUrl ?? null,
         model_url: glbUrl ?? null,
-        bedrooms: bedrooms ? Number(bedrooms) : null,
-        bathrooms: bathrooms ? Number(bathrooms) : null,
-        area_sqft: areaSqft ? Number(areaSqft) : null,
+        attributes,
       });
       router.push("/seller/listings");
     } catch (err) {
@@ -193,7 +205,10 @@ export default function NewListingPage() {
               </label>
               <select
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setAttributes({});
+                }}
                 className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">Select category</option>
@@ -234,48 +249,13 @@ export default function NewListingPage() {
           </div>
         </div>
 
-        {/* Property Details */}
-        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-neutral-700">
-            Property Details{" "}
-            <span className="text-xs font-normal text-neutral-400">(optional)</span>
-          </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-700">Bedrooms</label>
-              <input
-                type="number"
-                min="0"
-                value={bedrooms}
-                onChange={(e) => setBedrooms(e.target.value)}
-                placeholder="e.g. 3"
-                className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-700">Bathrooms</label>
-              <input
-                type="number"
-                min="0"
-                value={bathrooms}
-                onChange={(e) => setBathrooms(e.target.value)}
-                placeholder="e.g. 2"
-                className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-neutral-700">Area (sq ft)</label>
-              <input
-                type="number"
-                min="0"
-                value={areaSqft}
-                onChange={(e) => setAreaSqft(e.target.value)}
-                placeholder="e.g. 1200"
-                className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-            </div>
+        {/* Category-specific fields */}
+        {dynamicFields.length > 0 && (
+          <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+            <h2 className="text-sm font-semibold text-neutral-700">{selectedMain?.name} Details</h2>
+            <CategoryFieldsInput fields={dynamicFields} values={attributes} onChange={setAttributes} />
           </div>
-        </div>
+        )}
 
         {/* Image upload from device */}
         <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">

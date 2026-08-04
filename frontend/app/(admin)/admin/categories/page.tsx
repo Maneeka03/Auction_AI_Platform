@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
-import { CategoryFormDrawer } from "@/components/categories/CategoryFormDrawer";
+import { CategoryFormDrawer, type CategoryFormPayload } from "@/components/categories/CategoryFormDrawer";
 import { createCategory, deleteCategory, updateCategory } from "@/lib/api/categories";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -24,15 +24,19 @@ export default function CategoriesAdminPage() {
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function handleSubmit(name: string) {
+  async function handleSubmit(payload: CategoryFormPayload) {
     if (!accessToken || !drawer) return;
 
     if (drawer.mode === "create-main") {
-      await createCategory(accessToken, { name });
+      await createCategory(accessToken, { name: payload.name, group_label: payload.group_label, fields: payload.fields });
     } else if (drawer.mode === "create-sub") {
-      await createCategory(accessToken, { name, parent_id: drawer.parent.id });
+      await createCategory(accessToken, { name: payload.name, parent_id: drawer.parent.id });
     } else {
-      await updateCategory(accessToken, drawer.category.id, { name });
+      await updateCategory(accessToken, drawer.category.id, {
+        name: payload.name,
+        group_label: payload.group_label,
+        fields: payload.fields,
+      });
     }
 
     setDrawer(null);
@@ -147,6 +151,7 @@ export default function CategoriesAdminPage() {
           <CategoryFormDrawer
             category={drawer.mode === "edit" ? drawer.category : undefined}
             parentName={drawer.mode === "create-sub" ? drawer.parent.name : drawer.mode === "edit" ? drawer.parentName : undefined}
+            showFields={drawer.mode === "create-main" || (drawer.mode === "edit" && drawer.category.parent_id === null)}
             onClose={() => setDrawer(null)}
             onSubmit={handleSubmit}
           />

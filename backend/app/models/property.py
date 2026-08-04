@@ -4,8 +4,8 @@ from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, pg_enum
@@ -67,6 +67,8 @@ class Property(Base, TimestampMixin):
     image_url: Mapped[str | None] = mapped_column(String(500), default=None)
     # A GLB 3D model for the listing, shown by the public detail page's 3D viewer. Public MinIO URL.
     model_url: Mapped[str | None] = mapped_column(String(500), default=None)
+    # Values for the selected category's custom fields, keyed by CategoryField.field_key.
+    attributes: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
     reserve_price: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     # Residential detail. Null on commercial lots, where they do not apply. Half-baths are not
     # modelled - bathrooms is a whole count.

@@ -33,6 +33,7 @@ class CreatePropertyRequest(BaseModel):
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=500)
     model_url: str | None = Field(default=None, max_length=500)
+    attributes: dict[str, str | int | float | bool | None] = {}
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
@@ -49,6 +50,8 @@ class UpdatePropertyRequest(BaseModel):
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=500)
     model_url: str | None = Field(default=None, max_length=500)
+    # Omit to leave attributes unchanged; pass an object to replace them.
+    attributes: dict[str, str | int | float | bool | None] | None = None
     bedrooms: Bedrooms | None = None
     bathrooms: Bedrooms | None = None
     area_sqft: Area | None = None
@@ -106,6 +109,7 @@ class PropertyOut(BaseModel):
     description: str | None
     image_url: str | None
     model_url: str | None
+    attributes: dict
     bedrooms: int | None
     bathrooms: int | None
     area_sqft: int | None
@@ -134,6 +138,7 @@ class PropertyOut(BaseModel):
             description=listing.description,
             image_url=listing.image_url,
             model_url=listing.model_url,
+            attributes=listing.attributes,
             bedrooms=listing.bedrooms,
             bathrooms=listing.bathrooms,
             area_sqft=listing.area_sqft,

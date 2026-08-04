@@ -8,18 +8,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import UNPROCESSABLE, AppError
-from app.models.category import Category
+from app.models.category import Category, CategoryField
 from app.models.property import Property
-from app.schemas.category import CreateCategoryRequest, UpdateCategoryRequest
+from app.schemas.category import CategoryFieldIn, CreateCategoryRequest, UpdateCategoryRequest
 
 
 def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+def _field_rows(fields: list[CategoryFieldIn]) -> list[CategoryField]:
+    """Turn field inputs into rows, deriving each key from its label and order from its position."""
+    return [
+        CategoryField(
+            label=f.label,
+            field_key=slugify(f.label),
+            field_type=f.field_type,
+            options=f.options,
+            unit=f.unit,
+            required=f.required,
+            sort_order=i,
+        )
+        for i, f in enumerate(fields)
+    ]
+
+
 async def get(session: AsyncSession, category_id: uuid.UUID) -> Category:
     category = await session.scalar(
-        select(Category).where(Category.id == category_id).options(selectinload(Category.children))
+        select(Category)
+        .where(Category.id == category_id)
+        .options(selectinload(Category.children), selectinload(Category.fields))
     )
     if category is None:
         raise AppError(status.HTTP_404_NOT_FOUND, "category_not_found", "Category not found.")
@@ -39,7 +57,13 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
     if data.parent_id is not None:
         await _assert_is_main(session, data.parent_id)
 
-    category = Category(name=data.name, slug=slugify(data.name), parent_id=data.parent_id)
+    category = Category(
+        name=data.name,
+        slug=slugify(data.name),
+        parent_id=data.parent_id,
+        group_label=data.group_label,
+        fields=_field_rows(data.fields),
+    )
     session.add(category)
     try:
         await session.commit()
@@ -50,8 +74,7 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
             "category_exists",
             "A category with this name already exists at this level.",
         ) from None
-    await session.refresh(category)
-    return category
+    return await get(session, category.id)
 
 
 async def tree(session: AsyncSession) -> list[Category]:
@@ -59,7 +82,10 @@ async def tree(session: AsyncSession) -> list[Category]:
     rows = await session.scalars(
         select(Category)
         .where(Category.parent_id.is_(None))
-        .options(selectinload(Category.children))
+        .options(
+            selectinload(Category.fields),
+            selectinload(Category.children).selectinload(Category.fields),
+        )
         .order_by(Category.name)
     )
     return list(rows)
@@ -86,6 +112,11 @@ async def update(
         category.name, category.slug = fields["name"], slugify(fields["name"])
     if "parent_id" in fields:
         category.parent_id = fields["parent_id"]
+    if "group_label" in fields:
+        category.group_label = fields["group_label"]
+    # A provided list replaces the whole set; delete-orphan drops the old rows on flush.
+    if data.fields is not None:
+        category.fields = _field_rows(data.fields)
 
     try:
         await session.commit()
@@ -96,8 +127,7 @@ async def update(
             "category_exists",
             "A category with this name already exists at this level.",
         ) from None
-    await session.refresh(category)
-    return category
+    return await get(session, category.id)
 
 
 async def delete(session: AsyncSession, category_id: uuid.UUID) -> None:

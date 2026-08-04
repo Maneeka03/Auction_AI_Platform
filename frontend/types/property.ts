@@ -24,6 +24,7 @@ export interface Property {
   description: string | null;
   image_url: string | null;
   model_url: string | null;
+  attributes: Record<string, string | number | boolean | null>;
   bedrooms: number | null;
   bathrooms: number | null;
   area_sqft: number | null;
@@ -51,6 +52,7 @@ export interface CreatePropertyRequest {
   description?: string | null;
   image_url?: string | null;
   model_url?: string | null;
+  attributes?: Record<string, string | number | boolean | null>;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;
@@ -64,6 +66,7 @@ export interface UpdatePropertyRequest {
   description?: string | null;
   image_url?: string | null;
   model_url?: string | null;
+  attributes?: Record<string, string | number | boolean | null>;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;

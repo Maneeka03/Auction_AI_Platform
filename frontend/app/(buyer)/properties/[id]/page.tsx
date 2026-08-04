@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PaymentModal } from "@/components/properties/PaymentModal";
 import { ModelViewer } from "@/components/properties/ModelViewer";
+import { CategoryAttributes } from "@/components/categories/CategoryAttributes";
 import { ApiRequestError } from "@/lib/api/client";
 import { getProperty } from "@/lib/api/properties";
 import { addToWatchlist, removeFromWatchlist, listWatchlist } from "@/lib/api/watchlist";
@@ -242,6 +243,13 @@ export default function BuyerPropertyDetailPage() {
                     <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">
                       {property.description}
                     </p>
+                  </div>
+                )}
+
+                {Object.keys(property.attributes).length > 0 && (
+                  <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                    <h2 className="mb-3 text-base font-bold text-neutral-900">Specifications</h2>
+                    <CategoryAttributes attributes={property.attributes} />
                   </div>
                 )}
               </div>

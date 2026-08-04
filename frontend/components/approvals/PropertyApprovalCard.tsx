@@ -34,6 +34,11 @@ export function PropertyApprovalCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{property.category_name}</p>
+          {property.category_name === "Others" ? (
+            <span className="mt-1 inline-block rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-600">
+              Needs a category — assign one before approving
+            </span>
+          ) : null}
           <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{property.title}</h3>
           <p className="text-xs text-neutral-500">{property.address}</p>
           <p className="mt-1 text-sm text-neutral-500">

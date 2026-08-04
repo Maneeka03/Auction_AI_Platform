@@ -5,6 +5,7 @@ import { Bath, BedDouble, Box, Check, CheckCircle2, Ruler, X, XCircle } from "lu
 import { useState } from "react";
 import { ApproverSeatChip } from "@/components/approvals/ApproverSeatChip";
 import { ModelViewer } from "@/components/properties/ModelViewer";
+import { CategoryAttributes } from "@/components/categories/CategoryAttributes";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { ApproverSeat, Property } from "@/types/property";
 
@@ -182,6 +183,14 @@ export function PropertyDetailModal({ property, currentUserSeat, onVote, isVotin
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Category field values */}
+            {Object.keys(property.attributes).length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-neutral-700">Specifications</p>
+                <CategoryAttributes attributes={property.attributes} />
               </div>
             )}
 

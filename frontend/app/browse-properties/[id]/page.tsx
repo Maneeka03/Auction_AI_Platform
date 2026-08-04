@@ -20,6 +20,7 @@ import {
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { ModelViewer } from "@/components/properties/ModelViewer";
+import { CategoryAttributes } from "@/components/categories/CategoryAttributes";
 import { getPublicProperty, listPublicProperties } from "@/lib/api/properties";
 import { listPublicCategories } from "@/lib/api/categories";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
@@ -251,6 +252,12 @@ export default function PropertyDetailPage() {
                   <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-600">
                     {property.description ?? "No description provided."}
                   </p>
+                </div>
+              )}
+              {!isLoading && property && Object.keys(property.attributes).length > 0 && (
+                <div className="mt-10 max-w-3xl">
+                  <h2 className="text-lg font-semibold text-neutral-900">Specifications</h2>
+                  <CategoryAttributes attributes={property.attributes} className="mt-3" />
                 </div>
               )}
             </div>
