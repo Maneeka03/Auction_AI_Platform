@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Bath, BedDouble, BookmarkPlus, BookmarkCheck, MapPin, Ruler } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PaymentModal } from "@/components/properties/PaymentModal";
 import { ApiRequestError } from "@/lib/api/client";
@@ -23,6 +23,7 @@ function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
 export default function BuyerPropertyDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { accessToken } = useAuth();
 
   const [property, setProperty] = useState<Property | null>(null);
@@ -35,9 +36,15 @@ export default function BuyerPropertyDetailPage() {
   useEffect(() => {
     if (!accessToken) return;
     getProperty(accessToken, params.id)
-      .then(setProperty)
+      .then((p) => {
+        setProperty(p);
+        if (searchParams.get("buy") === "true") {
+          setPurchasing(true);
+          router.replace(`/properties/${params.id}`, { scroll: false });
+        }
+      })
       .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Failed to load property."));
-  }, [accessToken, params.id]);
+  }, [accessToken, params.id, searchParams, router]);
 
   // Check if already in watchlist
   useEffect(() => {

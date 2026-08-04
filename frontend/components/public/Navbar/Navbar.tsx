@@ -4,10 +4,22 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/lib/auth/session-context";
+
+const STAFF_ROLES = ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"];
+
+function useBrowseHref() {
+    const { session } = useAuth();
+    if (!session) return "/browse-properties";
+    if (session.roles.some((r) => STAFF_ROLES.includes(r))) return "/admin/properties";
+    if (session.roles.includes("seller")) return "/seller/dashboard";
+    return "/browse-properties";
+}
 
 export default function Navbar({ solid = false }: { solid?: boolean }) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenu, setMobileMenu] = useState(false);
+    const browseHref = useBrowseHref();
 
     useEffect(() => {
         const handleScroll = () => {setIsScrolled(window.scrollY > 40);};
@@ -35,7 +47,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                     <Link href="/" className={`font-medium transition ${ opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
                         Home
                     </Link>
-                    <Link href="/browse-properties" className={`font-medium transition ${opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
+                    <Link href={browseHref} className={`font-medium transition ${opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
                         Browse Assets
                     </Link>
                     <Link href="/live-auctions" className={`font-medium transition ${ opaque? "text-gray-700 hover:text-violet-600": "text-white hover:text-white/80"}`}>
@@ -69,7 +81,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
                     <Link href="/" className="py-3 text-lg font-medium border-b border-gray-100">
                         Home
                     </Link>
-                    <Link href="/browse-properties" className="py-3 text-lg font-medium border-b border-gray-100">
+                    <Link href={browseHref} className="py-3 text-lg font-medium border-b border-gray-100">
                         Browse Assets
                     </Link>
                     <Link href="/live-auctions"className="py-3 text-lg font-medium border-b border-gray-100">

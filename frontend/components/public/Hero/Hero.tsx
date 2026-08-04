@@ -3,6 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth/session-context";
+
+const STAFF_ROLES = ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"];
 
 const SLOGANS = [
   "Buy, Sell & Bid on Premium Assets",
@@ -39,6 +42,13 @@ function useTypewriter(phrases: string[], typeSpeed = 55, deleteSpeed = 30, hold
 
 export default function Hero() {
   const typed = useTypewriter(SLOGANS, 100, 50, 2200);
+  const { session } = useAuth();
+  const browseHref = (() => {
+    if (!session) return "/browse-properties";
+    if (session.roles.some((r) => STAFF_ROLES.includes(r))) return "/admin/properties";
+    if (session.roles.includes("seller")) return "/seller/dashboard";
+    return "/browse-properties";
+  })();
 
   return (
     <section className="relative overflow-hidden bg-[#5B2BE0]">
@@ -71,7 +81,7 @@ export default function Hero() {
             sellers and collectors.
           </p>
           <div className="mt-10 flex flex-wrap gap-5">
-            <Link href="/browse-properties" className="rounded-xl bg-white px-8 py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href={browseHref} className="rounded-xl bg-white px-8 py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
               Browse Assets
             </Link>
             <Link href="/live-auctions" className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700">

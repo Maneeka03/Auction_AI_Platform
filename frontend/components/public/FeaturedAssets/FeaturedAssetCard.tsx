@@ -1,17 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, BedDouble, Bath, Ruler } from "lucide-react";
+import { useAuth } from "@/lib/auth/session-context";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Property } from "@/types/property";
+
+const STAFF_ROLES = ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"];
 
 interface FeaturedAssetCardProps {
   property: Property;
 }
 
 export function FeaturedAssetCard({ property }: FeaturedAssetCardProps) {
+  const { session } = useAuth();
+  const href = session?.roles.some((r) => STAFF_ROLES.includes(r))
+    ? `/admin/properties/${property.id}`
+    : `/browse-properties/${property.id}`;
+
   return (
     <Link
-      href={`/browse-properties/${property.id}`}
+      href={href}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
       <div className="relative h-60 overflow-hidden bg-neutral-100">
