@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ImagePlus, Loader2, X } from "lucide-react";
+import { ArrowLeft, Box, ImagePlus, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -15,10 +15,12 @@ export default function NewListingPage() {
   const { accessToken } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const glbInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGlbUploading, setIsGlbUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form fields
@@ -29,6 +31,8 @@ export default function NewListingPage() {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [glbUrl, setGlbUrl] = useState<string | null>(null);
+  const [glbFileName, setGlbFileName] = useState<string | null>(null);
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [areaSqft, setAreaSqft] = useState("");
@@ -72,6 +76,30 @@ export default function NewListingPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  async function handleGlbChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !accessToken) return;
+    setGlbFileName(file.name);
+    setGlbUrl(null);
+    setIsGlbUploading(true);
+    setError(null);
+    try {
+      const url = await uploadImage(accessToken, file, "property");
+      setGlbUrl(url);
+    } catch {
+      setError("3D model upload failed. Please try again.");
+      setGlbFileName(null);
+    } finally {
+      setIsGlbUploading(false);
+    }
+  }
+
+  function clearGlb() {
+    setGlbUrl(null);
+    setGlbFileName(null);
+    if (glbInputRef.current) glbInputRef.current.value = "";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -82,6 +110,10 @@ export default function NewListingPage() {
     }
     if (isUploading) {
       setError("Please wait — image is still uploading.");
+      return;
+    }
+    if (isGlbUploading) {
+      setError("Please wait — 3D model is still uploading.");
       return;
     }
 
@@ -95,6 +127,7 @@ export default function NewListingPage() {
         reserve_price: reservePrice,
         description: description.trim() || null,
         image_url: imageUrl ?? null,
+        model_url: glbUrl ?? null,
         bedrooms: bedrooms ? Number(bedrooms) : null,
         bathrooms: bathrooms ? Number(bathrooms) : null,
         area_sqft: areaSqft ? Number(areaSqft) : null,
@@ -312,6 +345,66 @@ export default function NewListingPage() {
           )}
         </div>
 
+        {/* GLB / 3D model upload */}
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-neutral-700">
+            3D Model (GLB){" "}
+            <span className="text-xs font-normal text-neutral-400">(optional)</span>
+          </h2>
+
+          <input
+            ref={glbInputRef}
+            type="file"
+            accept=".glb,.gltf"
+            className="hidden"
+            onChange={handleGlbChange}
+          />
+
+          {glbFileName ? (
+            <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Box size={20} className="shrink-0 text-brand-500" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-neutral-800">{glbFileName}</p>
+                  {isGlbUploading ? (
+                    <p className="flex items-center gap-1 text-xs text-neutral-500">
+                      <Loader2 size={11} className="animate-spin" /> Uploading…
+                    </p>
+                  ) : glbUrl ? (
+                    <p className="text-xs text-green-600">✓ Uploaded</p>
+                  ) : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearGlb}
+                className="ml-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 hover:bg-neutral-300"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => glbInputRef.current?.click()}
+              className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-neutral-400 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-500"
+            >
+              <Box size={24} />
+              <span className="text-sm font-medium">Click to upload a .glb or .gltf file</span>
+            </button>
+          )}
+
+          {glbFileName && !isGlbUploading && (
+            <button
+              type="button"
+              onClick={() => glbInputRef.current?.click()}
+              className="text-xs text-brand-600 hover:underline"
+            >
+              Change file
+            </button>
+          )}
+        </div>
+
         {/* Approval notice */}
         <div className="rounded-lg border border-brand-100 bg-brand-50 p-4 text-xs text-brand-700">
           <p className="mb-1 font-semibold">What happens after you submit?</p>
@@ -332,7 +425,7 @@ export default function NewListingPage() {
           </Link>
           <button
             type="submit"
-            disabled={isSubmitting || isUploading}
+            disabled={isSubmitting || isUploading || isGlbUploading}
             className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
           >
             {isSubmitting ? "Submitting…" : "Submit Listing"}
