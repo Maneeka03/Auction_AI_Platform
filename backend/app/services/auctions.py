@@ -384,6 +384,51 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
     return auction
 
 
+async def award_to_highest(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
+    """Award the auction to whoever placed the highest bid. Raises if no bids exist."""
+    auction = await locked(session, auction_id)
+    if auction.winner_id is not None:
+        raise AppError(
+            status.HTTP_409_CONFLICT, "already_awarded", "This auction has already been awarded."
+        )
+
+    row = (
+        await session.execute(
+            select(Bid.bidder_id, func.max(Bid.amount).label("top_bid"))
+            .where(Bid.auction_id == auction_id)
+            .group_by(Bid.bidder_id)
+            .order_by(func.max(Bid.amount).desc())
+            .limit(1)
+        )
+    ).first()
+    if row is None:
+        raise AppError(
+            status.HTTP_409_CONFLICT, "no_bids", "This auction has no bids to award."
+        )
+
+    bidder_id, winning_bid = row.bidder_id, row.top_bid
+    charge = wallets.hold_for(auction, winning_bid)
+    wallet = await wallets.locked(session, bidder_id)
+    if charge > await wallets.spendable(session, wallet, exclude_auction_id=auction_id):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "insufficient_funds",
+            "The winner no longer has the funds to cover this bid.",
+        )
+
+    wallet.balance -= charge
+    auction.winner_id = bidder_id
+    auction.ended_at = datetime.now(UTC)
+    auction.listing.status = PropertyStatus.SOLD
+    await release_holds(session, auction, bidder_id)
+    wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
+    if auction.listing.seller_id is not None:
+        escrow.open_for(session, auction.listing, bidder_id, charge, auction_id)
+    await session.commit()
+    await broadcast(session, auction_id, "ended")
+    return auction
+
+
 async def end(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
     """Close a room with no sale. Every bidder's funds unlock as a result."""
     auction = await locked(session, auction_id)

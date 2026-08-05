@@ -187,7 +187,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-10 text-white sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-16 flex flex-col gap-10 text-white md:flex-row md:justify-around items-center">
           <div>
             <h3 className="text-lg font-bold">Auction Categories</h3>
             <ul className="mt-5 space-y-3">

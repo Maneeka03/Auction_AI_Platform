@@ -75,6 +75,14 @@ async def list_all(session: AsyncSession, page: int, size: int) -> tuple[list[tu
     )
     return [(ticket, name, email) for ticket, name, email in rows.all()], total
 
+async def get_one(session: AsyncSession, ticket_id: uuid.UUID) -> SupportTicket:
+    """Fetch any ticket by ID — admin use only, no ownership check."""
+    ticket = await session.get(SupportTicket, ticket_id)
+    if ticket is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "ticket_not_found", "Ticket not found.")
+    return ticket
+
+
 async def update_status(session: AsyncSession, ticket_id: uuid.UUID, new_status: "TicketStatus") -> SupportTicket:
     """Admin-only status change - not scoped to ownership, unlike update()."""
     ticket = await session.get(SupportTicket, ticket_id)

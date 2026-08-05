@@ -2,6 +2,7 @@
 
 import { Radio, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { getMyAuctions, getMyListings } from "@/lib/api/seller";
 import { listMyAuctionRequests, submitAuctionRequest } from "@/lib/api/auctionRequests";
 import { ApiRequestError } from "@/lib/api/client";
@@ -170,16 +171,12 @@ function AddLiveAuctionModal({ onClose, onSuccess }: { onClose: () => void; onSu
             <div className="space-y-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">Property</label>
-                <select
+                <SearchableSelect
                   value={propertyId}
-                  onChange={(e) => setPropertyId(e.target.value)}
-                  className={inputCls}
-                >
-                  <option value="">Select a published property…</option>
-                  {publishedProps.map((p) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </select>
+                  options={publishedProps.map((p) => ({ value: p.id, label: p.title }))}
+                  placeholder="Select a published property…"
+                  onChange={setPropertyId}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">

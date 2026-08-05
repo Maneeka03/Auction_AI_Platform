@@ -2,6 +2,7 @@
 
 import { FolderPlus, Loader2, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { createCategory, listCategories } from "@/lib/api/categories";
 import { useAuth } from "@/lib/auth/session-context";
 import type { CategoryTree } from "@/types/category";
@@ -150,21 +151,18 @@ export default function ProposeCategoryPage() {
               Place under existing category{" "}
               <span className="text-xs font-normal text-neutral-400">(optional)</span>
             </label>
-            <select
+            <SearchableSelect
               value={parentId}
-              onChange={(e) => {
-                setParentId(e.target.value);
-                if (e.target.value) setSubcatNames([]);
+              options={[
+                { value: "", label: "No parent — top-level category" },
+                ...categories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              placeholder="No parent — top-level category"
+              onChange={(v) => {
+                setParentId(v);
+                if (v) setSubcatNames([]);
               }}
-              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-            >
-              <option value="">No parent — top-level category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 

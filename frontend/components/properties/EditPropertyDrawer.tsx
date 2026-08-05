@@ -3,6 +3,7 @@
 import { Box, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CategorySelect } from "@/components/categories/CategorySelect";
+import { CategoryCustomFields } from "@/components/properties/CategoryCustomFields";
 import { Select } from "@/components/ui/Select";
 import { useAuth } from "@/lib/auth/session-context";
 import { useCategories } from "@/lib/hooks/useCategories";
@@ -30,6 +31,9 @@ export function EditPropertyDrawer({
   const [title, setTitle] = useState(property.title);
   const [address, setAddress] = useState(property.address);
   const [categoryId, setCategoryId] = useState(property.category_id);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>(
+    property.custom_fields ?? {},
+  );
   const [reservePrice, setReservePrice] = useState(property.reserve_price);
   const [status, setStatus] = useState<"draft" | "published">(
     property.status === "draft" || property.status === "published"
@@ -49,6 +53,7 @@ export function EditPropertyDrawer({
     property.image_url,
   );
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const existingModelUrl = property.model_url ?? null;
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +71,8 @@ export function EditPropertyDrawer({
   const showResidentialFields = isRealEstateCategory(
     selectedMain?.name ?? property.category_name,
   );
+  const parentCategoryId =
+    selectedMain && selectedMain.id !== categoryId ? selectedMain.id : undefined;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -132,14 +139,16 @@ export function EditPropertyDrawer({
         category_id: categoryId,
         reserve_price: reservePrice,
         status,
-        description,
+        description: description || undefined,
         image_url: imageUrl,
-        model_url: modelUrl,
+        // Preserve the existing model_url if no new file was uploaded
+        model_url: modelUrl ?? existingModelUrl ?? undefined,
         bedrooms:
           showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
         bathrooms:
           showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
         area_sqft: areaSqft ? Number(areaSqft) : undefined,
+        custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -257,6 +266,22 @@ export function EditPropertyDrawer({
                     <X size={16} />
                   </button>
                 </div>
+              ) : existingModelUrl ? (
+                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-sm">
+                  <span className="flex min-w-0 items-center gap-2 text-green-700">
+                    <Box size={16} className="shrink-0 text-green-600" />
+                    <span className="truncate text-xs">3D model saved</span>
+                  </span>
+                  {!isSold && (
+                    <button
+                      type="button"
+                      onClick={() => modelInputRef.current?.click()}
+                      className="shrink-0 text-xs text-neutral-500 hover:text-neutral-700"
+                    >
+                      Replace
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   type="button"
@@ -264,7 +289,7 @@ export function EditPropertyDrawer({
                   onClick={() => modelInputRef.current?.click()}
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-neutral-300 py-3 text-sm text-neutral-400 hover:border-brand-300 hover:text-brand-500 disabled:opacity-60"
                 >
-                  <Box size={18} /> {property.model_url ? "Replace 3D model" : "Upload a .glb model"}
+                  <Box size={18} /> Upload a .glb model
                 </button>
               )}
             </div>
@@ -302,12 +327,27 @@ export function EditPropertyDrawer({
                   Loading categories...
                 </p>
               ) : (
-                <CategorySelect
-                  categories={categories}
-                  value={categoryId}
-                  onChange={setCategoryId}
-                  disabled={isSold}
-                />
+                <>
+                  <CategorySelect
+                    categories={categories}
+                    value={categoryId}
+                    onChange={(id) => {
+                      setCategoryId(id);
+                      setCustomFieldValues({});
+                    }}
+                    disabled={isSold}
+                  />
+                  {categoryId && (
+                    <div className="mt-4">
+                      <CategoryCustomFields
+                        categoryId={categoryId}
+                        parentCategoryId={parentCategoryId}
+                        values={customFieldValues}
+                        onChange={setCustomFieldValues}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

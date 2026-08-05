@@ -15,7 +15,7 @@ from app.schemas.portal import (
     SellerDashboardOut,
     SellerEscrowOut,
 )
-from app.schemas.property import CreatePropertyRequest, PropertyOut, UpdatePropertyRequest
+from app.schemas.property import AddPropertyImageRequest, CreatePropertyRequest, PropertyOut, UpdatePropertyRequest
 from app.services import auctions, bids, escrow, portal, properties
 
 router = APIRouter(prefix="/seller", tags=["seller-portal"])
@@ -68,6 +68,17 @@ async def get_listing(
     property_id: uuid.UUID, session: DbSession, actor: CurrentUser
 ) -> PropertyOut:
     return PropertyOut.of(await _own_listing(session, actor, property_id))
+
+
+@router.post("/listings/{property_id}/images", response_model=PropertyOut, status_code=status.HTTP_201_CREATED)
+async def add_listing_image(
+    property_id: uuid.UUID,
+    payload: AddPropertyImageRequest,
+    session: DbSession,
+    actor: CurrentUser,
+) -> PropertyOut:
+    await _own_listing(session, actor, property_id)
+    return PropertyOut.of(await properties.add_image(session, property_id, payload.image_url))
 
 
 @router.patch("/listings/{property_id}", response_model=PropertyOut)

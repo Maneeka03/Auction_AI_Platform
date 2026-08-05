@@ -134,6 +134,14 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@provenix.io"
 
+    # SMTP (leave host blank to disable email sending)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_from_name: str = "Support Team"
+
     @property
     def vapid_private_key_pem(self) -> str:
         return self.vapid_private_key

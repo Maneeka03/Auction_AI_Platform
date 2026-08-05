@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Bath, BedDouble, Box, Check, CheckCircle2, Ruler, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ApproverSeatChip } from "@/components/approvals/ApproverSeatChip";
 import { ModelViewer } from "@/components/properties/ModelViewer";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
@@ -166,41 +167,33 @@ export function PropertyDetailModal({
                   {/* Parent category */}
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-medium text-neutral-500">Category</label>
-                    <select
+                    <SearchableSelect
                       value={selectedParentId}
-                      onChange={(e) => {
-                        setSelectedParentId(e.target.value);
+                      options={[
+                        { value: "", label: "— Select category —" },
+                        ...categories.map((c) => ({ value: c.id, label: c.name })),
+                      ]}
+                      placeholder="— Select category —"
+                      onChange={(v) => {
+                        setSelectedParentId(v);
                         setSelectedSubId("");
                       }}
-                      className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-                    >
-                      <option value="">— Select category —</option>
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {/* Subcategory */}
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-medium text-neutral-500">Subcategory</label>
-                    <select
+                    <SearchableSelect
                       value={selectedSubId}
-                      onChange={(e) => setSelectedSubId(e.target.value)}
+                      options={[
+                        { value: "", label: subcategories.length === 0 ? "No subcategories" : "— Select subcategory —" },
+                        ...subcategories.map((c) => ({ value: c.id, label: c.name })),
+                      ]}
+                      placeholder={subcategories.length === 0 ? "No subcategories" : "— Select subcategory —"}
                       disabled={subcategories.length === 0}
-                      className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
-                    >
-                      <option value="">
-                        {subcategories.length === 0 ? "No subcategories" : "— Select subcategory —"}
-                      </option>
-                      {subcategories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setSelectedSubId}
+                    />
                   </div>
                 </div>
 

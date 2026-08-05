@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import { listWatchlist, removeFromWatchlist, updateWatchlistStatus } from "@/lib/api/watchlist";
@@ -83,15 +84,11 @@ export default function WatchlistPage() {
                     ${Number(item.property.reserve_price).toLocaleString()}
                   </p>
                 </div>
-                <select
+                <SearchableSelect
                   value={item.status}
-                  onChange={(e) => void handleStatusChange(item.property.id, e.target.value as WatchlistStatus)}
-                  className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs font-medium text-neutral-700 focus:outline-none"
-                >
-                  {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
+                  options={Object.entries(STATUS_LABELS).map(([val, label]) => ({ value: val, label }))}
+                  onChange={(v) => void handleStatusChange(item.property.id, v as WatchlistStatus)}
+                />
                 <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-medium sm:inline ${STATUS_COLORS[item.status] ?? "bg-neutral-100 text-neutral-600"}`}>
                   {STATUS_LABELS[item.status] ?? item.status}
                 </span>

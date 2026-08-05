@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { createTask, deleteTask, listTasks, updateTask } from "@/lib/api/tasks";
 import { ApiRequestError } from "@/lib/api/client";
@@ -174,15 +175,15 @@ export default function TasksPage() {
                     <span>Due: {formatDate(task.due_date)}</span>
                   </div>
                 </div>
-                <select
+                <SearchableSelect
                   value={task.status}
-                  onChange={(e) => void handleStatusChange(task.id, e.target.value as TaskStatus)}
-                  className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs font-medium focus:outline-none"
-                >
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
+                  options={[
+                    { value: "open", label: "Open" },
+                    { value: "in_progress", label: "In Progress" },
+                    { value: "done", label: "Done" },
+                  ]}
+                  onChange={(v) => void handleStatusChange(task.id, v as TaskStatus)}
+                />
                 <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-medium sm:inline ${STATUS_COLORS[task.status]}`}>
                   {task.status.replace("_", " ")}
                 </span>

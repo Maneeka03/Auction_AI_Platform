@@ -6,6 +6,7 @@ import NextLink from "next/link";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import Navbar from "@/components/public/Navbar/Navbar";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import Footer from "@/components/public/Footer/Footer";
 
 const CONTACT_INFO = [
@@ -117,15 +118,15 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-neutral-700">Topic</label>
-                    <select
-                      required
+                    <SearchableSelect
                       value={form.topic}
-                      onChange={(e) => update("topic", e.target.value)}
-                      className="h-11 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm focus:border-brand-500 focus:bg-white focus:outline-none"
-                    >
-                      <option value="">Select a topic</option>
-                      {TOPICS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                      options={[
+                        { value: "", label: "Select a topic" },
+                        ...TOPICS.map((t) => ({ value: t, label: t })),
+                      ]}
+                      placeholder="Select a topic"
+                      onChange={(v) => update("topic", v)}
+                    />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-neutral-700">Message</label>

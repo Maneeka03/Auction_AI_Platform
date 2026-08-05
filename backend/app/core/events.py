@@ -10,6 +10,10 @@ def auction_channel(auction_id: uuid.UUID) -> str:
     return f"auction:{auction_id}"
 
 
+def ticket_channel() -> str:
+    return "support_tickets"
+
+
 async def publish(channel: str, payload: dict[str, Any]) -> None:
     await redis.publish(channel, json.dumps(payload))
 

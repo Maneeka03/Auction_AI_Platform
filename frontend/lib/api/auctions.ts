@@ -43,6 +43,10 @@ export function awardAuction(accessToken: string, auctionId: string, bidderId: s
   return apiClient.post<Auction>(`${BASE}/${auctionId}/award`, { bidder_id: bidderId }, { accessToken });
 }
 
+export function awardAuctionToHighest(accessToken: string, auctionId: string): Promise<Auction> {
+  return apiClient.post<Auction>(`${BASE}/${auctionId}/award-highest`, undefined, { accessToken });
+}
+
 export function deleteAuction(accessToken: string, auctionId: string): Promise<void> {
   return apiClient.delete<void>(`${BASE}/${auctionId}`, { accessToken });
 }

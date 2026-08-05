@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { listCategories, createCategory } from "@/lib/api/categories";
-import { createListing } from "@/lib/api/seller";
+import { createListing, addListingImage } from "@/lib/api/seller";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
-// import type { CategoryTree } from "@/types/category";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import type { CategoryTree, CategoryField } from "@/types/category";
 
 
@@ -17,6 +17,7 @@ export default function NewListingPage() {
   const { accessToken } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const extraFileInputRef = useRef<HTMLInputElement>(null);
   const glbInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<CategoryTree[]>([]);
@@ -28,13 +29,17 @@ export default function NewListingPage() {
   // Form fields
   const [title, setTitle] = useState("");
   const [address, setAddress] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [selectedMainId, setSelectedMainId] = useState("");
+  const [selectedSubId, setSelectedSubId] = useState("");
   const [categoryFields, setCategoryFields] = useState<CategoryField[]>([]);
-const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [reservePrice, setReservePrice] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Additional images: [{preview, url}] — url is null while uploading
+  const [extraImages, setExtraImages] = useState<{ preview: string; url: string | null }[]>([]);
+  const [extraUploading, setExtraUploading] = useState(false);
   const [glbUrl, setGlbUrl] = useState<string | null>(null);
   const [glbFileName, setGlbFileName] = useState<string | null>(null);
   const [bedrooms, setBedrooms] = useState("");
@@ -59,10 +64,9 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     .catch(() => null);
 
 }, [accessToken]);
-  const flatCategories = categories.flatMap((parent) => [
-    { id: parent.id, label: parent.name, isParent: true },
-    ...parent.children.map((child) => ({ id: child.id, label: `  ${child.name}`, isParent: false })),
-  ]);
+  const selectedMain = categories.find((c) => c.id === selectedMainId);
+  const subCategories = selectedMain?.children ?? [];
+  const categoryId = selectedSubId || selectedMainId;
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -89,6 +93,41 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     setImageUrl(null);
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleExtraFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length || !accessToken) return;
+    if (extraImages.length + files.length > 9) {
+      setError("You can upload up to 9 additional images.");
+      return;
+    }
+    setExtraUploading(true);
+    setError(null);
+    const previews = files.map((f) => ({ preview: URL.createObjectURL(f), url: null as string | null }));
+    setExtraImages((prev) => [...prev, ...previews]);
+    const startIdx = extraImages.length;
+    await Promise.all(
+      files.map(async (file, i) => {
+        try {
+          const url = await uploadImage(accessToken, file, "property");
+          setExtraImages((prev) => {
+            const next = [...prev];
+            next[startIdx + i] = { ...next[startIdx + i], url };
+            return next;
+          });
+        } catch {
+          setExtraImages((prev) => prev.filter((_, idx) => idx !== startIdx + i));
+          setError("One or more image uploads failed.");
+        }
+      }),
+    );
+    setExtraUploading(false);
+    if (extraFileInputRef.current) extraFileInputRef.current.value = "";
+  }
+
+  function removeExtraImage(idx: number) {
+    setExtraImages((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function handleGlbChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -132,8 +171,8 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
       setError("Title, address, category, and reserve price are required.");
       return;
     }
-    if (isUploading) {
-      setError("Please wait — image is still uploading.");
+    if (isUploading || extraUploading) {
+      setError("Please wait — images are still uploading.");
       return;
     }
     if (isGlbUploading) {
@@ -152,7 +191,7 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
         finalDescription = "[Category: Other]\n\n" + (description.trim() || "") || null;
       }
 
-      await createListing(accessToken, {
+      const listing = await createListing(accessToken, {
         title: title.trim(),
         address: address.trim(),
         category_id: finalCategoryId,
@@ -165,6 +204,11 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
         area_sqft: areaSqft ? Number(areaSqft) : null,
         custom_fields: customFieldValues,
       });
+      // Upload additional images sequentially
+      const validExtras = extraImages.filter((img) => img.url);
+      for (const img of validExtras) {
+        await addListingImage(accessToken, listing.id, img.url!);
+      }
       router.push("/seller/listings");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit listing.");
@@ -224,38 +268,67 @@ const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
               <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                 Category <span className="text-red-500">*</span>
               </label>
-              <select
-                value={categoryId}
-                // onChange={(e) => { setCategoryId(e.target.value); }}
-onChange={(e) => {
-  const id = e.target.value;
-
-  setCategoryId(id);
-
-  const category = categories
-    .flatMap((c) => [
-      c,
-      ...c.children,
-    ])
-    .find((c) => c.id === id);
-
-  console.log("Selected category:", category);
-
-  setCategoryFields(category?.fields || []);
-
-  setCustomFieldValues({});
-}}
-                className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="">Select category</option>
-                {flatCategories.map((c) => (
-                  <option key={c.id} value={c.id} disabled={c.isParent && c.id !== categoryId}>
-                    {c.label}
-                  </option>
-                ))}
-                <option value="__other__">Other</option>
-              </select>
+              <SearchableSelect
+                value={selectedMainId}
+                options={[
+                  ...categories.map((c) => ({ value: c.id, label: c.name })),
+                  { value: "__other__", label: "Other" },
+                ]}
+                placeholder="Select category"
+                onChange={(id) => {
+                  setSelectedMainId(id);
+                  setSelectedSubId("");
+                  const cat = categories.find((c) => c.id === id);
+                  setCategoryFields(cat?.fields ?? []);
+                  setCustomFieldValues({});
+                }}
+              />
             </div>
+            {subCategories.length > 0 ? (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Sub-category
+                </label>
+                <SearchableSelect
+                  value={selectedSubId}
+                  options={[
+                    { value: "", label: "None (main category only)" },
+                    ...subCategories.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  placeholder="None (main category only)"
+                  onChange={(id) => {
+                    setSelectedSubId(id);
+                    if (!id) {
+                      setCategoryFields(selectedMain?.fields ?? []);
+                    } else {
+                      const sub = subCategories.find((c) => c.id === id);
+                      setCategoryFields(sub?.fields ?? []);
+                    }
+                    setCustomFieldValues({});
+                  }}
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Reserve Price <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-neutral-500">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={reservePrice}
+                    onChange={(e) => setReservePrice(e.target.value)}
+                    placeholder="0"
+                    className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {subCategories.length > 0 && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                 Reserve Price <span className="text-red-500">*</span>
@@ -272,7 +345,7 @@ onChange={(e) => {
                 />
               </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">Description</label>
@@ -365,83 +438,57 @@ onChange={(e) => {
 )} */}
 {categoryFields.length > 0 && (
   <div className="space-y-4 border-t border-neutral-200 pt-5">
-
-    <h3 className="text-sm font-semibold text-neutral-700">
-      Additional Information
-    </h3>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <h3 className="text-sm font-semibold text-neutral-700">Additional Information</h3>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {categoryFields.map((field) => (
         <div key={field.id}>
-
           <label className="mb-1.5 block text-sm font-medium text-neutral-700">
             {field.label}
-            {field.required && (
-              <span className="text-red-500"> *</span>
-            )}
+            {field.required && <span className="text-red-500"> *</span>}
           </label>
 
-          {field.field_type === "text" && (
+          {field.field_type === "select" ? (
+            <SearchableSelect
+              value={customFieldValues[field.label] ?? ""}
+              options={(field.options ?? []).map((o) => ({ value: o, label: o }))}
+              placeholder="Select…"
+              onChange={(v) => setCustomFieldValues((prev) => ({ ...prev, [field.label]: v }))}
+            />
+          ) : field.field_type === "textarea" ? (
+            <textarea
+              rows={3}
+              value={customFieldValues[field.label] ?? ""}
+              onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [field.label]: e.target.value }))}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          ) : field.field_type === "boolean" ? (
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-700">
+              <input
+                type="checkbox"
+                checked={customFieldValues[field.label] === "true"}
+                onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [field.label]: e.target.checked ? "true" : "false" }))}
+                className="h-4 w-4 rounded border-neutral-300 accent-brand-500"
+              />
+              Yes
+            </label>
+          ) : (
             <input
-              type="text"
-              value={customFieldValues[field.id] || ""}
-              onChange={(e) =>
-                setCustomFieldValues({
-                  ...customFieldValues,
-                  [field.id]: e.target.value,
-                })
-              }
-              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+              type={field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"}
+              value={customFieldValues[field.label] ?? ""}
+              onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [field.label]: e.target.value }))}
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:outline-none"
             />
           )}
-
-          {field.field_type === "number" && (
-            <input
-              type="number"
-              value={customFieldValues[field.id] || ""}
-              onChange={(e) =>
-                setCustomFieldValues({
-                  ...customFieldValues,
-                  [field.id]: e.target.value,
-                })
-              }
-              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
-            />
-          )}
-
-          {field.field_type === "select" && (
-            <select
-              value={customFieldValues[field.id] || ""}
-              onChange={(e) =>
-                setCustomFieldValues({
-                  ...customFieldValues,
-                  [field.id]: e.target.value,
-                })
-              }
-              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
-            >
-              <option value="">Select</option>
-
-              {field.options?.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-
-            </select>
-          )}
-
         </div>
       ))}
     </div>
-
   </div>
 )}
 
         </div>
 
         {/* Property Details */}
-        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+        {/* <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
           <h2 className="text-sm font-semibold text-neutral-700">
             Property Details{" "}
             <span className="text-xs font-normal text-neutral-400">(optional)</span>
@@ -481,7 +528,7 @@ onChange={(e) => {
               />
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Image upload from device */}
         <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
@@ -548,6 +595,70 @@ onChange={(e) => {
             >
               Change image
             </button>
+          )}
+        </div>
+
+        {/* Additional images */}
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-700">
+              Additional Images{" "}
+              <span className="text-xs font-normal text-neutral-400">(up to 9, optional)</span>
+            </h2>
+            {extraImages.length < 9 && (
+              <button
+                type="button"
+                onClick={() => extraFileInputRef.current?.click()}
+                className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100"
+              >
+                <ImagePlus size={14} /> Add Images
+              </button>
+            )}
+          </div>
+          <input
+            ref={extraFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleExtraFileChange}
+          />
+          {extraImages.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => extraFileInputRef.current?.click()}
+              className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-neutral-400 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-500"
+            >
+              <ImagePlus size={22} />
+              <span className="text-xs font-medium">Click to add more images</span>
+            </button>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {extraImages.map((img, idx) => (
+                <div key={idx} className="relative">
+                  <div className="relative h-24 w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+                    <Image src={img.preview} alt="" fill className="object-cover" unoptimized />
+                    {!img.url && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Loader2 size={18} className="animate-spin text-white" />
+                      </div>
+                    )}
+                    {img.url && (
+                      <div className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeExtraImage(idx)}
+                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-neutral-700 text-white hover:bg-neutral-900"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
@@ -631,7 +742,7 @@ onChange={(e) => {
           </Link>
           <button
             type="submit"
-            disabled={isSubmitting || isUploading || isGlbUploading}
+            disabled={isSubmitting || isUploading || extraUploading || isGlbUploading}
             className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
           >
             {isSubmitting ? "Submitting…" : "Submit Listing"}

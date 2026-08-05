@@ -2,26 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { listPublicCategoryFields } from "@/lib/api/categories";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import type { CategoryField } from "@/types/category";
 
 interface Props {
   categoryId: string;
+  parentCategoryId?: string;
   values: Record<string, string>;
   onChange: (values: Record<string, string>) => void;
 }
 
-export function CategoryCustomFields({ categoryId, values, onChange }: Props) {
+export function CategoryCustomFields({ categoryId, parentCategoryId, values, onChange }: Props) {
   const [fields, setFields] = useState<CategoryField[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!categoryId) { setFields([]); return; }
     setIsLoading(true);
-    listPublicCategoryFields(categoryId)
-      .then(setFields)
-      .catch(() => setFields([]))
-      .finally(() => setIsLoading(false));
-  }, [categoryId]);
+    const fetchAll = async () => {
+      const parentFields =
+        parentCategoryId && parentCategoryId !== categoryId
+          ? await listPublicCategoryFields(parentCategoryId).catch(() => [])
+          : [];
+      const catFields = await listPublicCategoryFields(categoryId).catch(() => []);
+      setFields([...parentFields, ...catFields]);
+    };
+    fetchAll().finally(() => setIsLoading(false));
+  }, [categoryId, parentCategoryId]);
 
   if (!categoryId || isLoading) {
     return isLoading ? (
@@ -50,22 +57,19 @@ export function CategoryCustomFields({ categoryId, values, onChange }: Props) {
           </label>
         );
 
-        if (field.field_type === "dropdown" && field.options) {
+        if (field.field_type === "select" && field.options) {
           return (
             <div key={field.id}>
               {labelEl}
-              <select
-                id={id}
+              <SearchableSelect
                 value={value}
-                onChange={(e) => set(field.label, e.target.value)}
-                required={field.required}
-                className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="">Select…</option>
-                {field.options.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Select…" },
+                  ...field.options.map((opt) => ({ value: opt, label: opt })),
+                ]}
+                placeholder="Select…"
+                onChange={(v) => set(field.label, v)}
+              />
             </div>
           );
         }
@@ -121,16 +125,18 @@ export function CategoryCustomFields({ categoryId, values, onChange }: Props) {
           );
         }
 
-        if (field.field_type === "file") {
+        if (field.field_type === "textarea") {
           return (
             <div key={field.id}>
               {labelEl}
-              <input
+              <textarea
                 id={id}
-                type="file"
-                onChange={(e) => set(field.label, e.target.files?.[0]?.name ?? "")}
+                value={value}
+                onChange={(e) => set(field.label, e.target.value)}
                 required={field.required}
-                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-brand-50 file:px-3 file:py-1 file:text-xs file:font-medium file:text-brand-700"
+                rows={3}
+                placeholder={`Enter ${field.label.toLowerCase()}`}
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
             </div>
           );

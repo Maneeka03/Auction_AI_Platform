@@ -112,6 +112,8 @@ export default function LiveBiddingRoomPage() {
 
   const isLive = auction.status === "live";
   const isEnded = auction.status === "ended";
+  const iWon = isEnded && !!auction.winner_id && auction.winner_id === session?.id;
+  const iLost = isEnded && !!auction.winner_id && auction.winner_id !== session?.id && canBid;
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-6">
@@ -238,8 +240,32 @@ export default function LiveBiddingRoomPage() {
           </div>
 
           {isEnded ? (
-            <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-              This auction has ended{auction.winner_id ? " and a winner has been selected." : " with no sale."}
+            <div>
+              {iWon ? (
+                <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4">
+                  <p className="text-lg font-bold text-green-700">🏆 Congratulations — You Won!</p>
+                  <p className="mt-1 text-sm text-green-600">
+                    You are the highest bidder. Our team will contact you shortly to complete the purchase.
+                  </p>
+                </div>
+              ) : iLost ? (
+                <div className="rounded-xl border border-red-100 bg-red-50 px-5 py-4">
+                  <p className="text-base font-semibold text-red-700">You didn&apos;t win this auction.</p>
+                  <p className="mt-1 text-sm text-red-500">
+                    Another bidder placed a higher bid. Browse more auctions to find your next opportunity.
+                  </p>
+                  <Link
+                    href="/browse-auctions"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  >
+                    Browse More Auctions
+                  </Link>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+                  This auction has ended{auction.winner_id ? " and a winner has been selected." : " with no sale."}
+                </div>
+              )}
             </div>
           ) : !isLive ? (
             <div className="rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-700">

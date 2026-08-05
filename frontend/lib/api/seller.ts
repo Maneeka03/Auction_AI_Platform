@@ -24,6 +24,10 @@ export function updateListing(token: string, propertyId: string, payload: Update
   return apiClient.patch(`/api/v1/seller/listings/${propertyId}`, payload, { accessToken: token });
 }
 
+export function addListingImage(token: string, propertyId: string, imageUrl: string): Promise<Property> {
+  return apiClient.post(`/api/v1/seller/listings/${propertyId}/images`, { image_url: imageUrl }, { accessToken: token });
+}
+
 export function getMyAuctions(token: string): Promise<Auction[]> {
   return apiClient.get("/api/v1/seller/auctions", { accessToken: token });
 }

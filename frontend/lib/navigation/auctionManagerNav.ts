@@ -3,8 +3,10 @@ import {
   Coins,
   FolderTree,
   Gavel,
+  HelpCircle,
   Home,
   LayoutDashboard,
+  LifeBuoy,
   Megaphone,
   MessageSquare,
   PackageSearch,
@@ -59,6 +61,10 @@ export const auctionManagerNav: NavSection[] = [
   },
   {
     title: "Administration",
-    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }],
+    items: [
+      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "FAQ", href: "/admin/faqs", icon: HelpCircle },
+      { label: "Contact Support", href: "/help/contact", icon: LifeBuoy },
+    ],
   },
 ];

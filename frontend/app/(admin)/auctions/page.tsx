@@ -8,7 +8,7 @@ import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
 import { CreateAuctionDrawer } from "@/components/auctions/CreateAuctionDrawer";
 import { EditAuctionDrawer } from "@/components/auctions/EditAuctionDrawer";
-import { createAuction, deleteAuction, endAuction, listAuctions, updateAuction } from "@/lib/api/auctions";
+import { awardAuctionToHighest, createAuction, deleteAuction, endAuction, listAuctions, updateAuction } from "@/lib/api/auctions";
 import { ApiRequestError } from "@/lib/api/client";
 import { can } from "@/lib/auth/permissions";
 import { useAuth } from "@/lib/auth/session-context";
@@ -87,11 +87,25 @@ export default function LiveAuctionsPage() {
 
   async function handleEndAuction(auction: Auction) {
     if (!accessToken) return;
-    const confirmed = window.confirm(
-      `End "${auction.title}" now? This closes the auction with no sale and can't be undone.`,
-    );
-    if (!confirmed) return;
-    await endAuction(accessToken, auction.id);
+    const hasBids = !!auction.current_bid;
+    if (hasBids) {
+      const choice = window.confirm(
+        `"${auction.title}" has active bids (highest: $${Number(auction.current_bid).toLocaleString()}).\n\nClick OK to award to the highest bidder.\nClick Cancel to end with no sale.`,
+      );
+      if (choice) {
+        await awardAuctionToHighest(accessToken, auction.id);
+      } else {
+        const noSaleConfirm = window.confirm(`End "${auction.title}" with no sale? This can't be undone.`);
+        if (!noSaleConfirm) return;
+        await endAuction(accessToken, auction.id);
+      }
+    } else {
+      const confirmed = window.confirm(
+        `End "${auction.title}" now? This closes the auction with no sale and can't be undone.`,
+      );
+      if (!confirmed) return;
+      await endAuction(accessToken, auction.id);
+    }
     void fetchAuctions();
   }
 

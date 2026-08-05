@@ -204,12 +204,26 @@ export default function ListingsPage() {
                       </td>
                       <td className="px-4 py-3 text-neutral-500">
                         {isRealEstateCategory(property.category_name) ? (
-                          <>
+                          <span className="text-sm">
                             {property.bedrooms ?? "—"} bd · {property.bathrooms ?? "—"} ba
                             {property.area_sqft ? ` · ${property.area_sqft.toLocaleString()} sqft` : ""}
-                          </>
+                          </span>
                         ) : property.area_sqft ? (
-                          `${property.area_sqft.toLocaleString()} sqft`
+                          <span className="text-sm">{property.area_sqft.toLocaleString()} sqft</span>
+                        ) : property.custom_fields && Object.keys(property.custom_fields).length > 0 ? (
+                          <div className="space-y-0.5">
+                            {Object.entries(property.custom_fields).slice(0, 2).map(([key, val]) => (
+                              <p key={key} className="truncate text-xs leading-tight">
+                                <span className="font-medium text-neutral-600">{key}:</span>{" "}
+                                <span className="text-neutral-500">{val}</span>
+                              </p>
+                            ))}
+                            {Object.keys(property.custom_fields).length > 2 && (
+                              <p className="text-xs text-neutral-400">
+                                +{Object.keys(property.custom_fields).length - 2} more
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           "—"
                         )}

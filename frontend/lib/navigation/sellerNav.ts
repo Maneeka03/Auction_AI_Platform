@@ -2,7 +2,9 @@ import {
   Clock,
   FileText,
   Gavel,
+  HelpCircle,
   LayoutDashboard,
+  LifeBuoy,
   MessageSquare,
   Package,
   Settings,
@@ -42,5 +44,12 @@ export const sellerNav: NavSection[] = [
   {
     title: "Account",
     items: [{ label: "Settings", href: "/seller/settings", icon: Settings }],
+  },
+  {
+    title: "Support",
+    items: [
+      { label: "FAQ", href: "/seller/faq", icon: HelpCircle },
+      { label: "Contact Support", href: "/seller/support", icon: LifeBuoy },
+    ],
   },
 ];

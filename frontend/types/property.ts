@@ -35,6 +35,7 @@ export interface Property {
   purchased_at: string | null;
   votes: PropertyVote[];
   images: PropertyImage[];
+  custom_fields: Record<string, string> | null;
   created_at: string;
 }
 export interface PropertyPage {

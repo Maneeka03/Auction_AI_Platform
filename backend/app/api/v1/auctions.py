@@ -121,6 +121,14 @@ async def award_auction(
     return AuctionOut.of(*await auctions.detail(session, auction_id))
 
 
+@router.post("/{auction_id}/award-highest", response_model=AuctionOut)
+async def award_auction_to_highest(
+    auction_id: uuid.UUID, session: DbSession, _: User = Manager
+) -> AuctionOut:
+    await auctions.award_to_highest(session, auction_id)
+    return AuctionOut.of(*await auctions.detail(session, auction_id))
+
+
 @router.post("/{auction_id}/end", response_model=AuctionOut)
 async def end_auction(auction_id: uuid.UUID, session: DbSession, _: User = Manager) -> AuctionOut:
     await auctions.end(session, auction_id)
