@@ -64,3 +64,7 @@ class AdminTicketPage(BaseModel):
     
 class UpdateTicketStatusRequest(BaseModel):
     status: TicketStatus
+
+
+class ReplyRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=5000)

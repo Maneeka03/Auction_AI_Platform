@@ -2,6 +2,7 @@
 
 import { Radio } from "lucide-react";
 import { useEffect, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import {
   listMyAuctionRequests,
   submitAuctionRequest,
@@ -173,16 +174,12 @@ export default function AuctionRequestPage() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">Property</label>
-            <select
+            <SearchableSelect
               value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
-              className="h-11 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-            >
-              <option value="">Select a published property…</option>
-              {publishedProps.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+              options={publishedProps.map((p) => ({ value: p.id, label: p.title }))}
+              placeholder="Select a published property…"
+              onChange={setPropertyId}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

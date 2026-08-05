@@ -1,13 +1,14 @@
 "use client";
 
-import { ChevronDown, LifeBuoy, Pencil, Plus, Settings2, Trash2, X } from "lucide-react";
+import { LifeBuoy, Pencil, Plus, Send, Settings2, Trash2, X } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { TicketStatusDropdown } from "@/components/ui/TicketStatusDropdown";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { can } from "@/lib/auth/permissions";
 import { Select } from "@/components/ui/Select";
 import {
-  createTicket, deleteTicket, listAllTickets, listMyTickets, updateTicket, updateTicketStatus,
+  createTicket, deleteTicket, listAllTickets, listMyTickets, replyToTicket, updateTicket, updateTicketStatus,
 } from "@/lib/api/supportTickets";
 import {
   createTicketSubject, deleteTicketSubject, listAllTicketSubjects, listTicketSubjects, updateTicketSubject,
@@ -16,6 +17,8 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { AdminTicket, SupportTicket, TicketStatus } from "@/types/supportTicket";
 import type { TicketSubject } from "@/types/ticketSubject";
+
+const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 
 const OTHER_VALUE = "__other__";
 const STATUSES: TicketStatus[] = ["open", "in_progress", "resolved", "closed"];
@@ -47,6 +50,10 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [replyTicket, setReplyTicket] = useState<AdminTicket | null>(null);
+  const [replyMsg, setReplyMsg] = useState("");
+  const [replySending, setReplySending] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
   const PAGE_SIZE = 15;
 
   const load = useCallback(() => {
@@ -63,6 +70,25 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
 
   useEffect(() => { void load(); }, [load]);
 
+  // WebSocket for real-time ticket updates
+  useEffect(() => {
+    const ws = new WebSocket(`${WS_BASE}/api/v1/support-tickets/ws?token=${encodeURIComponent(accessToken)}`);
+    ws.onmessage = (e: MessageEvent) => {
+      try {
+        const event = JSON.parse(e.data as string) as { type: string; ticket: AdminTicket };
+        if (event.type === "ticket_created") {
+          setTickets((prev) => [event.ticket, ...prev]);
+          setTotal((t) => t + 1);
+        } else if (event.type === "ticket_updated") {
+          setTickets((prev) => prev.map((t) => (t.id === event.ticket.id ? event.ticket : t)));
+        }
+      } catch {
+        // ignore malformed messages
+      }
+    };
+    return () => { ws.close(); };
+  }, [accessToken]);
+
   async function handleStatusChange(ticket: AdminTicket, newStatus: TicketStatus) {
     setUpdatingId(ticket.id);
     setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, status: newStatus } : t)));
@@ -73,6 +99,21 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
       await load();
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function handleReply() {
+    if (!replyTicket || !replyMsg.trim()) return;
+    setReplySending(true);
+    setReplyError(null);
+    try {
+      await replyToTicket(accessToken, replyTicket.id, replyMsg.trim());
+      setReplyTicket(null);
+      setReplyMsg("");
+    } catch (err) {
+      setReplyError(err instanceof ApiRequestError ? err.message : "Failed to send reply.");
+    } finally {
+      setReplySending(false);
     }
   }
 
@@ -95,14 +136,15 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
             placeholder="Search name, subject, message..."
             className="h-9 w-56 rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none"
           />
-          <select
+          <SearchableSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as TicketStatus | "all")}
-            className="h-9 rounded-lg border border-neutral-200 bg-neutral-50 px-2 text-sm focus:border-brand-500 focus:outline-none"
-          >
-            <option value="all">All statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-          </select>
+            options={[
+              { value: "all", label: "All statuses" },
+              ...STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
+            ]}
+            placeholder="All statuses"
+            onChange={(v) => setStatusFilter(v as TicketStatus | "all")}
+          />
         </div>
       </div>
 
@@ -119,11 +161,12 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
           <table className="w-full table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className="bg-neutral-50 text-xs text-neutral-500">
-                <th className="w-[16%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Raised By</th>
-                <th className="w-[14%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Subject</th>
-                <th className="w-[34%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Message</th>
+                <th className="w-[15%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Raised By</th>
+                <th className="w-[12%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Subject</th>
+                <th className="w-[30%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Message</th>
                 <th className="w-[16%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Status</th>
-                <th className="w-[20%] border-b border-neutral-200 px-3 py-2.5 font-medium">Date & Time</th>
+                <th className="w-[16%] border-b border-r border-neutral-200 px-3 py-2.5 font-medium">Date & Time</th>
+                <th className="w-[11%] border-b border-neutral-200 px-3 py-2.5 font-medium">Reply</th>
               </tr>
             </thead>
             <tbody>
@@ -135,23 +178,23 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
                   </td>
                   <td className={`${cell} text-neutral-800`}>{subjectLabelFor(ticket)}</td>
                   <td className={`${cell} text-neutral-600`}>{ticket.message}</td>
-                 <td className="border-b border-r border-neutral-200 px-3 py-3">
-  <div className="relative w-full">
-    <select
-      value={ticket.status}
-      disabled={updatingId === ticket.id}
-      onChange={(e) => handleStatusChange(ticket, e.target.value as TicketStatus)}
-      className={`h-8 w-full appearance-none rounded-full border-0 py-0 pl-2.5 pr-6 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:opacity-50 ${STATUS_STYLES[ticket.status]}`}
-    >
-      <option value="open" className={STATUS_STYLES.open}>Open</option>
-      <option value="in_progress" className={STATUS_STYLES.in_progress}>In Progress</option>
-      <option value="resolved" className={STATUS_STYLES.resolved}>Resolved</option>
-      <option value="closed" className={STATUS_STYLES.closed}>Closed</option>
-    </select>
-    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
-  </div>
-</td>
-                  <td className="border-b border-neutral-200 px-3 py-3 text-neutral-500">{fmtDateTime(ticket.created_at)}</td>
+                  <td className="border-b border-r border-neutral-200 px-3 py-2.5">
+                    <TicketStatusDropdown
+                      value={ticket.status}
+                      disabled={updatingId === ticket.id}
+                      onChange={(v) => handleStatusChange(ticket, v)}
+                    />
+                  </td>
+                  <td className="border-b border-r border-neutral-200 px-3 py-3 text-xs text-neutral-500">{fmtDateTime(ticket.created_at)}</td>
+                  <td className="border-b border-neutral-200 px-3 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { setReplyTicket(ticket); setReplyMsg(""); setReplyError(null); }}
+                      className="flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100"
+                    >
+                      <Send size={12} /> Reply
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -182,6 +225,59 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
           </div>
         </div>
       )}
+
+      {/* Reply modal */}
+      {replyTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900">Reply to {replyTicket.raiser_name}</h2>
+                <p className="text-xs text-neutral-500">{replyTicket.raiser_email}</p>
+              </div>
+              <button type="button" onClick={() => setReplyTicket(null)} className="text-neutral-400 hover:text-neutral-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-4 rounded-lg border border-neutral-100 bg-neutral-50 p-3">
+              <p className="text-xs font-medium text-neutral-500">Original message</p>
+              <p className="mt-1 text-sm text-neutral-700">{replyTicket.message}</p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-800">Your reply</label>
+              <textarea
+                value={replyMsg}
+                onChange={(e) => setReplyMsg(e.target.value)}
+                rows={5}
+                placeholder="Type your reply here..."
+                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            {replyError && <p className="mt-2 text-sm text-danger-600">{replyError}</p>}
+
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setReplyTicket(null)}
+                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReply}
+                disabled={replySending || !replyMsg.trim()}
+                className="flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
+              >
+                <Send size={14} /> {replySending ? "Sending..." : "Send Reply"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -203,7 +299,13 @@ export default function ContactSupportPage() {
   const [editingSubject, setEditingSubject] = useState<{ id: string; name: string } | null>(null);
   const [subjectError, setSubjectError] = useState<string | null>(null);
 
-  const isAdmin = !!session && can(session.permissions, "system_settings", "view");
+  // Full admin: can manage subjects + see all tickets + update status
+  const isFullAdmin = !!session && (
+    session.roles.includes("super_admin") || session.roles.includes("gemologist")
+  );
+  // Viewer admin: can see all tickets + update status but cannot manage subjects
+  const isViewerAdmin = !!session && session.roles.includes("auction_manager") && !isFullAdmin;
+  const isAdmin = isFullAdmin || isViewerAdmin;
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -370,7 +472,7 @@ export default function ContactSupportPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              {isAdmin && (
+              {isFullAdmin && (
                 <button
                   type="button"
                   onClick={openManager}
@@ -495,7 +597,7 @@ export default function ContactSupportPage() {
           </div>
         )}
 
-        {isAdmin && isManagerMounted && (
+        {isFullAdmin && isManagerMounted && (
           <div className="fixed inset-0 z-50 flex justify-end">
             <div
               className={`absolute inset-0 bg-neutral-900/40 transition-opacity duration-200 ${isManagerVisible ? "opacity-100" : "opacity-0"}`}

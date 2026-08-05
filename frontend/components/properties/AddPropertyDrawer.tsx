@@ -45,6 +45,9 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
   );
   const showResidentialFields = isRealEstateCategory(selectedMain?.name);
+  // parentCategoryId is set only when a subcategory is selected
+  const parentCategoryId =
+    selectedMain && selectedMain.id !== categoryId ? selectedMain.id : undefined;
 
   function handleCategoryChange(id: string) {
     setCategoryId(id);
@@ -311,6 +314,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
                     <div className="mt-4">
                       <CategoryCustomFields
                         categoryId={categoryId}
+                        parentCategoryId={parentCategoryId}
                         values={customFieldValues}
                         onChange={setCustomFieldValues}
                       />

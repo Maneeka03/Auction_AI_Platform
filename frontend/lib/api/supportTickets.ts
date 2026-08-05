@@ -41,3 +41,11 @@ export function updateTicketStatus(
 ): Promise<AdminTicket> {
   return apiClient.patch<AdminTicket>(`${BASE}/${ticketId}/status`, { status }, { accessToken });
 }
+
+export function replyToTicket(
+  accessToken: string,
+  ticketId: string,
+  message: string,
+): Promise<void> {
+  return apiClient.post<void>(`${BASE}/${ticketId}/reply`, { message }, { accessToken });
+}

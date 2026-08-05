@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { PropertyCard } from "@/components/properties/PropertyCard";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { listProperties } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -70,38 +71,30 @@ export default function AdminBrowsePropertiesPage() {
           {/* Category dropdown */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-500">Category</label>
-            <select
+            <SearchableSelect
               value={selectedParentId}
-              onChange={(e) => handleParentChange(e.target.value)}
-              className="h-9 w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 sm:min-w-[180px]"
-            >
-              <option value="">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "All Categories" },
+                ...categories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              placeholder="All Categories"
+              onChange={handleParentChange}
+            />
           </div>
 
           {/* Subcategory dropdown — always visible, disabled when no parent or no children */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-500">Subcategory</label>
-            <select
+            <SearchableSelect
               value={selectedSubId}
-              onChange={(e) => setSelectedSubId(e.target.value)}
+              options={[
+                { value: "", label: subcategories.length === 0 ? "No subcategories" : "All Subcategories" },
+                ...subcategories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              placeholder={subcategories.length === 0 ? "No subcategories" : "All Subcategories"}
               disabled={subcategories.length === 0}
-              className="h-9 w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400 sm:min-w-[180px]"
-            >
-              <option value="">
-                {subcategories.length === 0 ? "No subcategories" : "All Subcategories"}
-              </option>
-              {subcategories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedSubId}
+            />
           </div>
 
           {/* Reset */}

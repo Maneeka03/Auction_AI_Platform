@@ -121,6 +121,7 @@ class PropertyOut(BaseModel):
     purchased_at: datetime | None
     votes: list[VoteOut]
     images: list[PropertyImageOut]
+    custom_fields: dict[str, str] | None
     created_at: datetime
 
     @classmethod
@@ -149,6 +150,7 @@ class PropertyOut(BaseModel):
             purchased_at=listing.purchased_at,
             votes=[VoteOut.of(vote) for vote in listing.votes],
             images=[PropertyImageOut.of(img) for img in listing.images],
+            custom_fields=listing.custom_fields,
             created_at=listing.created_at,
         )
 

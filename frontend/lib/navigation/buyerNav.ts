@@ -1,7 +1,9 @@
 import {
   Bookmark,
   Gavel,
+  HelpCircle,
   LayoutDashboard,
+  LifeBuoy,
   MessageSquare,
   Search,
   Settings,
@@ -42,5 +44,12 @@ export const buyerNav: NavSection[] = [
   {
     title: "Account",
     items: [{ label: "Settings", href: "/settings", icon: Settings }],
+  },
+  {
+    title: "Support",
+    items: [
+      { label: "FAQ", href: "/support/faq", icon: HelpCircle },
+      { label: "Contact Support", href: "/support", icon: LifeBuoy },
+    ],
   },
 ];

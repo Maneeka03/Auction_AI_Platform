@@ -1,7 +1,8 @@
 "use client";
 
 import { Pencil, Plus, Trash2, X, GripVertical } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import {
   createCategoryField,
   deleteCategoryField,
@@ -13,11 +14,11 @@ import type { CategoryField, CreateCategoryFieldRequest, FieldType } from "@/typ
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: "text", label: "Text" },
+  { value: "textarea", label: "Text (long)" },
   { value: "number", label: "Number" },
-  { value: "dropdown", label: "Dropdown" },
+  { value: "select", label: "Dropdown" },
   { value: "date", label: "Date" },
   { value: "boolean", label: "Yes / No" },
-  { value: "file", label: "File Upload" },
 ];
 
 interface FieldFormState {
@@ -25,7 +26,6 @@ interface FieldFormState {
   field_type: FieldType;
   options: string;
   required: boolean;
-  sort_order: number;
 }
 
 const EMPTY_FORM: FieldFormState = {
@@ -33,7 +33,6 @@ const EMPTY_FORM: FieldFormState = {
   field_type: "text",
   options: "",
   required: false,
-  sort_order: 0,
 };
 
 interface Props {
@@ -54,6 +53,10 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  // Drag state
+  const dragIndex = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
     void loadFields();
@@ -63,7 +66,8 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
     if (!accessToken) return;
     setIsLoading(true);
     try {
-      setFields(await listCategoryFields(accessToken, categoryId));
+      const fetched = await listCategoryFields(accessToken, categoryId);
+      setFields([...fetched].sort((a, b) => a.sort_order - b.sort_order));
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +91,6 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
       field_type: field.field_type,
       options: field.options ? field.options.join(", ") : "",
       required: field.required,
-      sort_order: field.sort_order,
     });
     setEditingId(field.id);
     setFormError(null);
@@ -103,13 +106,13 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
       setFormError("Label is required.");
       return;
     }
-    if (form.field_type === "dropdown" && !form.options.trim()) {
+    if (form.field_type === "select" && !form.options.trim()) {
       setFormError("Dropdown options are required (comma-separated).");
       return;
     }
 
     const options =
-      form.field_type === "dropdown"
+      form.field_type === "select"
         ? form.options.split(",").map((o) => o.trim()).filter(Boolean)
         : null;
 
@@ -118,7 +121,9 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
       field_type: form.field_type,
       options,
       required: form.required,
-      sort_order: form.sort_order,
+      sort_order: editingId
+        ? (fields.find((f) => f.id === editingId)?.sort_order ?? fields.length)
+        : fields.length,
     };
 
     setIsSubmitting(true);
@@ -145,6 +150,48 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
     if (!confirm("Delete this field? Existing listings will keep their stored value.")) return;
     await deleteCategoryField(accessToken, categoryId, fieldId);
     setFields((prev) => prev.filter((f) => f.id !== fieldId));
+  }
+
+  // ── Drag-and-drop handlers ──────────────────────────────────────────────────
+
+  function handleDragStart(index: number) {
+    dragIndex.current = index;
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }
+
+  async function handleDrop(dropIndex: number) {
+    const fromIndex = dragIndex.current;
+    if (fromIndex === null || fromIndex === dropIndex) {
+      dragIndex.current = null;
+      setDragOverIndex(null);
+      return;
+    }
+
+    const reordered = [...fields];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+
+    // Assign new sort_order values and update state immediately for snappy UX.
+    const withOrder = reordered.map((f, i) => ({ ...f, sort_order: i }));
+    setFields(withOrder);
+    dragIndex.current = null;
+    setDragOverIndex(null);
+
+    if (!accessToken) return;
+    await Promise.all(
+      withOrder.map((f) =>
+        updateCategoryField(accessToken, categoryId, f.id, { sort_order: f.sort_order }),
+      ),
+    );
+  }
+
+  function handleDragEnd() {
+    dragIndex.current = null;
+    setDragOverIndex(null);
   }
 
   return (
@@ -175,13 +222,25 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
             <p className="text-sm text-neutral-400">No fields yet. Add one to get started.</p>
           ) : (
             <ul className="space-y-2">
-              {fields.map((field) => (
+              {fields.map((field, index) => (
                 <li
                   key={field.id}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={() => void handleDrop(index)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-start justify-between gap-3 rounded-xl border bg-neutral-50 px-4 py-3 transition-all ${
+                    dragOverIndex === index
+                      ? "border-brand-400 ring-2 ring-brand-200"
+                      : "border-neutral-200"
+                  } ${dragIndex.current === index ? "opacity-40" : "opacity-100"}`}
                 >
                   <div className="flex items-start gap-2 min-w-0">
-                    <GripVertical size={16} className="mt-0.5 shrink-0 text-neutral-300" />
+                    <GripVertical
+                      size={16}
+                      className="mt-0.5 shrink-0 cursor-grab text-neutral-400 active:cursor-grabbing"
+                    />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-neutral-900">{field.label}</p>
                       <div className="mt-1 flex flex-wrap gap-1.5">
@@ -246,18 +305,14 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
 
               <div>
                 <label className="mb-1 block text-xs font-medium text-neutral-700">Field Type</label>
-                <select
+                <SearchableSelect
                   value={form.field_type}
-                  onChange={(e) => setForm((f) => ({ ...f, field_type: e.target.value as FieldType }))}
-                  className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none"
-                >
-                  {FIELD_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                  options={FIELD_TYPES}
+                  onChange={(v) => setForm((f) => ({ ...f, field_type: v as FieldType }))}
+                />
               </div>
 
-              {form.field_type === "dropdown" && (
+              {form.field_type === "select" && (
                 <div>
                   <label className="mb-1 block text-xs font-medium text-neutral-700">
                     Options <span className="text-neutral-400">(comma-separated)</span>
@@ -281,16 +336,6 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
                   />
                   Required
                 </label>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-neutral-500">Order</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.sort_order}
-                    onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
-                    className="h-8 w-16 rounded-lg border border-neutral-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none"
-                  />
-                </div>
               </div>
 
               {formError && <p className="text-xs text-danger-600">{formError}</p>}

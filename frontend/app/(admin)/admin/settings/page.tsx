@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 
@@ -108,17 +109,12 @@ function SelectField({
   options: { value: string; label: string }[];
 }) {
   return (
-    <select
+    <SearchableSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-10 w-full max-w-sm rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      options={options}
+      onChange={onChange}
+      className="max-w-sm"
+    />
   );
 }
 

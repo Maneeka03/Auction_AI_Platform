@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { HelpCircle, LifeBuoy, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -25,7 +26,9 @@ export function SellerShell({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
 
   async function handleSignOut() {
     await logout();
@@ -33,15 +36,18 @@ export function SellerShell({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    if (!profileOpen) return;
+    if (!profileOpen && !helpOpen) return;
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
+      if (helpRef.current && !helpRef.current.contains(event.target as Node)) {
+        setHelpOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [profileOpen]);
+  }, [profileOpen, helpOpen]);
 
   const userInitials = session ? initialsFromName(session.full_name) : "?";
 
@@ -78,6 +84,37 @@ export function SellerShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
+            {/* Help */}
+            <div ref={helpRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setHelpOpen((prev) => !prev)}
+                aria-label="Help and support"
+                aria-expanded={helpOpen}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100"
+              >
+                <HelpCircle size={17} />
+              </button>
+              {helpOpen ? (
+                <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg">
+                  <Link
+                    href="/seller/faq"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <HelpCircle size={15} className="text-brand-500" /> FAQ
+                  </Link>
+                  <Link
+                    href="/seller/support"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <LifeBuoy size={15} className="text-brand-500" /> Contact Support
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+
             {/* PushEnableButton moved to /seller/settings page */}
             <NotificationBell />
 

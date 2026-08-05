@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { getMyListings } from "@/lib/api/seller";
 import { ApiRequestError } from "@/lib/api/client";
@@ -91,6 +92,7 @@ export default function SellerListingsPage() {
                   <th className="px-4 py-3 text-right font-medium text-neutral-600">Reserve</th>
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">Status</th>
                   <th className="px-4 py-3 text-left font-medium text-neutral-600">Created</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -107,6 +109,16 @@ export default function SellerListingsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-neutral-500">{formatDate(p.created_at)}</td>
+                    <td className="px-4 py-3">
+                      {p.status === "draft" && (
+                        <Link
+                          href={`/seller/listings/${p.id}/edit`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100"
+                        >
+                          <Pencil size={12} /> Edit
+                        </Link>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

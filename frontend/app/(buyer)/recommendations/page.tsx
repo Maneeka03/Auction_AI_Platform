@@ -14,11 +14,12 @@ import type { Auction } from "@/types/auction";
 import type { Property } from "@/types/property";
 
 // Persist clicked item IDs in localStorage so they surface first on next visit.
-function markViewed(id: string) {
+function markViewed(id: string, categoryId: string) {
   try {
     const prev: string[] = JSON.parse(localStorage.getItem("provenix_viewed") ?? "[]");
     const updated = [id, ...prev.filter((v) => v !== id)].slice(0, 100);
     localStorage.setItem("provenix_viewed", JSON.stringify(updated));
+    localStorage.setItem("provenix_last_category", categoryId);
   } catch {}
 }
 
@@ -30,10 +31,24 @@ function readViewed(): string[] {
   }
 }
 
-// Sort items so previously-clicked ones appear first (most recent click = index 0).
-function prioritize<T extends { id: string }>(items: T[], viewedIds: string[]): T[] {
-  if (viewedIds.length === 0) return items;
+function readLastCategory(): string {
+  try {
+    return localStorage.getItem("provenix_last_category") ?? "";
+  } catch {
+    return "";
+  }
+}
+
+// Sort items: last-viewed category first, then previously-clicked items, then rest.
+function prioritize<T extends { id: string; category_id: string }>(
+  items: T[],
+  viewedIds: string[],
+  lastCategoryId: string,
+): T[] {
   return [...items].sort((a, b) => {
+    const aCat = lastCategoryId && a.category_id === lastCategoryId ? 0 : 1;
+    const bCat = lastCategoryId && b.category_id === lastCategoryId ? 0 : 1;
+    if (aCat !== bCat) return aCat - bCat;
     const ai = viewedIds.indexOf(a.id);
     const bi = viewedIds.indexOf(b.id);
     if (ai === -1 && bi === -1) return 0;
@@ -48,7 +63,7 @@ function LiveAuctionCard({ a }: { a: Auction }) {
   const currentPrice = a.current_bid ?? a.opening_bid;
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <Link href={`/live-auctions/${a.id}`} className="block" onClick={() => markViewed(a.id)}>
+      <Link href={`/live-auctions/${a.id}`} className="block" onClick={() => markViewed(a.id, a.category_id)}>
         <div className="relative h-44 w-full bg-white">
           {imgSrc ? (
             <Image src={imgSrc} alt={a.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
@@ -134,7 +149,7 @@ function ListingCard({ p, onBuyNow }: { p: Property; onBuyNow: (p: Property) => 
   const imgSrc = resolveMinioUrl(p.image_url);
   return (
     <div className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-      <Link href={`/properties/${p.id}`} className="block" onClick={() => markViewed(p.id)}>
+      <Link href={`/properties/${p.id}`} className="block" onClick={() => markViewed(p.id, p.category_id)}>
         <div className="relative h-44 w-full bg-white">
           {imgSrc ? (
             <Image src={imgSrc} alt={p.title} fill className="object-contain transition-transform duration-200 group-hover:scale-105" unoptimized />
@@ -199,10 +214,12 @@ export default function RecommendationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<Property | null>(null);
   const [viewedIds, setViewedIds] = useState<string[]>([]);
+  const [lastCategoryId, setLastCategoryId] = useState("");
 
-  // Read last-clicked order from localStorage on mount.
+  // Read last-clicked order and last category from localStorage on mount.
   useEffect(() => {
     setViewedIds(readViewed());
+    setLastCategoryId(readLastCategory());
   }, []);
 
   // Auto-open PaymentModal when redirected from landing page with ?buy=<id>
@@ -275,9 +292,9 @@ export default function RecommendationsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {prioritize(liveAuctions, viewedIds).map((a) => <LiveAuctionCard key={a.id} a={a} />)}
-            {prioritize(upcomingAuctions, viewedIds).map((a) => <UpcomingAuctionCard key={a.id} a={a} />)}
-            {prioritize(listings, viewedIds).map((p) => <ListingCard key={p.id} p={p} onBuyNow={setPurchasing} />)}
+            {prioritize(liveAuctions, viewedIds, lastCategoryId).map((a) => <LiveAuctionCard key={a.id} a={a} />)}
+            {prioritize(upcomingAuctions, viewedIds, lastCategoryId).map((a) => <UpcomingAuctionCard key={a.id} a={a} />)}
+            {prioritize(listings, viewedIds, lastCategoryId).map((p) => <ListingCard key={p.id} p={p} onBuyNow={setPurchasing} />)}
           </div>
         )}
       </div>

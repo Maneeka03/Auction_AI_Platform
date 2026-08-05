@@ -129,7 +129,7 @@ export default function AdminPropertyDetailPage() {
         ) : (
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             {/* Left: image gallery + description */}
-            <div>
+            <div className="space-y-6">
               <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-neutral-200 md:h-[480px]">
                 {show3d && modelUrl ? (
                   <ModelViewer src={modelUrl} className="h-full w-full" />
@@ -152,7 +152,7 @@ export default function AdminPropertyDetailPage() {
               </div>
 
               {gallery.length > 1 && (
-                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+                <div className="flex gap-3 overflow-x-auto pb-2">
                   {gallery.map((url) => (
                     <button
                       key={url}
@@ -170,7 +170,7 @@ export default function AdminPropertyDetailPage() {
                 </div>
               )}
 
-              <div className="mt-10">
+              <div>
                 <h2 className="text-lg font-semibold text-neutral-900">About this property</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-600">
                   {property.description ?? "No description provided."}
@@ -185,22 +185,34 @@ export default function AdminPropertyDetailPage() {
                 {formatMoney(property.reserve_price)}
               </p>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              {/* Feature pills — horizontal single row */}
+              <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
                 {property.bedrooms != null && (
-                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
                     <BedDouble size={15} /> {property.bedrooms} Beds
                   </span>
                 )}
                 {property.bathrooms != null && (
-                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
                     <Bath size={15} /> {property.bathrooms} Baths
                   </span>
                 )}
                 {property.area_sqft != null && (
-                  <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700">
                     <Ruler size={15} /> {property.area_sqft.toLocaleString()} sqft
                   </span>
                 )}
+                {property.custom_fields &&
+                  Object.entries(property.custom_fields).slice(0, 3).map(([key, val]) => (
+                    <span
+                      key={key}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700"
+                    >
+                      <Tag size={13} className="shrink-0 text-neutral-400" />
+                      <span className="text-neutral-500 text-xs">{key}:</span>
+                      <span>{val}</span>
+                    </span>
+                  ))}
               </div>
 
               {modelUrl ? (
@@ -285,30 +297,6 @@ export default function AdminPropertyDetailPage() {
                 </div>
               )}
 
-              <div className="mt-8 rounded-2xl border border-neutral-200 p-6">
-                <h3 className="text-sm font-semibold text-neutral-900">Key Details</h3>
-                <dl className="mt-4 space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-neutral-500">Category</dt>
-                    <dd className="font-medium text-neutral-900">{property.category_name}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-neutral-500">Status</dt>
-                    <dd className="font-medium capitalize text-neutral-900">{property.status}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-neutral-500">Listed</dt>
-                    <dd className="font-medium text-neutral-900">{formatDate(property.created_at)}</dd>
-                  </div>
-                  {property.seller_name ? (
-                    <div className="flex justify-between">
-                      <dt className="text-neutral-500">Seller</dt>
-                      <dd className="font-medium text-neutral-900">{property.seller_name}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-              </div>
-
               <div className="mt-6 flex flex-wrap gap-3">
                 <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-xs font-medium text-green-600">
                   <ShieldCheck size={13} /> KYC Verified Sellers
@@ -316,6 +304,26 @@ export default function AdminPropertyDetailPage() {
                 <span className="flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1.5 text-xs font-medium text-neutral-600">
                   <Lock size={13} className="text-brand-600" /> Escrow Protected
                 </span>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-neutral-200 p-6">
+                <h3 className="text-sm font-semibold text-neutral-900">Key Details</h3>
+                <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                  {[
+                    { label: "Category", value: property.category_name },
+                    { label: "Status", value: property.status },
+                    { label: "Listed", value: formatDate(property.created_at) },
+                    ...(property.seller_name ? [{ label: "Seller", value: property.seller_name }] : []),
+                    ...(property.custom_fields
+                      ? Object.entries(property.custom_fields).map(([k, v]) => ({ label: k, value: v }))
+                      : []),
+                  ].map(({ label, value }) => (
+                    <div key={label}>
+                      <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">{label}</dt>
+                      <dd className="mt-0.5 break-words font-medium capitalize text-neutral-900">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             </div>
           </div>

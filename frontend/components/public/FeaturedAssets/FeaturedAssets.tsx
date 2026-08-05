@@ -18,7 +18,7 @@ export default function FeaturedAssets() {
     useEffect(() => {
         async function loadProperties() {
             try {
-                const result = await listPublicProperties({page: 1,size: 6,});
+                const result = await listPublicProperties({page: 1,size: 4,});
                 setProperties(result.items);
             } catch (err) {
                 setError(err instanceof ApiRequestError? err.message: "Failed to load properties.");
