@@ -24,3 +24,13 @@ export interface UpdateTicketRequest {
   custom_subject?: string | null;
   message?: string;
 }
+
+export interface AdminTicket extends SupportTicket {
+  raiser_name: string;
+  raiser_email: string;
+}
+export interface AdminTicketPage {
+  items: AdminTicket[];
+  total: number;
+}
+
