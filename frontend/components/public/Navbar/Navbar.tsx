@@ -33,7 +33,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
 
     return (
         <header className={`fixed left-0 top-0 z-50 w-full transition-all duration-300 ${ opaque ? "bg-white/95 shadow-lg backdrop-blur-md": "bg-transparent"}`}>
-            <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 lg:px-8">
+            <div className="mx-auto flex h-20 sm:h-24 max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link href="/" className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
                         <span className="text-xl font-bold text-violet-700">P</span>

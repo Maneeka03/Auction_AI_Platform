@@ -144,7 +144,7 @@ export default function Footer() {
       <PlusMark className="pointer-events-none absolute left-[38%] top-16 text-neutral-300" />
       <HexMark className="pointer-events-none absolute left-[8%] top-52 text-pink-300" />
 
-      <div className="relative z-20 mx-auto w-full max-w-6xl px-6">
+      <div className="relative z-20 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8 rounded-3xl bg-white p-8 shadow-2xl md:flex-row md:justify-between md:p-10">
           <Image
             src="/images/footer/newslater.png"
@@ -187,17 +187,13 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* link columns */}
-        <div className="mt-16 grid grid-cols-2 gap-10 text-white sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid grid-cols-1 gap-10 text-white sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="text-lg font-bold">Auction Categories</h3>
             <ul className="mt-5 space-y-3">
               {AUCTION_CATEGORIES.map((label) => (
                 <li key={label}>
-                  <Link
-                    href="/browse-properties"
-                    className="text-purple-100 transition hover:text-white"
-                  >
+                  <Link href="/browse-properties" className="text-purple-100 transition hover:text-white">
                     {label}
                   </Link>
                 </li>
@@ -210,10 +206,7 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {ABOUT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-purple-100 transition hover:text-white"
-                  >
+                  <Link href={link.href} className="text-purple-100 transition hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -226,10 +219,7 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {HELP_LINKS.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-purple-100 transition hover:text-white"
-                  >
+                  <Link href={link.href} className="text-purple-100 transition hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -240,52 +230,27 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold">Follow Us</h3>
             <ul className="mt-5 space-y-3 text-purple-100">
-              <li className="flex items-center gap-3">
-                <Phone size={16} /> {CONTACT.phone1}
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone size={16} /> {CONTACT.phone2}
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={16} /> {CONTACT.email}
-              </li>
-              <li className="flex items-center gap-3">
-                <MapPin size={16} /> {CONTACT.address}
-              </li>
+              <li className="flex items-center gap-3"><Phone size={16} /> {CONTACT.phone1}</li>
+              <li className="flex items-center gap-3"><Phone size={16} /> {CONTACT.phone2}</li>
+              <li className="flex items-center gap-3"><Mail size={16} /> {CONTACT.email}</li>
+              <li className="flex items-center gap-3"><MapPin size={16} /> {CONTACT.address}</li>
             </ul>
             <div className="mt-6 flex gap-3">
-              <Link
-                href="#"
-                aria-label="Facebook"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700"
-              >
+              <Link href="#" aria-label="Facebook" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700">
                 <FacebookIcon />
               </Link>
-              <Link
-                href="#"
-                aria-label="Twitter"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700"
-              >
+              <Link href="#" aria-label="Twitter" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700">
                 <TwitterIcon />
               </Link>
-              <Link
-                href="#"
-                aria-label="Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700"
-              >
+              <Link href="#" aria-label="Instagram" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700">
                 <InstagramIcon />
               </Link>
-              <Link
-                href="#"
-                aria-label="LinkedIn"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700"
-              >
+              <Link href="#" aria-label="LinkedIn" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-white hover:text-brand-700">
                 <LinkedinIcon />
               </Link>
             </div>
           </div>
         </div>
-
         {/* bottom bar: wordmark · payment badges · copyright */}
         <div className="mt-16 flex flex-col items-center gap-6 border-t border-white/10 pb-10 pt-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">

@@ -1,5 +1,13 @@
 import { apiClient } from "@/lib/api/client";
-import type { Category, CategoryTree, CreateCategoryRequest, UpdateCategoryRequest } from "@/types/category";
+import type {
+  Category,
+  CategoryField,
+  CategoryTree,
+  CreateCategoryFieldRequest,
+  CreateCategoryRequest,
+  UpdateCategoryFieldRequest,
+  UpdateCategoryRequest,
+} from "@/types/category";
 
 const BASE = "/api/v1/categories";
 
@@ -29,4 +37,39 @@ export function updateCategory(
 
 export function deleteCategory(accessToken: string, categoryId: string): Promise<void> {
   return apiClient.delete<void>(`${BASE}/${categoryId}`, { accessToken });
+}
+
+// ── Custom fields ──────────────────────────────────────────────────────────────
+
+export function listCategoryFields(accessToken: string, categoryId: string): Promise<CategoryField[]> {
+  return apiClient.get<CategoryField[]>(`${BASE}/${categoryId}/fields`, { accessToken });
+}
+
+export function listPublicCategoryFields(categoryId: string): Promise<CategoryField[]> {
+  return apiClient.get<CategoryField[]>(`${BASE}/${categoryId}/fields/public`);
+}
+
+export function createCategoryField(
+  accessToken: string,
+  categoryId: string,
+  payload: CreateCategoryFieldRequest,
+): Promise<CategoryField> {
+  return apiClient.post<CategoryField>(`${BASE}/${categoryId}/fields`, payload, { accessToken });
+}
+
+export function updateCategoryField(
+  accessToken: string,
+  categoryId: string,
+  fieldId: string,
+  payload: UpdateCategoryFieldRequest,
+): Promise<CategoryField> {
+  return apiClient.patch<CategoryField>(`${BASE}/${categoryId}/fields/${fieldId}`, payload, { accessToken });
+}
+
+export function deleteCategoryField(
+  accessToken: string,
+  categoryId: string,
+  fieldId: string,
+): Promise<void> {
+  return apiClient.delete<void>(`${BASE}/${categoryId}/fields/${fieldId}`, { accessToken });
 }

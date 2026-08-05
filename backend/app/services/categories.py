@@ -8,9 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import UNPROCESSABLE, AppError
-from app.models.category import Category
+from app.models.category import Category, CategoryField
 from app.models.property import Property
-from app.schemas.category import CreateCategoryRequest, UpdateCategoryRequest
+from app.schemas.category import (
+    CreateCategoryFieldRequest,
+    CreateCategoryRequest,
+    UpdateCategoryFieldRequest,
+    UpdateCategoryRequest,
+)
 
 
 def slugify(name: str) -> str:
@@ -19,7 +24,9 @@ def slugify(name: str) -> str:
 
 async def get(session: AsyncSession, category_id: uuid.UUID) -> Category:
     category = await session.scalar(
-        select(Category).where(Category.id == category_id).options(selectinload(Category.children))
+        select(Category)
+        .where(Category.id == category_id)
+        .options(selectinload(Category.children), selectinload(Category.fields))
     )
     if category is None:
         raise AppError(status.HTTP_404_NOT_FOUND, "category_not_found", "Category not found.")
@@ -27,7 +34,6 @@ async def get(session: AsyncSession, category_id: uuid.UUID) -> Category:
 
 
 async def _assert_is_main(session: AsyncSession, parent_id: uuid.UUID) -> None:
-    """A subcategory may only hang off a main category, keeping the tree exactly two levels deep."""
     parent = await get(session, parent_id)
     if parent.parent_id is not None:
         raise AppError(
@@ -54,15 +60,53 @@ async def create(session: AsyncSession, data: CreateCategoryRequest) -> Category
     return category
 
 
+# async def tree(session: AsyncSession) -> list[Category]:
+#     rows = await session.scalars(
+#         select(Category)
+#         .where(Category.parent_id.is_(None))
+#         .options(selectinload(Category.children), selectinload(Category.fields))
+#         .order_by(Category.name)
+#     )
+#     return list(rows)
+# async def tree(session: AsyncSession) -> list[Category]:
+#     rows = await session.scalars(
+#         select(Category)
+#         .where(Category.parent_id.is_(None))
+#         .options(
+#             selectinload(Category.fields),
+#             selectinload(Category.children)
+#             .selectinload(Category.fields),
+#             selectinload(Category.children)
+#             .selectinload(Category.children),
+#         )
+#         .order_by(Category.name)
+#     )
+#     return list(rows)
 async def tree(session: AsyncSession) -> list[Category]:
-    """Main categories, each carrying its subcategories."""
     rows = await session.scalars(
         select(Category)
         .where(Category.parent_id.is_(None))
-        .options(selectinload(Category.children))
+        .options(
+            selectinload(Category.fields),
+            selectinload(Category.children)
+            .selectinload(Category.fields),
+            selectinload(Category.children)
+            .selectinload(Category.children),
+        )
         .order_by(Category.name)
     )
-    return list(rows)
+
+    categories = list(rows)
+
+    for category in categories:
+        for child in category.children:
+            # Add parent category fields into subcategory fields
+            child.fields = [
+                *category.fields,
+                *child.fields
+            ]
+
+    return categories
 
 
 async def update(
@@ -101,7 +145,6 @@ async def update(
 
 
 async def delete(session: AsyncSession, category_id: uuid.UUID) -> None:
-    """Remove a category and its subcategories. Blocked while any listing still uses one of them."""
     category = await get(session, category_id)
     in_use = await session.scalar(
         select(func.count())
@@ -123,4 +166,71 @@ async def delete(session: AsyncSession, category_id: uuid.UUID) -> None:
         )
 
     await session.delete(category)
+    await session.commit()
+
+
+# ── Custom field CRUD ──────────────────────────────────────────────────────────
+
+async def _get_field(
+    session: AsyncSession, category_id: uuid.UUID, field_id: uuid.UUID
+) -> CategoryField:
+    field = await session.scalar(
+        select(CategoryField).where(
+            CategoryField.id == field_id,
+            CategoryField.category_id == category_id,
+        )
+    )
+    if field is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "field_not_found", "Custom field not found.")
+    return field
+
+
+async def list_fields(session: AsyncSession, category_id: uuid.UUID) -> list[CategoryField]:
+    await get(session, category_id)  # 404 if category missing
+    rows = await session.scalars(
+        select(CategoryField)
+        .where(CategoryField.category_id == category_id)
+        .order_by(CategoryField.sort_order, CategoryField.created_at)
+    )
+    return list(rows)
+
+
+async def create_field(
+    session: AsyncSession, category_id: uuid.UUID, data: CreateCategoryFieldRequest
+) -> CategoryField:
+    await get(session, category_id)
+    field = CategoryField(
+        category_id=category_id,
+        label=data.label,
+        field_type=data.field_type,
+        options=data.options,
+        required=data.required,
+        sort_order=data.sort_order,
+    )
+    session.add(field)
+    await session.commit()
+    await session.refresh(field)
+    return field
+
+
+async def update_field(
+    session: AsyncSession,
+    category_id: uuid.UUID,
+    field_id: uuid.UUID,
+    data: UpdateCategoryFieldRequest,
+) -> CategoryField:
+    field = await _get_field(session, category_id, field_id)
+    updates = data.model_dump(exclude_unset=True)
+    for key, value in updates.items():
+        setattr(field, key, value)
+    await session.commit()
+    await session.refresh(field)
+    return field
+
+
+async def delete_field(
+    session: AsyncSession, category_id: uuid.UUID, field_id: uuid.UUID
+) -> None:
+    field = await _get_field(session, category_id, field_id)
+    await session.delete(field)
     await session.commit()

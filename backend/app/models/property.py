@@ -5,7 +5,7 @@ from decimal import Decimal
 from enum import StrEnum
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, pg_enum
@@ -76,6 +76,8 @@ class Property(Base, TimestampMixin):
     # Coordinates for map/radius search. Null until geocoded or set by the lister.
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), default=None)
     longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), default=None)
+    custom_fields: Mapped[dict | None] = mapped_column(JSONB, default=None)
+
     seller_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
     )

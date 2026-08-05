@@ -38,6 +38,7 @@ class CreatePropertyRequest(BaseModel):
     area_sqft: Area | None = None
     latitude: Latitude | None = None
     longitude: Longitude | None = None
+    custom_fields: dict[str, str] | None = None
 
 
 class UpdatePropertyRequest(BaseModel):
@@ -54,6 +55,7 @@ class UpdatePropertyRequest(BaseModel):
     area_sqft: Area | None = None
     latitude: Latitude | None = None
     longitude: Longitude | None = None
+    custom_fields: dict[str, str] | None = None
 
 
 class PurchaseRequest(BaseModel):

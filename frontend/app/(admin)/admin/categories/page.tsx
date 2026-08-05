@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronDown, ChevronRight, FolderPlus, Plus, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderPlus, Plus, RefreshCw, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { CategoryFormDrawer } from "@/components/categories/CategoryFormDrawer";
+import { CategoryFieldsDrawer } from "@/components/categories/CategoryFieldsDrawer";
 import { createCategory, deleteCategory, updateCategory } from "@/lib/api/categories";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -18,10 +19,13 @@ type DrawerState =
   | { mode: "edit"; category: Category; parentName?: string }
   | null;
 
+type FieldsDrawerState = { categoryId: string; categoryName: string } | null;
+
 export default function CategoriesAdminPage() {
   const { accessToken } = useAuth();
   const { categories, isLoading, error, refetch } = useCategories();
   const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [fieldsDrawer, setFieldsDrawer] = useState<FieldsDrawerState>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -143,6 +147,14 @@ export default function CategoriesAdminPage() {
                         <div className="flex shrink-0 items-center gap-1">
                           <button
                             type="button"
+                            onClick={() => setFieldsDrawer({ categoryId: main.id, categoryName: main.name })}
+                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50"
+                          >
+                            <Settings2 size={14} />
+                            <span className="hidden sm:inline">Manage Fields</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setDrawer({ mode: "create-sub", parent: main })}
                             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
                           >
@@ -167,16 +179,26 @@ export default function CategoriesAdminPage() {
                                   className="flex items-center justify-between border-b border-neutral-100 px-3 py-2 last:border-0 hover:bg-neutral-50"
                                 >
                                   <p className="text-sm text-neutral-700">{sub.name}</p>
-                                  <PropertyRowMenu
-                                    onEdit={() =>
-                                      setDrawer({
-                                        mode: "edit",
-                                        category: sub,
-                                        parentName: main.name,
-                                      })
-                                    }
-                                    onDelete={() => void handleDelete(sub)}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setFieldsDrawer({ categoryId: sub.id, categoryName: `${main.name} › ${sub.name}` })}
+                                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-violet-600 hover:bg-violet-50"
+                                    >
+                                      <Settings2 size={13} />
+                                      <span className="hidden sm:inline">Fields</span>
+                                    </button>
+                                    <PropertyRowMenu
+                                      onEdit={() =>
+                                        setDrawer({
+                                          mode: "edit",
+                                          category: sub,
+                                          parentName: main.name,
+                                        })
+                                      }
+                                      onDelete={() => void handleDelete(sub)}
+                                    />
+                                  </div>
                                 </li>
                               ))}
                             </ul>
@@ -205,6 +227,14 @@ export default function CategoriesAdminPage() {
             }
             onClose={() => setDrawer(null)}
             onSubmit={handleSubmit}
+          />
+        ) : null}
+
+        {fieldsDrawer ? (
+          <CategoryFieldsDrawer
+            categoryId={fieldsDrawer.categoryId}
+            categoryName={fieldsDrawer.categoryName}
+            onClose={() => setFieldsDrawer(null)}
           />
         ) : null}
       </RequirePermission>

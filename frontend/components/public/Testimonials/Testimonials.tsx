@@ -72,72 +72,165 @@ export default function Testimonials() {
   );
 
   return (
+    // <section className="relative bg-white py-20">
+    //   <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+    //     <div className="mb-8 flex items-center justify-between">
+    //       <div>
+    //         <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
+    //           Testimonials
+    //         </span>
+    //         <h2 className="mt-2 text-3xl sm:text-4xl font-bold text-neutral-900">What Buyers Are Saying</h2>
+    //       </div>
+
+    //       <div className="flex items-center gap-3">
+    //         <button
+    //           onClick={() => {
+    //             emblaApi?.scrollPrev();
+    //             autoplay.current.reset();
+    //           }}
+    //           className="h-8 w-10 rounded-xl border shadow transition hover:bg-purple-600 hover:text-white"
+    //         >
+    //           <ChevronLeft size={20} />
+    //         </button>
+    //         <button
+    //           onClick={() => {
+    //             emblaApi?.scrollNext();
+    //             autoplay.current.reset();
+    //           }}
+    //           className="h-8 w-10 rounded-xl border shadow transition hover:bg-purple-600 hover:text-white"
+    //         >
+    //           <ChevronRight size={20} />
+    //         </button>
+    //       </div>
+    //     </div>
+
+    //     <div className="overflow-hidden pb-4" ref={emblaRef}>
+    //       <div className="flex">
+    //         {TESTIMONIALS.map((t) => (
+    //           <div key={t.name} className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] px-3">
+    //             <div className="flex h-full flex-col rounded-2xl bg-white p-8 shadow-sm transition-shadow hover:shadow-lg">
+    //               <div className="flex gap-0.5 text-amber-400">
+    //                 {Array.from({ length: 5 }).map((_, i) => (
+    //                   <Star key={i} size={16} className="fill-amber-400" />
+    //                 ))}
+    //               </div>
+    //               <p className="mt-4 flex-1 text-sm leading-relaxed text-neutral-600">
+    //                 &ldquo;{t.quote}&rdquo;
+    //               </p>
+    //               <div className="mt-6 flex items-center gap-3 border-t border-neutral-100 pt-4">
+    //                 <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
+    //                   {t.avatar ? (
+    //                     <Image src={t.avatar} alt={t.name} width={44} height={44} className="h-full w-full object-cover" />
+    //                     ) : (
+    //                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-fuchsia-600 to-violet-600 text-sm font-semibold text-white">
+    //                         {initials(t.name)}
+    //                       </div>
+    //                     )}
+    //                 </div>
+    //                 <div>
+    //                   <p className="text-sm font-semibold text-neutral-900">{t.name}</p>
+    //                   <p className="text-xs text-neutral-500">{t.role}</p>
+    //                 </div>
+    //               </div>
+    //             </div>
+    //           </div>
+    //         ))}
+    //       </div>
+    //     </div>
+    //   </div>
+    // </section>
     <section className="relative bg-white py-20">
-      <div className="container mx-auto">
-        <div className="mb-10 flex items-center justify-between">
-          <div>
-            <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
-              Testimonials
-            </span>
-            <h2 className="mt-2 text-4xl font-bold text-neutral-900">What Buyers Are Saying</h2>
-          </div>
+  <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+    {/* Header */}
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
+          Testimonials
+        </span>
 
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={() => {
-                emblaApi?.scrollPrev();
-                autoplay.current.reset();
-              }}
-              className="h-7 w-10 rounded-xl border shadow transition hover:bg-purple-600 hover:text-white"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => {
-                emblaApi?.scrollNext();
-                autoplay.current.reset();
-              }}
-              className="mr-8 h-7 w-10 rounded-xl border shadow transition hover:bg-purple-600 hover:text-white"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
+        <h2 className="mt-2 text-3xl font-bold text-neutral-900 sm:text-4xl">
+          What Buyers Are Saying
+        </h2>
+      </div>
 
-        <div className="overflow-hidden pb-4" ref={emblaRef}>
-          <div className="flex">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="flex-[0_0_33.333%] px-3">
-                <div className="flex h-full flex-col rounded-2xl bg-white p-8 shadow-sm transition-shadow hover:shadow-lg">
-                  <div className="flex gap-0.5 text-amber-400">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} size={16} className="fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="mt-4 flex-1 text-sm leading-relaxed text-neutral-600">
-                    &ldquo;{t.quote}&rdquo;
+      {/* Navigation Buttons */}
+      <div className="flex items-center gap-3 self-start sm:self-center">
+        <button
+          onClick={() => {
+            emblaApi?.scrollPrev();
+            autoplay.current.reset();
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm transition hover:bg-purple-600 hover:text-white"
+          aria-label="Previous testimonials"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <button
+          onClick={() => {
+            emblaApi?.scrollNext();
+            autoplay.current.reset();
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm transition hover:bg-purple-600 hover:text-white"
+          aria-label="Next testimonials"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+
+    {/* Carousel */}
+    <div className="overflow-hidden pb-4" ref={emblaRef}>
+      <div className="flex">
+        {TESTIMONIALS.map((t) => (
+          <div
+            key={t.name}
+            className="px-3 flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%]"
+          >
+            <div className="flex h-full flex-col rounded-2xl bg-white p-8 shadow-sm transition-shadow hover:shadow-lg">
+              <div className="flex gap-0.5 text-amber-400">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} size={16} className="fill-amber-400" />
+                ))}
+              </div>
+
+              <p className="mt-4 flex-1 text-sm leading-relaxed text-neutral-600">
+                &ldquo;{t.quote}&rdquo;
+              </p>
+
+              <div className="mt-6 flex items-center gap-3 border-t border-neutral-100 pt-4">
+                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                  {t.avatar ? (
+                    <Image
+                      src={t.avatar}
+                      alt={t.name}
+                      width={44}
+                      height={44}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-fuchsia-600 to-violet-600 text-sm font-semibold text-white">
+                      {initials(t.name)}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {t.name}
                   </p>
-                  <div className="mt-6 flex items-center gap-3 border-t border-neutral-100 pt-4">
-                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
-                      {t.avatar ? (
-                        <Image src={t.avatar} alt={t.name} width={44} height={44} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-fuchsia-600 to-violet-600 text-sm font-semibold text-white">
-                            {initials(t.name)}
-                          </div>
-                        )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-900">{t.name}</p>
-                      <p className="text-xs text-neutral-500">{t.role}</p>
-                    </div>
-                  </div>
+                  <p className="text-xs text-neutral-500">
+                    {t.role}
+                  </p>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
-    </section>
+    </div>
+  </div>
+</section>
   );
+
 }
