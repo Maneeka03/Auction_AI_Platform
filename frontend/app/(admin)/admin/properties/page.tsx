@@ -12,10 +12,18 @@ import type { Property } from "@/types/property";
 export default function AdminBrowsePropertiesPage() {
   const { accessToken } = useAuth();
   const { categories } = useCategories();
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+
+  const [selectedParentId, setSelectedParentId] = useState("");
+  const [selectedSubId, setSelectedSubId] = useState("");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedParent = categories.find((c) => c.id === selectedParentId) ?? null;
+  const subcategories = selectedParent?.children ?? [];
+
+  // Active filter: subcategory takes priority over parent, otherwise null = all
+  const activeCategoryId = selectedSubId || selectedParentId || null;
 
   const fetchProperties = useCallback(async () => {
     if (!accessToken) return;
@@ -39,6 +47,16 @@ export default function AdminBrowsePropertiesPage() {
     void fetchProperties();
   }, [fetchProperties]);
 
+  function handleParentChange(id: string) {
+    setSelectedParentId(id);
+    setSelectedSubId("");
+  }
+
+  function handleReset() {
+    setSelectedParentId("");
+    setSelectedSubId("");
+  }
+
   return (
     <AdminShell>
       <div className="mx-auto max-w-6xl space-y-5 p-6">
@@ -47,45 +65,55 @@ export default function AdminBrowsePropertiesPage() {
           <p className="mt-1 text-sm text-neutral-600">All properties across every status and category.</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveCategoryId(null)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeCategoryId === null ? "bg-brand-500 text-white" : "bg-white text-neutral-600 hover:bg-neutral-100"
-            }`}
-          >
-            All
-          </button>
-          {categories.map((main) => (
-            <div key={main.id} className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveCategoryId(main.id)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  activeCategoryId === main.id
-                    ? "bg-brand-500 text-white"
-                    : "bg-white text-neutral-600 hover:bg-neutral-100"
-                }`}
-              >
-                {main.name}
-              </button>
-              {main.children.map((sub) => (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setActiveCategoryId(sub.id)}
-                  className={`rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium transition-colors ${
-                    activeCategoryId === sub.id
-                      ? "bg-brand-500 text-white"
-                      : "bg-white text-neutral-500 hover:bg-neutral-100"
-                  }`}
-                >
-                  {sub.name}
-                </button>
+        {/* Filter bar */}
+        <div className="grid grid-cols-1 items-end gap-3 sm:flex sm:flex-wrap">
+          {/* Category dropdown */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-neutral-500">Category</label>
+            <select
+              value={selectedParentId}
+              onChange={(e) => handleParentChange(e.target.value)}
+              className="h-9 w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 sm:min-w-[180px]"
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
-            </div>
-          ))}
+            </select>
+          </div>
+
+          {/* Subcategory dropdown — always visible, disabled when no parent or no children */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-neutral-500">Subcategory</label>
+            <select
+              value={selectedSubId}
+              onChange={(e) => setSelectedSubId(e.target.value)}
+              disabled={subcategories.length === 0}
+              className="h-9 w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400 sm:min-w-[180px]"
+            >
+              <option value="">
+                {subcategories.length === 0 ? "No subcategories" : "All Subcategories"}
+              </option>
+              {subcategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reset */}
+          {(selectedParentId || selectedSubId) && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="h-9 rounded-lg border border-neutral-200 px-4 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {isLoading ? (

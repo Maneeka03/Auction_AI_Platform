@@ -164,15 +164,15 @@ export function PropertyDetailModal({
                 {/* Two dropdowns: responsive grid */}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {/* Parent category */}
-                  <div>
-                    <label className="mb-1 block text-xs text-neutral-400">Category</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-neutral-500">Category</label>
                     <select
                       value={selectedParentId}
                       onChange={(e) => {
                         setSelectedParentId(e.target.value);
                         setSelectedSubId("");
                       }}
-                      className="h-8 w-full rounded-lg border border-neutral-200 bg-white px-2 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-100"
+                      className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     >
                       <option value="">— Select category —</option>
                       {categories.map((c) => (
@@ -184,13 +184,13 @@ export function PropertyDetailModal({
                   </div>
 
                   {/* Subcategory */}
-                  <div>
-                    <label className="mb-1 block text-xs text-neutral-400">Subcategory</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-neutral-500">Subcategory</label>
                     <select
                       value={selectedSubId}
                       onChange={(e) => setSelectedSubId(e.target.value)}
                       disabled={subcategories.length === 0}
-                      className="h-8 w-full rounded-lg border border-neutral-200 bg-white px-2 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+                      className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
                     >
                       <option value="">
                         {subcategories.length === 0 ? "No subcategories" : "— Select subcategory —"}

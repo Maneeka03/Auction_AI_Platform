@@ -40,25 +40,27 @@ export default function CustomSelect({ value, options, onChange, className = "" 
       </button>
 
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-full overflow-hidden rounded-xl border border-neutral-100 bg-white py-1.5 shadow-xl">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition ${
-                option.value === value
-                  ? "bg-brand-50 font-semibold text-brand-600"
-                  : "text-neutral-700 hover:bg-neutral-50"
-              }`}
-            >
-              {option.label}
-              {option.value === value && <Check size={14} />}
-            </button>
-          ))}
+        <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-full overflow-hidden rounded-xl border border-neutral-100 bg-white shadow-xl">
+          <div className="max-h-60 overflow-y-auto py-1.5">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition ${
+                  option.value === value
+                    ? "bg-brand-50 font-semibold text-brand-600"
+                    : "text-neutral-700 hover:bg-neutral-50"
+                }`}
+              >
+                <span className="min-w-0 truncate">{option.label}</span>
+                {option.value === value && <Check size={14} className="shrink-0" />}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
