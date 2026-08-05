@@ -21,7 +21,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="relative overflow-hidden py-20">
+    <section id="how-it-works" className="relative overflow-hidden py-20">
       <Image
         src="/images/how-it-works/real-bg.png"
         alt=""

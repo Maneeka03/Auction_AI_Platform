@@ -90,9 +90,7 @@ const AUCTION_CATEGORIES = [
 
 const ABOUT_LINKS = [
   { label: "About Aucto", href: "/about" },
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Careers", href: "/careers" },
-  { label: "Press", href: "/press" },
+  { label: "How It Works", href: "/#how-it-works" },
   { label: "Our Blog", href: "/blog" },
 ];
 
