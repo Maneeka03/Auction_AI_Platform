@@ -1,33 +1,9 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
-    admin,
-    agency,
-    auction_requests,
-    auctions,
-    auth,
-    buyer,
-    campaigns,
-    categories,
-    crm,
-    dev,
-    escrow,
-    faqs,
-    groups,
-    kyc,
-    me,
-    messages,
-    notifications,
-    properties,
-    push,
-    reports,
-    reviews,
-    saved_searches,
-    seller,
-    tasks,
-    uploads,
-    users,
-    wallet,
+    admin, agency, auction_requests, auctions, auth, buyer, campaigns, categories, crm, dev,
+    escrow, groups, kyc, me, messages, notifications, properties, push, reports, reviews,
+    saved_searches, seller, support_tickets, tasks, ticket_subjects, uploads, users, wallet,faqs,
     watchlist,
 )
 from app.core.config import settings
@@ -60,6 +36,8 @@ api_router.include_router(tasks.router)
 api_router.include_router(auction_requests.router)
 api_router.include_router(admin.router)
 api_router.include_router(faqs.router)
+api_router.include_router(support_tickets.router)
+api_router.include_router(ticket_subjects.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)
