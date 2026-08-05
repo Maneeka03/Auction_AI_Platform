@@ -9,7 +9,9 @@ import { listCategories, createCategory } from "@/lib/api/categories";
 import { createListing } from "@/lib/api/seller";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
-import type { CategoryTree } from "@/types/category";
+// import type { CategoryTree } from "@/types/category";
+import type { CategoryTree, CategoryField } from "@/types/category";
+
 
 export default function NewListingPage() {
   const { accessToken } = useAuth();
@@ -27,6 +29,8 @@ export default function NewListingPage() {
   const [title, setTitle] = useState("");
   const [address, setAddress] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [categoryFields, setCategoryFields] = useState<CategoryField[]>([]);
+const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [reservePrice, setReservePrice] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -37,13 +41,24 @@ export default function NewListingPage() {
   const [bathrooms, setBathrooms] = useState("");
   const [areaSqft, setAreaSqft] = useState("");
 
-  useEffect(() => {
-    if (!accessToken) return;
-    listCategories(accessToken)
-      .then(setCategories)
-      .catch(() => null);
-  }, [accessToken]);
+  // useEffect(() => {
+  //   if (!accessToken) return;
+  //   listCategories(accessToken)
+  //     .then(setCategories)
+  //     .catch(() => null);
+  // }, [accessToken]);
 
+  useEffect(() => {
+  if (!accessToken) return;
+
+  listCategories(accessToken)
+    .then((data) => {
+      console.log("CATEGORY RESPONSE:", data);
+      setCategories(data);
+    })
+    .catch(() => null);
+
+}, [accessToken]);
   const flatCategories = categories.flatMap((parent) => [
     { id: parent.id, label: parent.name, isParent: true },
     ...parent.children.map((child) => ({ id: child.id, label: `  ${child.name}`, isParent: false })),
@@ -148,6 +163,7 @@ export default function NewListingPage() {
         bedrooms: bedrooms ? Number(bedrooms) : null,
         bathrooms: bathrooms ? Number(bathrooms) : null,
         area_sqft: areaSqft ? Number(areaSqft) : null,
+        custom_fields: customFieldValues,
       });
       router.push("/seller/listings");
     } catch (err) {
@@ -210,7 +226,25 @@ export default function NewListingPage() {
               </label>
               <select
                 value={categoryId}
-                onChange={(e) => { setCategoryId(e.target.value); }}
+                // onChange={(e) => { setCategoryId(e.target.value); }}
+onChange={(e) => {
+  const id = e.target.value;
+
+  setCategoryId(id);
+
+  const category = categories
+    .flatMap((c) => [
+      c,
+      ...c.children,
+    ])
+    .find((c) => c.id === id);
+
+  console.log("Selected category:", category);
+
+  setCategoryFields(category?.fields || []);
+
+  setCustomFieldValues({});
+}}
                 className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">Select category</option>
@@ -250,6 +284,160 @@ export default function NewListingPage() {
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
             />
           </div>
+
+{/* Category Custom Fields */}
+{/* {categoryFields.length > 0 && (
+  <div className="space-y-4 border-t border-neutral-200 pt-5">
+
+    <h3 className="text-sm font-semibold text-neutral-700">
+      Additional Information
+    </h3>
+
+    {categoryFields.map((field) => (
+      <div key={field.id}>
+
+        <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+          {field.label}
+          {field.required && (
+            <span className="text-red-500"> *</span>
+          )}
+        </label>
+
+
+        {field.field_type === "text" && (
+          <input
+            type="text"
+            value={customFieldValues[field.id] || ""}
+            onChange={(e) =>
+              setCustomFieldValues({
+                ...customFieldValues,
+                [field.id]: e.target.value,
+              })
+            }
+            className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+          />
+        )}
+
+
+        {field.field_type === "number" && (
+          <input
+            type="number"
+            value={customFieldValues[field.id] || ""}
+            onChange={(e) =>
+              setCustomFieldValues({
+                ...customFieldValues,
+                [field.id]: e.target.value,
+              })
+            }
+            className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+          />
+        )}
+
+
+        {field.field_type === "select" && (
+          <select
+            value={customFieldValues[field.id] || ""}
+            onChange={(e) =>
+              setCustomFieldValues({
+                ...customFieldValues,
+                [field.id]: e.target.value,
+              })
+            }
+            className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+          >
+            <option value="">
+              Select
+            </option>
+
+            {field.options?.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+
+          </select>
+        )}
+
+      </div>
+    ))}
+
+  </div>
+)} */}
+{categoryFields.length > 0 && (
+  <div className="space-y-4 border-t border-neutral-200 pt-5">
+
+    <h3 className="text-sm font-semibold text-neutral-700">
+      Additional Information
+    </h3>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {categoryFields.map((field) => (
+        <div key={field.id}>
+
+          <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+            {field.label}
+            {field.required && (
+              <span className="text-red-500"> *</span>
+            )}
+          </label>
+
+          {field.field_type === "text" && (
+            <input
+              type="text"
+              value={customFieldValues[field.id] || ""}
+              onChange={(e) =>
+                setCustomFieldValues({
+                  ...customFieldValues,
+                  [field.id]: e.target.value,
+                })
+              }
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+            />
+          )}
+
+          {field.field_type === "number" && (
+            <input
+              type="number"
+              value={customFieldValues[field.id] || ""}
+              onChange={(e) =>
+                setCustomFieldValues({
+                  ...customFieldValues,
+                  [field.id]: e.target.value,
+                })
+              }
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+            />
+          )}
+
+          {field.field_type === "select" && (
+            <select
+              value={customFieldValues[field.id] || ""}
+              onChange={(e) =>
+                setCustomFieldValues({
+                  ...customFieldValues,
+                  [field.id]: e.target.value,
+                })
+              }
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm"
+            >
+              <option value="">Select</option>
+
+              {field.options?.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+
+            </select>
+          )}
+
+        </div>
+      ))}
+    </div>
+
+  </div>
+)}
+
         </div>
 
         {/* Property Details */}

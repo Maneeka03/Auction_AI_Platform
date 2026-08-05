@@ -54,6 +54,7 @@ export interface CreatePropertyRequest {
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;
+  custom_fields?: Record<string, string> | null;
 }
 export interface UpdatePropertyRequest {
   title?: string;
@@ -67,6 +68,7 @@ export interface UpdatePropertyRequest {
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqft?: number | null;
+  custom_fields?: Record<string, string> | null;
 }
 export interface PurchaseRequest {
   method: PaymentMethod;

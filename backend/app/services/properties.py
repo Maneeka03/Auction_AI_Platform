@@ -50,6 +50,7 @@ async def create(session: AsyncSession, actor: User, data: CreatePropertyRequest
         area_sqft=data.area_sqft,
         latitude=data.latitude,
         longitude=data.longitude,
+        custom_fields=data.custom_fields,
         seller=actor if Role.SELLER in actor.roles else None,
         votes=[],
     )

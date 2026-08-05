@@ -61,13 +61,13 @@ export default function Hero() {
 
       <Image src="/images/hero/banner-bg-4.png" alt="Hero Background" fill priority className="object-cover object-center" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#4B22D1]/80 via-[#5B2BE0]/60 to-transparent" />
-      <div className="relative z-30 mx-auto flex min-h-screen max-w-[1450px] items-center justify-between px-8 pt-28">
+      <div className="relative z-30 mx-auto flex min-h-screen max-w-[1450px] items-center justify-between px-4 sm:px-8 pt-24 sm:pt-28">
         <div className="w-full lg:w-[45%]">
-          <span className="inline-flex rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur">
+          <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
             AI Powered Digital Auction Platform
           </span>
 
-          <h1 className="mt-8 min-h-[2.3em] text-5xl font-extrabold leading-[1.15] tracking-tight text-white lg:text-6xl lg:min-h-[2.3em]">
+          <h1 className="mt-6 sm:mt-8 min-h-[2.5em] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight text-white">
             {typed}
             <span
               className="ml-1 inline-block h-[0.9em] w-[4px] translate-y-1 bg-white align-middle"
@@ -75,31 +75,31 @@ export default function Hero() {
             />
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-8 text-purple-100">
+          <p className="mt-5 max-w-xl text-base sm:text-lg leading-8 text-purple-100">
             Discover verified assets, participate in live auctions,
             and experience a secure marketplace built for buyers,
             sellers and collectors.
           </p>
-          <div className="mt-10 flex flex-wrap gap-5">
-            <Link href={browseHref} className="rounded-xl bg-white px-8 py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link href={browseHref} className="rounded-xl bg-white px-6 sm:px-8 py-3.5 sm:py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
               Browse Assets
             </Link>
-            <Link href="/live-auctions" className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700">
+            <Link href="/live-auctions" className="rounded-xl border border-white px-6 sm:px-8 py-3.5 sm:py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700">
               Explore Auctions
             </Link>
           </div>
-          <div className="relative z-30 mt-16 flex gap-12 pb-40">
+          <div className="relative z-30 mt-12 sm:mt-16 flex gap-8 sm:gap-12 pb-20 sm:pb-40">
             <div>
-              <h2 className="text-4xl font-bold text-white">15K+</h2>
-              <p className="mt-1 text-purple-200">Assets Listed</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">15K+</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Assets Listed</p>
             </div>
             <div>
-              <h2 className="text-4xl font-bold text-white">500+</h2>
-              <p className="mt-1 text-purple-200">Live Auctions</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">500+</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Live Auctions</p>
             </div>
             <div>
-              <h2 className="text-4xl font-bold text-white">99%</h2>
-              <p className="mt-1 text-purple-200">Secure Deals</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">99%</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Secure Deals</p>
             </div>
           </div>
         </div>

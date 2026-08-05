@@ -3,13 +3,13 @@
 import { Box, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CategorySelect } from "@/components/categories/CategorySelect";
+import { CategoryCustomFields } from "@/components/properties/CategoryCustomFields";
 import { useAuth } from "@/lib/auth/session-context";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { isRealEstateCategory } from "@/lib/utils/categoryVisuals";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import type { CreatePropertyRequest } from "@/types/property";
 
-const GLB_CONTENT_TYPE = "model/gltf-binary";
 
 interface AddPropertyDrawerProps {
   onClose: () => void;
@@ -33,6 +33,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +45,11 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     (main) => main.id === categoryId || main.children.some((child) => child.id === categoryId),
   );
   const showResidentialFields = isRealEstateCategory(selectedMain?.name);
+
+  function handleCategoryChange(id: string) {
+    setCategoryId(id);
+    setCustomFieldValues({});
+  }
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -155,6 +161,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
           bedrooms: showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
           bathrooms: showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
           area_sqft: areaSqft ? Number(areaSqft) : undefined,
+          custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
         },
         uploadedUrls.slice(1),
       );
@@ -298,7 +305,18 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
               {categoriesLoading ? (
                 <p className="text-xs text-neutral-500">Loading categories...</p>
               ) : (
-                <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+                <>
+                  <CategorySelect categories={categories} value={categoryId} onChange={handleCategoryChange} />
+                  {categoryId && (
+                    <div className="mt-4">
+                      <CategoryCustomFields
+                        categoryId={categoryId}
+                        values={customFieldValues}
+                        onChange={setCustomFieldValues}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

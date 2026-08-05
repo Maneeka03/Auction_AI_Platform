@@ -30,20 +30,20 @@ export default function FeaturedAssets() {
     }, []);
 
     return (
-        <section className="relative overflow-hidden py-18">
+        <section className="relative overflow-hidden py-20">
             <div className="absolute -top-32 left-0 w-full min-h-[900px] object-cover">
                 <Image src={featuredBg} alt="" className="w-full h-full object-cover" priority/>
             </div>
-            <div className="relative z-20 mx-auto w-full max-w-[1600px] px-8">
-                <div className="mb-10 flex items-end justify-between">
+            <div className="relative z-20 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+                <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <span className="text-m font-bold uppercase tracking-[0.2em] text-brand-500">Featured Assets</span>
-                        <h2 className="mt-2 text-4xl font-bold tracking-tight text-neutral-900">
+                        <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">Featured Assets</span>
+                        <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900">
                             Explore Premium Properties
                         </h2>
                     </div>
                     <Link href="/browse-properties"
-                        className="group inline-flex items-center gap-2 text-m font-bold text-brand-500 transition-colors hover:text-brand-600"
+                        className="group inline-flex items-center gap-2 text-sm font-bold text-brand-500 transition-colors hover:text-brand-600"
                     >Browse All Properties
                         <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1"/>
                     </Link>

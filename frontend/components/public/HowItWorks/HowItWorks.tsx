@@ -29,12 +29,12 @@ export default function HowItWorks() {
         className="object-cover object-center"
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] px-8">
+      <div className="relative z-10 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
             How It Works
           </span>
-          <h2 className="mt-2 text-4xl font-bold text-neutral-900">Bidding Made Simple</h2>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-bold text-neutral-900">Bidding Made Simple</h2>
           <p className="mt-3 text-neutral-500">Three steps from browsing to owning.</p>
         </div>
 
