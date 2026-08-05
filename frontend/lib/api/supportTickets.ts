@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import type { CreateTicketRequest, SupportTicket, TicketPage, UpdateTicketRequest } from "@/types/supportTicket";
+import type { CreateTicketRequest,AdminTicketPage,AdminTicket,TicketStatus, SupportTicket, TicketPage, UpdateTicketRequest } from "@/types/supportTicket";
 
 const BASE = "/api/v1/support-tickets";
 
@@ -21,4 +21,23 @@ export function updateTicket(
 
 export function deleteTicket(accessToken: string, ticketId: string): Promise<void> {
   return apiClient.delete<void>(`${BASE}/${ticketId}`, { accessToken });
+}
+
+export function listAllTickets(
+  accessToken: string,
+  params: { page?: number; size?: number } = {},
+): Promise<AdminTicketPage> {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", String(params.page));
+  if (params.size) query.set("size", String(params.size));
+  const queryString = query.toString();
+  return apiClient.get<AdminTicketPage>(`${BASE}/all${queryString ? `?${queryString}` : ""}`, { accessToken });
+}
+
+export function updateTicketStatus(
+  accessToken: string,
+  ticketId: string,
+  status: TicketStatus,
+): Promise<AdminTicket> {
+  return apiClient.patch<AdminTicket>(`${BASE}/${ticketId}/status`, { status }, { accessToken });
 }

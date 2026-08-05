@@ -52,3 +52,15 @@ class TicketOut(BaseModel):
 class TicketPage(BaseModel):
     items: list[TicketOut]
     total: int
+    
+class AdminTicketOut(TicketOut):
+    raiser_name: str
+    raiser_email: str
+
+
+class AdminTicketPage(BaseModel):
+    items: list[AdminTicketOut]
+    total: int
+    
+class UpdateTicketStatusRequest(BaseModel):
+    status: TicketStatus

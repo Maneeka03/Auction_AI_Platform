@@ -21,12 +21,7 @@ from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionR
 from app.services import escrow, notifications, properties, wallets
 
 logger = logging.getLogger(__name__)
-
-# Fields an admin may no longer touch once bidding has opened. The client's rule is that the room
-# filters are decided before the auction starts; the closing time stays editable throughout.
 FROZEN_ONCE_LIVE = frozenset({"room_access", "increments"})
-
-# An auction plus its headline numbers.
 AuctionRow = tuple[Auction, Decimal | None, int]
 
 _BIDS = (
@@ -75,8 +70,6 @@ async def broadcast(session: AsyncSession, auction_id: uuid.UUID, event: str) ->
             {"type": event, "auction": auction.model_dump(mode="json")},
         )
     except RedisError:
-        # The write is already committed. Failing the caller here would report a placed bid as an
-        # error and invite a retry; a room that misses a push re-syncs on its next snapshot.
         logger.warning("auction %s: %s broadcast failed", auction_id, event)
 
 
@@ -231,8 +224,6 @@ async def update(
     if auction.status is AuctionStatus.ENDED:
         raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
 
-    # Every updatable column is NOT NULL, so an omitted field and an explicit null both mean
-    # "leave it alone" rather than "write NULL and crash".
     fields = data.model_dump(exclude_none=True)
     if auction.status is not AuctionStatus.UPCOMING and FROZEN_ONCE_LIVE.intersection(fields):
         raise AppError(
@@ -263,7 +254,6 @@ async def invite(session: AsyncSession, auction_id: uuid.UUID, user_ids: list[uu
         raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
 
     try:
-        # Postgres rejects an unknown user_id on the INSERT itself, not at commit.
         await session.execute(
             pg_insert(AuctionInvite)
             .values([{"auction_id": auction_id, "user_id": user_id} for user_id in set(user_ids)])
@@ -372,7 +362,6 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
             status.HTTP_409_CONFLICT, "not_a_bidder", "That user has not bid on this auction."
         )
 
-    # Auction is locked above, so taking the wallet second matches bids.place and cannot deadlock.
     charge = wallets.hold_for(auction, winning_bid)
     wallet = await wallets.locked(session, bidder_id)
     if charge > await wallets.spendable(session, wallet, exclude_auction_id=auction_id):
@@ -386,12 +375,8 @@ async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UU
     auction.winner_id = bidder_id
     auction.ended_at = datetime.now(UTC)
     auction.listing.status = PropertyStatus.SOLD
-
-    # Every hold closes, including the winner's, then the winner is charged - so the log nets to
-    # zero for a loser and to the price for the winner.
     await release_holds(session, auction, bidder_id)
     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
-    # The winner's payment is held in escrow and released to the seller by staff (services/escrow).
     if auction.listing.seller_id is not None:
         escrow.open_for(session, auction.listing, bidder_id, charge, auction_id)
     await session.commit()

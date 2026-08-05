@@ -41,7 +41,6 @@ export default function AuctionActivityPage() {
     void fetchLiveAuctions();
   }, [fetchLiveAuctions]);
 
-  // Poll for fresh auction state every 15s so the table/KPIs stay live without a socket.
   useEffect(() => {
     const interval = setInterval(() => void fetchLiveAuctions(), 15000);
     return () => clearInterval(interval);

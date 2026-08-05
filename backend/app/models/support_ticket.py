@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, pg_enum
 from app.models.ticket_subject import TicketSubject
 
-
 class TicketStatus(StrEnum):
     OPEN = "open"
     IN_PROGRESS = "in_progress"
