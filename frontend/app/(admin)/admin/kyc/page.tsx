@@ -19,7 +19,7 @@ const tabs: { key: FilterTab; label: string }[] = [
 ];
 
 const statusStyles: Record<KycStatus, string> = {
-  pending: "bg-blue-500/10 text-amber-600",
+  pending: "bg-blue-100/10 text-amber-600",
   approved: "bg-success-500/10 text-success-500",
   rejected: "bg-danger-500/10 text-danger-600",
 };

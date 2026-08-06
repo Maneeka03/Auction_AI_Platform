@@ -429,6 +429,36 @@ async def award_to_highest(session: AsyncSession, auction_id: uuid.UUID) -> Auct
     return auction
 
 
+async def settle_expired(session: AsyncSession) -> None:
+    """Auto-award or close every auction that ran past ends_at without being manually settled."""
+    result = await session.execute(
+        select(Auction.id).where(
+            Auction.ended_at.is_(None),
+            Auction.ends_at <= func.now(),
+        )
+    )
+    ids = [row[0] for row in result.all()]
+    for auction_id in ids:
+        try:
+            await award_to_highest(session, auction_id)
+        except AppError as exc:
+            if exc.code == "no_bids":
+                try:
+                    auction = await locked(session, auction_id)
+                    if auction.ended_at is None:
+                        auction.ended_at = datetime.now(UTC)
+                        await session.commit()
+                        await broadcast(session, auction_id, "ended")
+                except Exception:
+                    logger.exception("settle_expired: no-sale close %s failed", auction_id)
+                    await session.rollback()
+            elif exc.code not in {"already_awarded", "insufficient_funds"}:
+                logger.warning("settle_expired: %s skipped (%s)", auction_id, exc.code)
+        except Exception:
+            logger.exception("settle_expired: auction %s failed", auction_id)
+            await session.rollback()
+
+
 async def end(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
     """Close a room with no sale. Every bidder's funds unlock as a result."""
     auction = await locked(session, auction_id)

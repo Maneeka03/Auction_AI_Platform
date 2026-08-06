@@ -100,7 +100,7 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
 
             {error ? (
               error.code === "kyc_required" ? (
-                <p className="mt-3 flex items-center gap-2 rounded-lg bg-blue-500/10 px-3 py-2.5 text-sm text-amber-700">
+                <p className="mt-3 flex items-center gap-2 rounded-lg bg-blue-100/10 px-3 py-2.5 text-sm text-amber-700">
                   <AlertCircle size={15} />
                   Verify your identity before buying.{" "}
                   <Link href="/kyc" className="font-medium underline underline-offset-2">

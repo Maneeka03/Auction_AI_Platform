@@ -12,7 +12,7 @@ interface SellerDetailsDrawerProps {
 
 const STATUS_BADGE = {
   active: "bg-success-500/10 text-success-500",
-  pending_verification: "bg-blue-500/10 text-amber-700",
+  pending_verification: "bg-blue-100/10 text-amber-700",
   suspended: "bg-danger-500/10 text-danger-600",
   deleted: "bg-neutral-100 text-neutral-500",
 };

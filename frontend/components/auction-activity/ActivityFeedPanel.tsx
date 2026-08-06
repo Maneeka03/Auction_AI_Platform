@@ -5,7 +5,7 @@ const typeStyles: Record<string, { icon: typeof Gavel; color: string }> = {
   bid: { icon: TrendingUp, color: "bg-brand-500/10 text-brand-600" },
   outbid: { icon: Gavel, color: "bg-danger-500/10 text-danger-600" },
   joined: { icon: LogIn, color: "bg-success-500/10 text-success-500" },
-  ending: { icon: TimerReset, color: "bg-blue-500/10 text-amber-600" },
+  ending: { icon: TimerReset, color: "bg-blue-100/10 text-amber-600" },
 };
 
 export function ActivityFeedPanel() {

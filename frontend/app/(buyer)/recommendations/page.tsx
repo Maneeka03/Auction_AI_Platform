@@ -115,7 +115,7 @@ function UpcomingAuctionCard({ a }: { a: Auction }) {
             <Package size={28} className="text-neutral-300" />
           </div>
         )}
-        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white shadow">
+        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-white shadow">
           <Clock size={10} /> Upcoming
         </span>
       </div>
@@ -136,7 +136,7 @@ function UpcomingAuctionCard({ a }: { a: Auction }) {
         <button
           type="button"
           disabled
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white cursor-not-allowed opacity-80"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-100 py-2 text-sm font-semibold text-white cursor-not-allowed opacity-80"
         >
           <Clock size={14} /> Upcoming Auction
         </button>

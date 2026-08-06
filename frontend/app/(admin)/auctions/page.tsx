@@ -27,7 +27,6 @@ export default function LiveAuctionsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { accessToken, session } = useAuth();
-  const isSuperAdmin = session?.roles.includes("super_admin") ?? false;
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -191,9 +190,9 @@ export default function LiveAuctionsPage() {
                     onDelete={handleDeleteAuction}
                   />
                 );
-                // Super admins open the live room by clicking the card; the card's own action
-                // buttons keep working because clicks on a button or link are ignored here.
-                return isSuperAdmin ? (
+                // Anyone with full auction_management can open the room by clicking the card.
+                // Clicks on the card's own buttons/links are ignored so they still work normally.
+                return canCreate ? (
                   <div
                     key={auction.id}
                     role="button"

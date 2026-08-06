@@ -18,9 +18,11 @@ from app.schemas.auction import (
     InviteRequest,
     UpdateAuctionRequest,
 )
+from app.rbac.permissions import Role
 from app.schemas.bid import BidOut, ParticipantOut, PlaceBidRequest
+from app.schemas.chat import ChatMessageOut, CreateChatMessageRequest
 from app.schemas.comment import CommentOut, CreateCommentRequest
-from app.services import auctions, bids, comments
+from app.services import auctions, bids, chat, comments
 
 router = APIRouter(prefix="/auctions", tags=["auctions"])
 
@@ -29,6 +31,12 @@ Manager = Depends(requires(Module.AUCTION_MANAGEMENT, Access.FULL))
 Viewer = Depends(requires(Module.AUCTION_MANAGEMENT, Access.VIEW))
 Bidder = Depends(requires(Module.BID_MANAGEMENT, Access.FULL))
 BidViewer = Depends(requires(Module.BID_MANAGEMENT, Access.VIEW))
+
+# Chat access: BID_MANAGEMENT:FULL covers buyers, managers, appraisers, admins — excludes sellers.
+ChatViewer = Depends(requires(Module.BID_MANAGEMENT, Access.FULL))
+
+# Roles that can POST in the bidding chat (auction managers are view-only).
+_CHAT_POSTER_ROLES = frozenset({Role.BUYER, Role.SUPER_ADMIN, Role.ADMIN, Role.GEMOLOGIST})
 
 
 @router.post("", response_model=AuctionOut, status_code=status.HTTP_201_CREATED)
@@ -170,6 +178,34 @@ async def post_comment(
     actor: User = Viewer,
 ) -> CommentOut:
     return CommentOut.of(await comments.post(session, auction_id, actor, payload.body))
+
+
+@router.get("/{auction_id}/chat", response_model=list[ChatMessageOut])
+async def list_chat(
+    auction_id: uuid.UUID,
+    session: DbSession,
+    limit: int = Query(100, ge=1, le=500),
+    _: User = ChatViewer,
+) -> list[ChatMessageOut]:
+    return [ChatMessageOut.of(m) for m in await chat.list_for(session, auction_id, limit)]
+
+
+@router.post(
+    "/{auction_id}/chat", response_model=ChatMessageOut, status_code=status.HTTP_201_CREATED
+)
+async def post_chat(
+    auction_id: uuid.UUID,
+    payload: CreateChatMessageRequest,
+    session: DbSession,
+    actor: User = ChatViewer,
+) -> ChatMessageOut:
+    if not set(actor.roles) & _CHAT_POSTER_ROLES:
+        raise AppError(
+            status.HTTP_403_FORBIDDEN,
+            "forbidden",
+            "Auction managers may only view the chat, not post.",
+        )
+    return ChatMessageOut.of(await chat.post(session, auction_id, actor, payload.body))
 
 
 async def _relay(websocket: WebSocket, channel: str) -> None:

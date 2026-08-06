@@ -117,7 +117,7 @@ function StatusBadge({
 }) {
   if (status === "live" && endingSoon) {
     return (
-      <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-amber-600">
+      <span className="rounded-full bg-blue-100/10 px-3 py-1 text-xs font-medium text-amber-600">
         Ending Soon
       </span>
     );
@@ -133,7 +133,7 @@ function StatusBadge({
 
   if (status === "upcoming") {
     return (
-      <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-600">
+      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-sky-600">
         Upcoming
       </span>
     );

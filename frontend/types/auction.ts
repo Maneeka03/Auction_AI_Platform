@@ -23,6 +23,7 @@ export interface Auction {
   token_percent: string;
   bidder_count: number;
   winner_id: string | null;
+  winner_name: string | null;
 }
 
 export interface AuctionPage {

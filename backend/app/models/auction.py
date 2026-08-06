@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, pg_enum
 from app.models.property import Property
+from app.models.user import User
 
 
 class RoomAccess(StrEnum):
@@ -49,6 +50,7 @@ class Auction(Base, TimestampMixin):
     )
 
     listing: Mapped[Property] = relationship(lazy="selectin")
+    winner: Mapped[User | None] = relationship(foreign_keys=[winner_id], lazy="selectin")
 
     @property
     def status(self) -> AuctionStatus:

@@ -4,7 +4,7 @@ import type { RibbonKpi } from "@/types/dashboard";
 const ribbonColor: Record<RibbonKpi["accent"], string> = {
   brand: "bg-brand-500",
   success: "bg-success-500",
-  amber: "bg-blue-500",
+  amber: "bg-blue-100",
   sky: "bg-sky-500",
   danger: "bg-danger-500",
   neutral: "bg-neutral-400",
@@ -13,8 +13,8 @@ const ribbonColor: Record<RibbonKpi["accent"], string> = {
 const iconBg: Record<RibbonKpi["accent"], string> = {
   brand: "bg-brand-500/10 text-brand-600",
   success: "bg-success-500/10 text-success-500",
-  amber: "bg-blue-500/10 text-amber-600",
-  sky: "bg-sky-500/10 text-sky-600",
+  amber: "bg-blue-100/10 text-amber-600",
+  sky: "bg-blue-100 text-sky-600",
   danger: "bg-danger-500/10 text-danger-600",
   neutral: "bg-neutral-100 text-neutral-500",
 };

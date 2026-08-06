@@ -17,10 +17,10 @@ import type { Notification, NotificationKind } from "@/types/notification";
 //   kyc_reviewed: ShieldCheck, new_message: MessageSquare,
 // };
 // const KIND_COLOR: Record<NotificationKind, string> = {
-//   outbid: "bg-blue-500/10 text-amber-600", auction_won: "bg-success-500/10 text-success-500",
+//   outbid: "bg-blue-100/10 text-amber-600", auction_won: "bg-success-500/10 text-success-500",
 //   auction_lost: "bg-neutral-100 text-neutral-500", property_approved: "bg-success-500/10 text-success-500",
 //   property_rejected: "bg-danger-500/10 text-danger-600", kyc_reviewed: "bg-brand-500/10 text-brand-600",
-//   new_message: "bg-sky-500/10 text-sky-600",
+//   new_message: "bg-blue-100 text-sky-600",
 // };
 
 type BellNotificationKind = Exclude<NotificationKind, "new_message">;
@@ -35,7 +35,7 @@ const KIND_ICON: Record<BellNotificationKind, typeof Bell> = {
 };
 
 const KIND_COLOR: Record<BellNotificationKind, string> = {
-  outbid: "bg-blue-500/10 text-amber-600",
+  outbid: "bg-blue-100/10 text-amber-600",
   auction_won: "bg-success-500/10 text-success-500",
   auction_lost: "bg-neutral-100 text-neutral-500",
   property_approved: "bg-success-500/10 text-success-500",

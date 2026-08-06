@@ -129,7 +129,7 @@ export function CreateAuctionDrawer({ onClose, onCreate }: CreateAuctionDrawerPr
               {isLoadingProperties ? (
                 <p className="text-sm text-neutral-500">Loading published properties...</p>
               ) : publishedProperties.length === 0 ? (
-                <p className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs text-amber-700">
+                <p className="rounded-lg bg-blue-100/10 px-3 py-2 text-xs text-amber-700">
                   No published properties available. Only a published property can be auctioned — publish one
                   from Listings first.
                 </p>

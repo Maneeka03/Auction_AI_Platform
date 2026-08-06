@@ -14,6 +14,7 @@ from app.models import auction as _auction  # noqa: F401
 from app.models import auction_request as _auction_request  # noqa: F401
 from app.models import campaign as _campaign  # noqa: F401
 from app.models import category as _category  # noqa: F401
+from app.models import chat as _chat  # noqa: F401
 from app.models import comment as _comment  # noqa: F401
 from app.models import escrow as _escrow  # noqa: F401
 from app.models import kyc as _kyc  # noqa: F401

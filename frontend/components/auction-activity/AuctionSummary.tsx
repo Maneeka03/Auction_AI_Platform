@@ -26,7 +26,7 @@ const stats = [
     title: "Today's Bids",
     value: auctionSummary.totalBidsToday,
     icon: HandCoins,
-    color: "bg-blue-500/10 text-amber-600",
+    color: "bg-blue-100/10 text-amber-600",
   },
   {
     title: "Ending Soon",
