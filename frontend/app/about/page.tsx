@@ -4,7 +4,7 @@ import { ShieldCheck, Lock, ClipboardCheck, Users, Gavel, Globe } from "lucide-r
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import Testimonials from "@/components/public/Testimonials/Testimonials";
-
+ 
 const VALUES = [
   {
     icon: ShieldCheck,
@@ -27,18 +27,18 @@ const VALUES = [
     description: "Live auctions are open to verified buyers, wherever they're bidding from.",
   },
 ];
-
+ 
 const STATS = [
   { value: "15K+", label: "Assets Listed" },
   { value: "500+", label: "Live Auctions" },
   { value: "99%", label: "Secure Deals" },
 ];
-
+ 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
-      <Navbar solid />
-
+      <Navbar />
+ 
       {/* Hero */}
       <section className="relative overflow-hidden" style={{ aspectRatio: "1812 / 629" }}>
         <Image
@@ -48,6 +48,7 @@ export default function AboutPage() {
           className="object-cover object-top"
           priority
         />
+        
         <div className="relative z-10 mx-auto flex h-full w-full max-w-[1600px] items-center px-8 pt-16 text-center">
           <div className="mx-auto">
             <span className="inline-flex rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur">
@@ -63,7 +64,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
+ 
       <section className="py-24">
         <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 items-center gap-16 px-8 lg:grid-cols-2">
           <div>
@@ -85,7 +86,7 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
-
+ 
          <div className="relative">
             <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-fuchsia-500/15 to-violet-600/15 blur-2xl" />
             <Image
@@ -98,7 +99,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* Values */}
       <section className="bg-neutral-50 py-20 ">
         <div className="mx-auto w-full max-w-[1600px] px-8">
@@ -106,7 +107,7 @@ export default function AboutPage() {
             <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">What We Value</span>
             <h2 className="mt-2 text-4xl font-bold text-neutral-900">The Principles Behind the Platform</h2>
           </div>
-
+ 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {VALUES.map((value, index) => {
               const Icon = value.icon;
@@ -127,17 +128,17 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* Testimonials */}
       <Testimonials />
-
+ 
       {/* CTA */}
       <section className="py-20">
         <div className="mx-auto w-full max-w-[1600px] px-8">
           <div className="relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-3xl px-10 py-24 text-center md:flex-row md:text-left">
             <Image src="/images/seller/call-bg.png" alt="" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-violet-700/20 via-transparent to-transparent" />
-
+ 
             <div className="relative z-10">
               <h2 className="text-3xl font-bold text-white">Ready to get started?</h2>
               <p className="mt-2 text-purple-100">Browse live auctions or list your first property today.</p>
@@ -159,7 +160,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
+ 
       <Footer />
     </div>
   );

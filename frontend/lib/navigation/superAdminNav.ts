@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  User,
   UserCog,
   Users,
   UserSquare2,
@@ -67,6 +68,7 @@ export const superAdminNav: NavSection[] = [
   {
     title: "Administration",
     items: [
+      { label: "Profile", href: "/admin/profile", icon: User },
       { label: "Staff Management", href: "/admin/users", icon: UserCog },
       { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
       { label: "Settings", href: "/admin/settings", icon: Settings },

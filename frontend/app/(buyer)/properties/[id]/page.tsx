@@ -173,7 +173,7 @@ export default function BuyerPropertyDetailPage() {
                             : "border-transparent opacity-70 hover:opacity-100"
                         }`}
                       >
-                        <Image src={url} alt="" fill className="object-cover" unoptimized />
+                        <Image src={url} alt="" fill className="object-contain" unoptimized />
                       </button>
                     ))}
                   </div>
@@ -322,7 +322,7 @@ export default function BuyerPropertyDetailPage() {
                             src={resolveMinioUrl(item.image_url)!}
                             alt={item.title}
                             fill
-                            className="object-cover transition group-hover:scale-105"
+                            className="object-contain transition group-hover:scale-105"
                             unoptimized
                           />
                         ) : (

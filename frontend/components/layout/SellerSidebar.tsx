@@ -15,6 +15,12 @@ interface SellerSidebarProps {
 function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const unreadMsgCount = useUnreadMessageCount();
+
+  const allHrefs = sellerNav.flatMap((s) => s.items.map((i) => i.href));
+  const bestMatchHref = allHrefs
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4">
       {sellerNav.map((section) => (
@@ -26,7 +32,7 @@ function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigat
           ) : null}
           <ul className="space-y-0.5">
             {section.items.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive = item.href === bestMatchHref;
               const isMessages = item.href === "/messages";
               return (
                 <li key={item.href}>

@@ -63,7 +63,7 @@ export default function PurchasesPage() {
             {purchases.map((p) => (
               <div key={p.escrow_id} className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-4">
                 {p.property_image_url ? (
-                  <img src={p.property_image_url} alt={p.property_title} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                  <img src={p.property_image_url} alt={p.property_title} className="h-16 w-16 shrink-0 rounded-lg object-contain" />
                 ) : (
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-neutral-100">
                     <Package size={22} className="text-neutral-400" />

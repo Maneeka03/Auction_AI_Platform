@@ -101,7 +101,7 @@ export default function AdminPropertyDetailPage() {
           src="/images/property-detail/hero-bg.png"
           alt=""
           fill
-          className="object-cover object-top opacity-40"
+          className="object-contain object-top opacity-40"
           priority
         /> */}
         <div className="relative z-10">
@@ -138,7 +138,7 @@ export default function AdminPropertyDetailPage() {
                     src={activeImage}
                     alt={property.title}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                   />
                 ) : (
@@ -164,7 +164,7 @@ export default function AdminPropertyDetailPage() {
                           : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
-                      <Image src={url} alt="" fill className="object-cover" unoptimized />
+                      <Image src={url} alt="" fill className="object-contain" unoptimized />
                     </button>
                   ))}
                 </div>

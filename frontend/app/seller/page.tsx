@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+
   ClipboardList,
   ShieldCheck,
   Lock,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
-
+ 
 const BENEFITS = [
   {
     icon: Users,
@@ -40,7 +41,7 @@ const BENEFITS = [
       "Manage listings, reserve prices, and auction requests from your own seller dashboard.",
   },
 ];
-
+ 
 const STEPS = [
   {
     icon: UserPlus,
@@ -64,11 +65,13 @@ const STEPS = [
       "Your auction runs, and proceeds are released to you via escrow once it closes.",
   },
 ];
-
+ 
 export default function BecomeSellerPage() {
   return (
+    
     <div className="min-h-screen bg-white">
-      <Navbar solid />
+      
+      <Navbar />
       <section
         className="relative min-h-[420px] overflow-hidden sm:min-h-0"
         style={{ aspectRatio: "1812 / 629" }}
@@ -100,7 +103,8 @@ export default function BecomeSellerPage() {
                 Become a Seller
               </Link>
               <Link
-                href="/seller/dashboard"
+                // href="/seller/dashboard"
+                href="/login"
                 className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700"
               >
                 Already a Seller?
@@ -109,7 +113,7 @@ export default function BecomeSellerPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* Benefits */}
       <section className="py-15">
         <div className="mx-auto w-full max-w-[1600px] px-8">
@@ -121,7 +125,7 @@ export default function BecomeSellerPage() {
               Built for Serious Sellers
             </h2>
           </div>
-
+ 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {BENEFITS.map((benefit) => {
               const Icon = benefit.icon;
@@ -145,7 +149,7 @@ export default function BecomeSellerPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* How it works for sellers */}
       <section className="bg-neutral-50 py-20">
         <div className="mx-auto w-full max-w-[1600px] px-8">
@@ -157,7 +161,7 @@ export default function BecomeSellerPage() {
               From Listing to Payout
             </h2>
           </div>
-
+ 
           <div className="relative mt-16 grid grid-cols-1 gap-10 md:grid-cols-4">
             <div className="absolute left-[12.5%] right-[12.5%] top-8 hidden h-0.5 bg-neutral-200 md:block" />
             {STEPS.map((step, index) => {
@@ -185,7 +189,7 @@ export default function BecomeSellerPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* CTA */}
       <section className="py-20">
         <div className="mx-auto w-full max-w-[1600px] px-8">
@@ -197,7 +201,7 @@ export default function BecomeSellerPage() {
               className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-violet-700/20 via-transparent to-transparent" />
-
+ 
             <div className="relative z-10">
               <h2 className="text-3xl font-bold text-white">
                 Ready to list your first property?
@@ -207,7 +211,8 @@ export default function BecomeSellerPage() {
               </p>
             </div>
             <Link
-              href="/signup?role=seller"
+              // href="/signup?role=seller"
+              href="/signup"
               className="relative z-10 flex shrink-0 items-center gap-2 rounded-full bg-white px-8 py-4 font-semibold text-violet-700 transition hover:-translate-y-1 hover:shadow-xl"
             >
               <Gavel size={18} /> Become a Seller
@@ -215,7 +220,7 @@ export default function BecomeSellerPage() {
           </div>
         </div>
       </section>
-
+ 
       <Footer />
     </div>
   );

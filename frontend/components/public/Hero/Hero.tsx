@@ -59,7 +59,7 @@ export default function Hero() {
         }
       `}</style>
 
-      <Image src="/images/hero/banner-bg-4.png" alt="Hero Background" fill priority className="object-cover object-center" />
+      <Image src="/images/hero/banner-bg-4.png" alt="Hero Background" fill priority className="object-contain object-center" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#4B22D1]/80 via-[#5B2BE0]/60 to-transparent" />
       <div className="relative z-30 mx-auto flex min-h-screen max-w-[1450px] items-center justify-between px-4 sm:px-8 pt-24 sm:pt-28">
         <div className="w-full lg:w-[45%]">
@@ -108,7 +108,7 @@ export default function Hero() {
         <Image src="/images/hero/banner-5.png" alt="Auction Illustration" width={900} height={900} priority className="w-[800px] max-w-none" />
       </div>
       <div className="absolute bottom-0 left-0 z-10 w-full">
-        <Image src="/images/hero/banner-shape-4.png" alt="Wave Shape" width={2000} height={657} priority className="w-full h-auto object-cover" />
+        <Image src="/images/hero/banner-shape-4.png" alt="Wave Shape" width={2000} height={657} priority className="w-full h-auto object-contain" />
       </div>
     </section>
   );

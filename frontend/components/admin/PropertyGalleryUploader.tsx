@@ -81,7 +81,7 @@ export default function PropertyGalleryUploader({
                 src={resolveMinioUrl(img.image_url)!}
                 alt=""
                 fill
-                className="object-cover"
+                className="object-contain"
                 unoptimized
               />
               <button

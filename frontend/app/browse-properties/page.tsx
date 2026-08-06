@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Filter, Search, X } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { FeaturedAssetCard } from "@/components/public/FeaturedAssets/FeaturedAssetCard";
@@ -52,10 +52,10 @@ export default function BrowsePropertiesPage() {
   const [endingWithin, setEndingWithin] = useState<Set<EndingWithinFilter>>(
     new Set(),
   );
-  const [favorited, setFavorited] = useState<Set<string>>(new Set());
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const priceBounds = useMemo(() => {
     if (properties.length === 0) return { min: 0, max: 10_000_000 };
@@ -172,15 +172,6 @@ export default function BrowsePropertiesPage() {
     });
   }
 
-  function toggleFavorite(id: string) {
-    setFavorited((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
   const filtered = useMemo(() => {
     let items = properties.filter((property) => {
       if (
@@ -255,7 +246,7 @@ export default function BrowsePropertiesPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <Navbar solid />
+      <Navbar />
 
       <div
         className="relative w-full overflow-hidden pt-16"
@@ -265,7 +256,7 @@ export default function BrowsePropertiesPage() {
           src="/images/property-detail/hero-bg.png"
           alt=""
           fill
-          className="object-cover object-top"
+          className="object-contain object-top"
           priority
         />
       </div>
@@ -286,8 +277,26 @@ export default function BrowsePropertiesPage() {
           </p>
         </div>
 
+        {/* Mobile filter toggle */}
+        <div className="mb-4 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((p) => !p)}
+            className="flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25"
+          >
+            <Filter size={15} />
+            Filters
+            {(auctionTypes.size + endingWithin.size + (selectedCategories.size > 0 ? 1 : 0)) > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-violet-700">
+                {auctionTypes.size + endingWithin.size + (selectedCategories.size > 0 ? 1 : 0)}
+              </span>
+            )}
+            {mobileFiltersOpen ? <X size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-          <aside className="space-y-6">
+          <aside className={`space-y-6 ${mobileFiltersOpen ? "block" : "hidden"} lg:block`}>
             <div className="rounded-2xl bg-white p-6 shadow-sm">
               <h3 className="text-lg font-bold text-neutral-900">
                 Filter by Price
@@ -331,7 +340,7 @@ export default function BrowsePropertiesPage() {
                     </button>
                   )}
                 </div>
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 max-h-56 space-y-2 overflow-y-auto pr-1">
                   {categories.map((cat) => {
                     const isChecked = selectedCategories.has(cat.id);
                     const isExpanded = expandedCategories.has(cat.id);
@@ -398,7 +407,7 @@ export default function BrowsePropertiesPage() {
               <h3 className="text-lg font-bold text-neutral-900">
                 Auction Type
               </h3>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 max-h-48 space-y-3 overflow-y-auto pr-1">
                 {(
                   [
                     ["live", "Live Auction"],
@@ -428,7 +437,7 @@ export default function BrowsePropertiesPage() {
               <h3 className="text-lg font-bold text-neutral-900">
                 Ending Within
               </h3>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 max-h-48 space-y-3 overflow-y-auto pr-1">
                 {(
                   [
                     ["1d", "1 Day"],
@@ -531,8 +540,6 @@ export default function BrowsePropertiesPage() {
                         auction={auction}
                         now={now}
                         loggedIn={!!session}
-                        favorited={favorited.has(property.id)}
-                        onToggleFavorite={() => toggleFavorite(property.id)}
                       />
                     ) : (
                       <FeaturedAssetCard

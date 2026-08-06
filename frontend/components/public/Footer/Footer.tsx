@@ -125,7 +125,7 @@ export default function Footer() {
           src="/images/footer/footer-bg.jpg"
           alt=""
           fill
-          className="object-cover object-top"
+          className="object-contain object-top"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-700/20 via-brand-700/35 to-brand-900/55" />
       </div>
@@ -187,7 +187,7 @@ export default function Footer() {
           </div>
         </div>
 
-          <div className="mt-16 flex flex-col gap-10 text-white md:flex-row md:justify-around items-center">
+          <div className="mt-16 flex flex-col gap-10 text-white md:flex-row md:justify-around md:items-start">
           <div>
             <h3 className="text-lg font-bold">Auction Categories</h3>
             <ul className="mt-5 space-y-3">

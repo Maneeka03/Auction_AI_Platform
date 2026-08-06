@@ -293,7 +293,7 @@ export function PropertyDetailModal({
                   src={activeImage}
                   alt={property.title}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   unoptimized
                 />
               </div>
@@ -318,7 +318,7 @@ export function PropertyDetailModal({
                     src={url}
                     alt=""
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                   />
                 </button>

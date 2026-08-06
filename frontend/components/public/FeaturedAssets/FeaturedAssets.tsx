@@ -31,8 +31,8 @@ export default function FeaturedAssets() {
 
     return (
         <section className="relative overflow-hidden py-20">
-            <div className="absolute -top-32 left-0 w-full min-h-[900px] object-cover">
-                <Image src={featuredBg} alt="" className="w-full h-full object-cover" priority/>
+            <div className="absolute inset-x-0 bottom-0 top-[-8rem]">
+                <Image src={featuredBg} alt="" fill className="object-cover" priority/>
             </div>
             <div className="relative z-20 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
                 <div className="mb-10 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">

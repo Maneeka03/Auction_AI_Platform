@@ -223,7 +223,7 @@ export default function EscrowAdminPage() {
                                   fill
                                   sizes="36px"
                                   unoptimized
-                                  className="object-cover"
+                                  className="object-contain"
                                 />
                               </span>
                             ) : (
