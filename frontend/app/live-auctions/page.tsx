@@ -122,7 +122,7 @@ export default function LiveAuctionsPage() {
         />
       </div>
 
-      <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-16">
+      <div className="relative z-20 mx-auto -mt-24 w-full max-w-[1600px] px-8 pb-16 sm:-mt-40 lg:-mt-90">
         <div className="mb-6 text-white">
           <Link
             href="/"
@@ -254,7 +254,7 @@ export default function LiveAuctionsPage() {
                 </div>
 
                 {/* Details */}
-                <div className="flex flex-1 items-center gap-6 px-6 py-5">
+                <div className="flex flex-1 flex-col items-start gap-4 px-6 py-5 sm:flex-row sm:items-center sm:gap-6">
                   <div className="min-w-0 flex-1">
                     <h3 className="text-lg font-semibold text-neutral-900">{auction.title}</h3>
                     <p className="text-sm text-neutral-500">{auction.address}</p>

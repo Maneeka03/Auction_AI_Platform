@@ -147,7 +147,7 @@ export default function UpcomingAuctions() {
                                         <Star size={16} className={favorited.has(auction.id) ? "fill-amber-400 text-amber-400" : "text-neutral-400"}/>
                                     </button>
                                 </div>
-                                <div className="flex flex-1 items-center gap-6 px-6 py-5">
+                                <div className="flex flex-1 flex-col items-start gap-4 px-6 py-5 sm:flex-row sm:items-center sm:gap-6">
                                     <div className="min-w-0 flex-1">
                                         <h3 className="text-lg font-semibold text-neutral-900">{auction.title}</h3>
                                         <p className="text-sm text-neutral-500">{auction.address}</p>
@@ -183,7 +183,7 @@ export default function UpcomingAuctions() {
                                         )}
                                     </div>
                                     <div className="flex shrink-0 items-center border-l-2 border-dashed border-neutral-300 pl-6">
-                                        <div className="border-r-2 border-dashed border-neutral-300 px-6">
+                                        <div className="border-r-2 border-dashed border-neutral-300 px-3 sm:px-6">
                                             <p className="flex items-center gap-1.5 text-xs font-medium text-success-500">
                                                 <TrendingUp size={14} /> Current Bid
                                             </p>
@@ -191,7 +191,7 @@ export default function UpcomingAuctions() {
                                                 {formatMoney(auction.current_bid)}
                                             </p>
                                         </div>
-                                        <div className="border-r-2 border-dashed border-neutral-300 px-6">
+                                        <div className="border-r-2 border-dashed border-neutral-300 px-3 sm:px-6">
                                             <p className="flex items-center gap-1.5 text-xs font-medium text-danger-500">
                                                 <Tag size={14} /> Reserve Price
                                             </p>

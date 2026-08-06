@@ -62,7 +62,7 @@ export default function SellerDashboardPage() {
   const pendingCount = recentListings.filter((l) => l.status === "draft").length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <WelcomeBanner
         name={firstName}
         message="Manage your listings, track auctions, and monitor your earnings."
@@ -185,7 +185,7 @@ export default function SellerDashboardPage() {
       {stats && (Number(stats.total_earnings) > 0 || Number(stats.pending_payouts) > 0) && (
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-400">Earnings Summary</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-neutral-200 bg-white p-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">

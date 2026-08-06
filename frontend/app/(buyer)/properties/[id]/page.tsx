@@ -93,7 +93,7 @@ export default function BuyerPropertyDetailPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-6xl space-y-6 p-6">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Back button — pill style */}
         <button
           type="button"

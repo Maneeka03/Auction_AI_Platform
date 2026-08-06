@@ -35,7 +35,7 @@ export default function FeaturedAssets() {
                 <Image src={featuredBg} alt="" className="w-full h-full object-cover" priority/>
             </div>
             <div className="relative z-20 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
-                <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+                <div className="mb-10 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">Featured Assets</span>
                         <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900">
@@ -52,7 +52,7 @@ export default function FeaturedAssets() {
                     <p className="text-red-500">{error}</p>
                 ) : properties.length === 0 ? (<p className="text-neutral-500">No featured properties available.</p>
                 ) : (
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {properties.map((property) => (
                         <FeaturedAssetCard key={property.id} property={property} />
                     ))}

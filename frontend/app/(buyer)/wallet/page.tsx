@@ -74,7 +74,7 @@ export default function WalletPage() {
   return (
     <RequirePermission module="payment_escrow" need="view">
       <div className="min-h-screen bg-neutral-50">
-        <div className="mx-auto max-w-4xl space-y-5 p-6">
+        <div className="mx-auto max-w-6xl space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">Wallet</h1>

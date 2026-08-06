@@ -8,7 +8,7 @@ export interface RibbonKpi {
   value: string;
   changePercent: number;
   changeLabel: string;
-  accent: "brand" | "success" | "amber" | "sky" | "danger";
+  accent: "brand" | "success" | "amber" | "sky" | "danger"|"neutral";
 }
 export interface WeeklyPoint {
   day: string;

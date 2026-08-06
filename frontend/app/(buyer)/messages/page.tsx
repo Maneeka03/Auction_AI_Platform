@@ -159,7 +159,7 @@ export default function BuyerMessagesPage() {
     <>
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         {/* Left panel */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-neutral-200 bg-white">
+        <aside className={`flex w-full shrink-0 flex-col border-r border-neutral-200 bg-white md:w-72 ${active ? "hidden md:flex" : "flex"}`}>
           <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
             <div className="flex gap-1">
               <button
@@ -285,7 +285,7 @@ export default function BuyerMessagesPage() {
         </aside>
 
         {/* Right panel */}
-        <main className="flex flex-1 flex-col bg-neutral-50">
+        <main className={`flex-1 flex-col bg-neutral-50 md:flex ${active ? "flex" : "hidden md:flex"}`}>
           {active === null ? (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
@@ -294,13 +294,13 @@ export default function BuyerMessagesPage() {
               </div>
             </div>
           ) : (
-            <MessageView
-              title={activeTitle}
-              messages={active.kind === "dm" ? dmMessages : groupMessages}
-              currentUserId={session?.id ?? ""}
-              loading={loadingMessages}
-              onSend={active.kind === "dm" ? handleSendDm : handleSendGroup}
-            />
+           <MessageView
+            title={activeTitle}
+            messages={active.kind === "dm" ? dmMessages : groupMessages}
+            currentUserId={session?.id ?? ""}
+            loading={loadingMessages}
+            onSend={active.kind === "dm" ? handleSendDm : handleSendGroup}
+          />
           )}
         </main>
       </div>

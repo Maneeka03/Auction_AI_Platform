@@ -147,7 +147,7 @@ export default function BuyerHomePage() {
   const totalItems = liveAuctions.length + publishedListings.length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <WelcomeBanner
         name={firstName}
         message="Discover auctions, track your bids, and win your next asset."

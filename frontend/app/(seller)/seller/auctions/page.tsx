@@ -179,7 +179,7 @@ function AddLiveAuctionModal({ onClose, onSuccess }: { onClose: () => void; onSu
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-neutral-700">Opening Bid ($)</label>
                   <input
@@ -287,7 +287,7 @@ export default function SellerAuctionsPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl space-y-6 p-6">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Live Auctions</h1>

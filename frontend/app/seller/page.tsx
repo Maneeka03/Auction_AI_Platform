@@ -18,22 +18,26 @@ const BENEFITS = [
   {
     icon: Users,
     title: "Reach Verified Buyers",
-    description: "Every buyer on the platform completes identity verification (KYC) before they can bid.",
+    description:
+      "Every buyer on the platform completes identity verification (KYC) before they can bid.",
   },
   {
     icon: TrendingUp,
     title: "Real-Time Analytics",
-    description: "Track views, bidder interest, and auction performance on every listing you run.",
+    description:
+      "Track views, bidder interest, and auction performance on every listing you run.",
   },
   {
     icon: Lock,
     title: "Escrow-Protected Payouts",
-    description: "Winning funds are held in escrow and released to you once the sale is confirmed.",
+    description:
+      "Winning funds are held in escrow and released to you once the sale is confirmed.",
   },
   {
     icon: ClipboardList,
     title: "Full Listing Control",
-    description: "Manage listings, reserve prices, and auction requests from your own seller dashboard.",
+    description:
+      "Manage listings, reserve prices, and auction requests from your own seller dashboard.",
   },
 ];
 
@@ -56,7 +60,8 @@ const STEPS = [
   {
     icon: Wallet,
     title: "Go Live & Get Paid",
-    description: "Your auction runs, and proceeds are released to you via escrow once it closes.",
+    description:
+      "Your auction runs, and proceeds are released to you via escrow once it closes.",
   },
 ];
 
@@ -64,7 +69,10 @@ export default function BecomeSellerPage() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar solid />
-      <section className="relative overflow-hidden" style={{ aspectRatio: "1812 / 629" }}>
+      <section
+        className="relative min-h-[420px] overflow-hidden sm:min-h-0"
+        style={{ aspectRatio: "1812 / 629" }}
+      >
         <Image
           src="/images/property-detail/hero-bg.png"
           alt=""
@@ -81,7 +89,8 @@ export default function BecomeSellerPage() {
               Sell With Confidence, Reach Real Buyers
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-purple-100">
-              List your properties, run live auctions, and get paid securely — all from one seller dashboard.
+              List your properties, run live auctions, and get paid securely —
+              all from one seller dashboard.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link
@@ -105,8 +114,12 @@ export default function BecomeSellerPage() {
       <section className="py-15">
         <div className="mx-auto w-full max-w-[1600px] px-8">
           <div className="text-center">
-            <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">Why Sell Here</span>
-            <h2 className="mt-2 text-4xl font-bold text-neutral-900">Built for Serious Sellers</h2>
+            <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
+              Why Sell Here
+            </span>
+            <h2 className="mt-2 text-4xl font-bold text-neutral-900">
+              Built for Serious Sellers
+            </h2>
           </div>
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -120,8 +133,12 @@ export default function BecomeSellerPage() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-500/10 text-brand-600">
                     <Icon size={26} />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-neutral-900">{benefit.title}</h3>
-                  <p className="mt-2 text-sm text-neutral-500">{benefit.description}</p>
+                  <h3 className="mt-4 text-lg font-semibold text-neutral-900">
+                    {benefit.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-neutral-500">
+                    {benefit.description}
+                  </p>
                 </div>
               );
             })}
@@ -133,8 +150,12 @@ export default function BecomeSellerPage() {
       <section className="bg-neutral-50 py-20">
         <div className="mx-auto w-full max-w-[1600px] px-8">
           <div className="text-center">
-            <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">How It Works</span>
-            <h2 className="mt-2 text-4xl font-bold text-neutral-900">From Listing to Payout</h2>
+            <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
+              How It Works
+            </span>
+            <h2 className="mt-2 text-4xl font-bold text-neutral-900">
+              From Listing to Payout
+            </h2>
           </div>
 
           <div className="relative mt-16 grid grid-cols-1 gap-10 md:grid-cols-4">
@@ -142,15 +163,22 @@ export default function BecomeSellerPage() {
             {STEPS.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div key={step.title} className="relative flex flex-col items-center text-center">
+                <div
+                  key={step.title}
+                  className="relative flex flex-col items-center text-center"
+                >
                   <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white shadow-lg">
                     <Icon size={24} />
                   </div>
                   <span className="mt-4 text-xs font-bold uppercase tracking-wide text-brand-500">
                     Step {index + 1}
                   </span>
-                  <h3 className="mt-1 text-base font-semibold text-neutral-900">{step.title}</h3>
-                  <p className="mt-2 max-w-xs text-sm text-neutral-500">{step.description}</p>
+                  <h3 className="mt-1 text-base font-semibold text-neutral-900">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 max-w-xs text-sm text-neutral-500">
+                    {step.description}
+                  </p>
                 </div>
               );
             })}
@@ -162,12 +190,21 @@ export default function BecomeSellerPage() {
       <section className="py-20">
         <div className="mx-auto w-full max-w-[1600px] px-8">
           <div className="relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-3xl px-10 py-24 text-center md:flex-row md:text-left">
-            <Image src="/images/seller/call-bg.png" alt="" fill className="object-cover" />
+            <Image
+              src="/images/seller/call-bg.png"
+              alt=""
+              fill
+              className="object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-violet-700/20 via-transparent to-transparent" />
 
             <div className="relative z-10">
-              <h2 className="text-3xl font-bold text-white">Ready to list your first property?</h2>
-              <p className="mt-2 text-purple-100">Sign up as a seller and get verified in minutes.</p>
+              <h2 className="text-3xl font-bold text-white">
+                Ready to list your first property?
+              </h2>
+              <p className="mt-2 text-purple-100">
+                Sign up as a seller and get verified in minutes.
+              </p>
             </div>
             <Link
               href="/signup?role=seller"

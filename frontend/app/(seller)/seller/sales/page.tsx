@@ -28,7 +28,7 @@ export default function SellerSalesPage() {
   const totalRevenue = sales.reduce((sum, s) => sum + Number(s.paid_amount ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-neutral-900">Sales History</h1>
           {sales.length > 0 ? (

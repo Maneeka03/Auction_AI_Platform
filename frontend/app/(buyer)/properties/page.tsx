@@ -43,21 +43,17 @@ export default function BrowsePropertiesPage() {
   }, [fetchProperties]);
 
   function handleConfirmPayment(_updatedProperty: Property) {
-    // Property is now sold — refresh so it drops out of the published list.
     void fetchProperties();
   }
 
   return (
     <RequirePermission module="asset_management" need="view">
       <div className="min-h-screen bg-neutral-50">
-        <div className="mx-auto max-w-6xl space-y-5 p-6">
+        <div className="mx-auto max-w-7xl space-y-5 p-6">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Browse Properties</h1>
             <p className="mt-1 text-sm text-neutral-600">Buy properties across every category directly.</p>
           </div>
-
-          {/* Category filter, built from the live category tree. Selecting a main category also
-              includes everything in its subcategories, since the backend rolls those up. */}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"

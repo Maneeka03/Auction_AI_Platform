@@ -176,7 +176,7 @@ export default function PropertyDetailPage() {
         />
       </div>
 
-      <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-12">
+      <div className="relative z-20 mx-auto -mt-24 w-full max-w-[1600px] px-8 pb-12 sm:-mt-40 lg:-mt-90">
         <Link
           href="/browse-properties"
           className="mb-5 inline-flex w-fit items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 text-sm text-white backdrop-blur-sm transition hover:bg-black/35"
