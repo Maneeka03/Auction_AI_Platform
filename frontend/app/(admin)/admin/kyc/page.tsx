@@ -91,7 +91,7 @@ export default function AdminKycReviewPage() {
   return (
     <AdminShell>
       <RequirePermission module="user_management" need="full">
-        <div className="space-y-5 p-6">
+        <div className="mx-auto max-w-7xl space-y-5 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-neutral-900">KYC Review</h1>
@@ -136,71 +136,103 @@ export default function AdminKycReviewPage() {
             <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr_auto] lg:items-start lg:gap-6">
+                    {/* Identity */}
                     <div>
-                      <p className="font-semibold text-neutral-900">{item.legal_name}</p>
-                      <p className="text-sm text-neutral-500">
-                        {item.full_name} · {item.email}
-                      </p>
-                      <p className="mt-1 text-xs text-neutral-400">
-                        Submitted {new Date(item.created_at).toLocaleString()}
-                      </p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-neutral-900">{item.legal_name}</p>
+                          <p className="text-sm text-neutral-500">
+                            {item.full_name} · {item.email}
+                          </p>
+                          <p className="mt-1 text-xs text-neutral-400">
+                            Submitted {new Date(item.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium lg:hidden ${statusStyles[item.status]}`}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+
+                      {item.notes ? (
+                        <p className="mt-3 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
+                          <span className="font-medium text-neutral-700">Notes:</span> {item.notes}
+                        </p>
+                      ) : null}
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}>
-                      {item.status}
-                    </span>
-                  </div>
 
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {item.document_keys.map((key) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => void handleViewDocument(item.id, key)}
-                        disabled={openingKey === key}
-                        className="flex items-center gap-1.5 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:opacity-60"
-                      >
-                        <FileText size={12} />
-                        {key.split("/").pop()}
-                        <ExternalLink size={11} className="text-neutral-400" />
-                      </button>
-                    ))}
-                  </div>
-
-                  {item.notes ? (
-                    <p className="mt-3 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-                      <span className="font-medium text-neutral-700">Notes:</span> {item.notes}
-                    </p>
-                  ) : null}
-
-                  {item.status === "pending" ? (
-                    <div className="mt-4 space-y-2 border-t border-neutral-100 pt-4">
-                      <input
-                        value={noteDrafts[item.id] ?? ""}
-                        onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                        placeholder="Optional note (visible to the applicant)"
-                        className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          disabled={decidingId === item.id}
-                          onClick={() => void handleDecision(item, false)}
-                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          type="button"
-                          disabled={decidingId === item.id}
-                          onClick={() => void handleDecision(item, true)}
-                          className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
-                        >
-                          {decidingId === item.id ? "Saving..." : "Approve"}
-                        </button>
+                    {/* Documents */}
+                    <div className="lg:border-l-2 lg:border-neutral-200 lg:pl-6">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 lg:hidden">
+                        Documents
+                      </p>
+                      <div className="hidden text-xs font-semibold uppercase tracking-wide text-neutral-400 lg:mb-2 lg:block">
+                        Documents
+                      </div>
+                      <div className="flex flex-wrap items-start gap-1.5">
+                        {item.document_keys.length === 0 ? (
+                          <p className="text-sm text-neutral-400">No documents attached.</p>
+                        ) : (
+                          item.document_keys.map((key) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => void handleViewDocument(item.id, key)}
+                              disabled={openingKey === key}
+                              className="flex items-center gap-1.5 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:opacity-60"
+                            >
+                              <FileText size={12} />
+                              {key.split("/").pop()}
+                              <ExternalLink size={11} className="text-neutral-400" />
+                            </button>
+                          ))
+                        )}
                       </div>
                     </div>
-                  ) : null}
+
+                    {/* Status + actions */}
+                   <div className="flex w-full flex-col items-start gap-3 lg:w-64 lg:items-end lg:border-l-2 lg:border-neutral-200 lg:pl-6">
+  <div className="hidden text-xs font-semibold uppercase tracking-wide text-neutral-400 lg:block">
+    Status
+  </div>
+  <span
+    className={`hidden rounded-full px-2.5 py-1 text-xs font-medium lg:inline-flex ${statusStyles[item.status]}`}
+  >
+    {item.status}
+  </span>
+
+                      {item.status === "pending" ? (
+                        <div className="w-full space-y-2">
+                          <input
+                            value={noteDrafts[item.id] ?? ""}
+                            onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                            placeholder="Optional note (visible to the applicant)"
+                            className="h-10 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={decidingId === item.id}
+                              onClick={() => void handleDecision(item, false)}
+                              className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              disabled={decidingId === item.id}
+                              onClick={() => void handleDecision(item, true)}
+                              className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
+                            >
+                              {decidingId === item.id ? "Saving..." : "Approve"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

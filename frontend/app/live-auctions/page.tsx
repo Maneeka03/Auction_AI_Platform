@@ -293,8 +293,8 @@ export default function LiveAuctionsPage() {
                   </div>
 
                   {/* Price stats */}
-                  <div className="flex shrink-0 items-center border-l-2 border-dashed border-neutral-300 pl-6">
-                    <div className="border-r-2 border-dashed border-neutral-300 px-6">
+                  <div className="flex w-full flex-col items-start gap-3 border-t-2 border-dashed border-neutral-300 pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:gap-0 sm:border-l-2 sm:border-t-0 sm:pl-6 sm:pt-0">
+                    <div className="w-full border-b-2 border-dashed border-neutral-300 pb-3 sm:w-auto sm:border-b-0 sm:border-r-2 sm:px-6 sm:pb-0">
                       <p className="flex items-center gap-1.5 text-xs font-medium text-green-600">
                         <TrendingUp size={14} /> Current Bid
                       </p>
@@ -302,7 +302,7 @@ export default function LiveAuctionsPage() {
                         {formatMoney(auction.current_bid)}
                       </p>
                     </div>
-                    <div className="border-r-2 border-dashed border-neutral-300 px-6">
+                    <div className="w-full border-b-2 border-dashed border-neutral-300 pb-3 sm:w-auto sm:border-b-0 sm:border-r-2 sm:px-6 sm:pb-0">
                       <p className="flex items-center gap-1.5 text-xs font-medium text-red-500">
                         <Tag size={14} /> Reserve Price
                       </p>
@@ -310,7 +310,7 @@ export default function LiveAuctionsPage() {
                         {formatMoney(auction.reserve_price)}
                       </p>
                     </div>
-                    <div className="px-6 text-sm text-neutral-500">
+                    <div className="w-full text-sm text-neutral-500 sm:w-auto sm:px-6">
                       <p className="flex items-center gap-1.5">
                         <Users size={14} /> {auction.bidder_count} bidder
                         {auction.bidder_count === 1 ? "" : "s"}
