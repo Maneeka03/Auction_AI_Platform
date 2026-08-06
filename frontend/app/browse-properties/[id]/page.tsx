@@ -320,7 +320,7 @@ export default function PropertyDetailPage() {
                     <Gavel size={16} className="text-brand-600" /> This property
                     is up for auction
                   </h3>
-                  <div className="mt-4 flex items-center gap-6 border-b border-dashed border-neutral-200 pb-4">
+                  <div className="mt-4 flex flex-col items-start gap-3 border-b border-dashed border-neutral-200 pb-4 sm:flex-row sm:items-center sm:gap-6">
                     <div>
                       <p className="flex items-center gap-1.5 text-xs font-medium text-success-500">
                         <TrendingUp size={13} /> Current Bid

@@ -1,7 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { Bath, BedDouble, Box, Check, CheckCircle2, Ruler, X, XCircle } from "lucide-react";
+import {
+  Bath,
+  BedDouble,
+  Box,
+  Check,
+  CheckCircle2,
+  Ruler,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ApproverSeatChip } from "@/components/approvals/ApproverSeatChip";
@@ -14,7 +23,10 @@ import type { CategoryTree } from "@/types/category";
 
 const SEATS: ApproverSeat[] = ["director", "appraiser", "legal_finance"];
 
-function parseDescription(raw: string | null): { text: string | null; fields: Array<{ label: string; value: string }> } {
+function parseDescription(raw: string | null): {
+  text: string | null;
+  fields: Array<{ label: string; value: string }>;
+} {
   if (!raw) return { text: null, fields: [] };
   const SEP = "--- Custom Fields ---";
   const idx = raw.indexOf(SEP);
@@ -28,9 +40,14 @@ function parseDescription(raw: string | null): { text: string | null; fields: Ar
       const colonIdx = line.indexOf(":");
       return colonIdx === -1
         ? null
-        : { label: line.slice(0, colonIdx).trim(), value: line.slice(colonIdx + 1).trim() };
+        : {
+            label: line.slice(0, colonIdx).trim(),
+            value: line.slice(colonIdx + 1).trim(),
+          };
     })
-    .filter((f): f is { label: string; value: string } => f !== null && !!f.label);
+    .filter(
+      (f): f is { label: string; value: string } => f !== null && !!f.label,
+    );
   return { text, fields };
 }
 
@@ -64,15 +81,21 @@ export function PropertyDetailModal({
   const [selectedSubId, setSelectedSubId] = useState("");
   const [savingCat, setSavingCat] = useState(false);
   const [catError, setCatError] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const { text: descriptionText, fields: customFields } = parseDescription(property.description);
-
+  const { text: descriptionText, fields: customFields } = parseDescription(
+    property.description,
+  );
   const approvedCount = property.votes.filter((v) => v.approved).length;
-  const myVote = currentUserSeat ? property.votes.find((v) => v.seat === currentUserSeat) : undefined;
-  const canVote = property.status === "draft" && currentUserSeat !== undefined && myVote === undefined;
-
-  // Derived values
-  const selectedParent = categories.find((p) => p.id === selectedParentId) ?? null;
+  const myVote = currentUserSeat
+    ? property.votes.find((v) => v.seat === currentUserSeat)
+    : undefined;
+  const canVote =
+    property.status === "draft" &&
+    currentUserSeat !== undefined &&
+    myVote === undefined;
+  const selectedParent =
+    categories.find((p) => p.id === selectedParentId) ?? null;
   const subcategories = selectedParent?.children ?? [];
   const finalCatId = selectedSubId || selectedParentId;
 
@@ -80,17 +103,31 @@ export function PropertyDetailModal({
     { id: p.id, name: p.name },
     ...p.children.map((c) => ({ id: c.id, name: c.name })),
   ]);
-  const selectedCatName = allFlat.find((c) => c.id === finalCatId)?.name ?? property.category_name;
+  const selectedCatName =
+    allFlat.find((c) => c.id === finalCatId)?.name ?? property.category_name;
   const isOther = selectedCatName?.toLowerCase() === "other";
   const catChanged = !!finalCatId && finalCatId !== property.category_id;
 
-  // Fetch categories on mount
   useEffect(() => {
     if (!accessToken) return;
-    listCategories(accessToken).then(setCategories).catch(() => null);
+    listCategories(accessToken)
+      .then(setCategories)
+      .catch(() => null);
   }, [accessToken]);
 
-  // Once categories load, initialise dropdowns from property.category_id
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+  const previousOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+  return () => {
+    document.body.style.overflow = previousOverflow;
+  };
+}, []);
+
   useEffect(() => {
     if (categories.length === 0) return;
     const isParent = categories.some((p) => p.id === property.category_id);
@@ -99,7 +136,7 @@ export function PropertyDetailModal({
       setSelectedSubId("");
     } else {
       const parent = categories.find((p) =>
-        p.children.some((c) => c.id === property.category_id)
+        p.children.some((c) => c.id === property.category_id),
       );
       setSelectedParentId(parent?.id ?? "");
       setSelectedSubId(parent ? property.category_id : "");
@@ -111,7 +148,9 @@ export function PropertyDetailModal({
     setSavingCat(true);
     setCatError(null);
     try {
-      const updated = await updateProperty(accessToken, property.id, { category_id: finalCatId });
+      const updated = await updateProperty(accessToken, property.id, {
+        category_id: finalCatId,
+      });
       onPropertyUpdated?.(updated);
     } catch {
       setCatError("Failed to update category.");
@@ -122,12 +161,17 @@ export function PropertyDetailModal({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/40 transition-opacity" onClick={onClose} />
-
-      {/* Slide-over drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl">
-        {/* Header */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
+      <div
+        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+          isVisible ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <div className="shrink-0 border-b border-neutral-100 px-5 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -166,12 +210,17 @@ export function PropertyDetailModal({
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {/* Parent category */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-neutral-500">Category</label>
+                    <label className="text-xs font-medium text-neutral-500">
+                      Category
+                    </label>
                     <SearchableSelect
                       value={selectedParentId}
                       options={[
                         { value: "", label: "— Select category —" },
-                        ...categories.map((c) => ({ value: c.id, label: c.name })),
+                        ...categories.map((c) => ({
+                          value: c.id,
+                          label: c.name,
+                        })),
                       ]}
                       placeholder="— Select category —"
                       onChange={(v) => {
@@ -183,14 +232,29 @@ export function PropertyDetailModal({
 
                   {/* Subcategory */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-neutral-500">Subcategory</label>
+                    <label className="text-xs font-medium text-neutral-500">
+                      Subcategory
+                    </label>
                     <SearchableSelect
                       value={selectedSubId}
                       options={[
-                        { value: "", label: subcategories.length === 0 ? "No subcategories" : "— Select subcategory —" },
-                        ...subcategories.map((c) => ({ value: c.id, label: c.name })),
+                        {
+                          value: "",
+                          label:
+                            subcategories.length === 0
+                              ? "No subcategories"
+                              : "— Select subcategory —",
+                        },
+                        ...subcategories.map((c) => ({
+                          value: c.id,
+                          label: c.name,
+                        })),
                       ]}
-                      placeholder={subcategories.length === 0 ? "No subcategories" : "— Select subcategory —"}
+                      placeholder={
+                        subcategories.length === 0
+                          ? "No subcategories"
+                          : "— Select subcategory —"
+                      }
                       disabled={subcategories.length === 0}
                       onChange={setSelectedSubId}
                     />
@@ -225,7 +289,13 @@ export function PropertyDetailModal({
           {activeImage && (
             <div className="px-5 pt-4 sm:px-6 sm:pt-5">
               <div className="relative h-52 w-full overflow-hidden rounded-xl bg-neutral-100 sm:h-56">
-                <Image src={activeImage} alt={property.title} fill className="object-cover" unoptimized />
+                <Image
+                  src={activeImage}
+                  alt={property.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
               </div>
             </div>
           )}
@@ -244,7 +314,13 @@ export function PropertyDetailModal({
                       : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <Image src={url} alt="" fill className="object-cover" unoptimized />
+                  <Image
+                    src={url}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
                 </button>
               ))}
             </div>
@@ -288,7 +364,9 @@ export function PropertyDetailModal({
             {/* Seller */}
             <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-600">
               <p>
-                <span className="font-medium text-neutral-800">Submitted by:</span>{" "}
+                <span className="font-medium text-neutral-800">
+                  Submitted by:
+                </span>{" "}
                 {property.seller_name ?? "Unknown Seller"}
               </p>
               <p className="mt-1">
@@ -304,19 +382,30 @@ export function PropertyDetailModal({
             {/* Description */}
             {descriptionText && (
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-neutral-700">Description</p>
-                <p className="text-sm leading-relaxed text-neutral-600">{descriptionText}</p>
+                <p className="mb-1.5 text-sm font-semibold text-neutral-700">
+                  Description
+                </p>
+                <p className="text-sm leading-relaxed text-neutral-600">
+                  {descriptionText}
+                </p>
               </div>
             )}
 
             {/* Custom Fields */}
             {customFields.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-semibold text-neutral-700">Custom Product Fields</p>
+                <p className="mb-2 text-sm font-semibold text-neutral-700">
+                  Custom Product Fields
+                </p>
                 <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-100 bg-neutral-50 px-4">
                   {customFields.map((f) => (
-                    <div key={f.label} className="flex items-center justify-between py-2 text-sm">
-                      <span className="font-medium text-neutral-600">{f.label}</span>
+                    <div
+                      key={f.label}
+                      className="flex items-center justify-between py-2 text-sm"
+                    >
+                      <span className="font-medium text-neutral-600">
+                        {f.label}
+                      </span>
                       <span className="text-neutral-800">{f.value}</span>
                     </div>
                   ))}
@@ -340,7 +429,9 @@ export function PropertyDetailModal({
             {/* Approval votes */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <p className="text-sm font-semibold text-neutral-700">Approval Status</p>
+                <p className="text-sm font-semibold text-neutral-700">
+                  Approval Status
+                </p>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                     approvedCount >= 2
@@ -407,8 +498,8 @@ export function PropertyDetailModal({
                     isOther
                       ? "Assign a real category before approving"
                       : catChanged
-                      ? "Save the category change first"
-                      : undefined
+                        ? "Save the category change first"
+                        : undefined
                   }
                   onClick={() => {
                     onVote(property.id, true);
