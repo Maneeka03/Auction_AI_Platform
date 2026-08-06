@@ -1,4 +1,5 @@
 import type { Auction } from "@/types/auction";
+import type { ChatMessage } from "@/types/chat";
 
 export interface AuctionComment {
   id: string;
@@ -9,7 +10,8 @@ export interface AuctionComment {
   created_at: string;
 }
 
-// Everything the auction-room WebSocket can send: auction-state events plus live chat messages.
+// Everything the auction-room WebSocket can send.
 export type RoomMessage =
   | { type: "snapshot" | "bid" | "updated" | "ended"; auction: Auction }
-  | { type: "comment"; comment: AuctionComment };
+  | { type: "comment"; comment: AuctionComment }
+  | { type: "chat"; message: ChatMessage };

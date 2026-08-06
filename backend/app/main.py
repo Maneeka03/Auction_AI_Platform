@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import re
 from collections.abc import AsyncIterator
@@ -14,17 +15,31 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, validation_error_handler
 from app.core.redis import redis
-from app.db.session import engine
+from app.db.session import SessionFactory, engine
+from app.services import auctions
 from app.services.uploads import configure_cors
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+async def _settle_expired_loop() -> None:
+    """Every 60 s, auto-award expired auctions to their highest bidder."""
+    while True:
+        await asyncio.sleep(60)
+        try:
+            async with SessionFactory() as session:
+                await auctions.settle_expired(session)
+        except Exception:
+            logger.exception("auction settler loop error")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     configure_cors()
+    settler = asyncio.create_task(_settle_expired_loop())
     yield
+    settler.cancel()
     await redis.aclose()
     await engine.dispose()
 

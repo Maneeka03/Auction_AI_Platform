@@ -68,6 +68,7 @@ class AuctionOut(BaseModel):
     token_percent: Decimal
     bidder_count: int
     winner_id: uuid.UUID | None
+    winner_name: str | None
 
     @classmethod
     def of(cls, auction: Auction, current_bid: Decimal | None, bidder_count: int) -> "AuctionOut":
@@ -92,6 +93,7 @@ class AuctionOut(BaseModel):
             token_percent=auction.token_percent,
             bidder_count=bidder_count,
             winner_id=auction.winner_id,
+            winner_name=auction.winner.full_name if auction.winner else None,
         )
 
 

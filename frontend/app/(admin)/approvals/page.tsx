@@ -96,7 +96,7 @@ export default function ApprovalsPage() {
           </div>
 
           {!currentUserSeat ? (
-            <p className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs text-amber-700">
+            <p className="rounded-lg bg-blue-100/10 px-3 py-2 text-xs text-amber-700">
               Your account doesn&apos;t hold an approval seat (Director, Appraiser, or Legal &amp; Finance), so
               you can view this queue but not vote on it.
             </p>

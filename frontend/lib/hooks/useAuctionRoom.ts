@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listComments, postComment } from "@/lib/api/comments";
+import { listChat, postChat } from "@/lib/api/chat";
 import type { Auction } from "@/types/auction";
 import type { AuctionComment, RoomMessage } from "@/types/comment";
+import type { ChatMessage } from "@/types/chat";
 import type { RoomFeedItem, SystemEvent } from "@/types/roomFeed";
 
 // WebSocket connects directly to the backend (can't be proxied via Next.js rewrites).
@@ -17,6 +19,8 @@ interface UseAuctionRoomResult {
   feed: RoomFeedItem[];
   connection: RoomConnection;
   send: (body: string) => Promise<void>;
+  chatMessages: ChatMessage[];
+  sendChat: (body: string) => Promise<void>;
 }
 
 let systemEventCounter = 0;
@@ -76,6 +80,7 @@ export function useAuctionRoom(auctionId: string, accessToken: string | null): U
   const [comments, setComments] = useState<AuctionComment[]>([]);
   const [systemEvents, setSystemEvents] = useState<SystemEvent[]>([]);
   const [connection, setConnection] = useState<RoomConnection>("connecting");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const prevAuctionRef = useRef<Auction | null>(null);
 
   const addComment = useCallback((incoming: AuctionComment) => {
@@ -94,6 +99,7 @@ export function useAuctionRoom(auctionId: string, accessToken: string | null): U
   useEffect(() => {
     if (!accessToken) return;
     void listComments(accessToken, auctionId).then(setComments).catch(() => {});
+    void listChat(accessToken, auctionId).then(setChatMessages).catch(() => {});
   }, [accessToken, auctionId]);
 
   useEffect(() => {
@@ -110,8 +116,15 @@ export function useAuctionRoom(auctionId: string, accessToken: string | null): U
       socket.onopen = () => !cancelled && setConnection("live");
       socket.onmessage = (event) => {
         const message = JSON.parse(event.data) as RoomMessage;
-        if (message.type === "comment") addComment(message.comment);
-        else applyAuction(message.auction);
+        if (message.type === "comment") {
+          addComment(message.comment);
+        } else if (message.type === "chat") {
+          setChatMessages((prev) =>
+            prev.some((m) => m.id === message.message.id) ? prev : [...prev, message.message],
+          );
+        } else {
+          applyAuction(message.auction);
+        }
       };
       socket.onclose = () => {
         if (cancelled) return;
@@ -136,6 +149,14 @@ export function useAuctionRoom(auctionId: string, accessToken: string | null): U
     [accessToken, auctionId],
   );
 
+  const sendChat = useCallback(
+    async (body: string) => {
+      if (!accessToken) return;
+      await postChat(accessToken, auctionId, body);
+    },
+    [accessToken, auctionId],
+  );
+
   const feed = useMemo<RoomFeedItem[]>(() => {
     const commentItems: RoomFeedItem[] = comments.map((comment) => ({
       kind: "comment",
@@ -154,5 +175,5 @@ export function useAuctionRoom(auctionId: string, accessToken: string | null): U
     );
   }, [comments, systemEvents]);
 
-  return { auction, comments, feed, connection, send };
+  return { auction, comments, feed, connection, send, chatMessages, sendChat };
 }

@@ -14,8 +14,8 @@ interface ListPanelProps {
 const chipPalette = [
   "bg-brand-500/10 text-brand-600",
   "bg-success-500/10 text-success-500",
-  "bg-blue-500/10 text-amber-600",
-  "bg-sky-500/10 text-sky-600",
+  "bg-blue-100/10 text-amber-600",
+  "bg-blue-100 text-sky-600",
 ];
 
 function ItemThumbnail({ imageSrc, color, icon: Icon }: { imageSrc?: string; color: string; icon: LucideIcon }) {

@@ -5,8 +5,8 @@ import { buildGoogleCalendarUrl } from "@/lib/utils/googleCalendar";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 
 const statusStyles: Record<Auction["status"], string> = {
-  live: "bg-danger-500/10 text-danger-600",
-  upcoming: "bg-sky-500/10 text-sky-600",
+  live: "bg-red-100 text-red-600",
+  upcoming: "bg-blue-100 text-sky-600",
   ended: "bg-neutral-100 text-neutral-500",
 };
 
@@ -56,7 +56,7 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
             src={imageUrl}
             alt={auction.title}
             fill
-            className="object-cover"
+            className="object-contain"
             unoptimized
           />
         ) : (
@@ -81,7 +81,9 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
 
         <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-xs text-neutral-500">Current Bid</p>
+            <p className="text-xs text-neutral-500">
+              {auction.status === "ended" ? "Final Bid" : "Current Bid"}
+            </p>
             <p className="font-semibold text-neutral-900">{formatMoney(auction.current_bid)}</p>
           </div>
           <div>
@@ -89,6 +91,21 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
             <p className="font-semibold text-neutral-900">{formatMoney(auction.reserve_price)}</p>
           </div>
         </div>
+
+        {auction.status === "ended" && (
+          <div className="mt-3 rounded-lg bg-neutral-50 px-3 py-2">
+            {auction.winner_name ? (
+              <>
+                <p className="text-xs text-neutral-500">Winner</p>
+                <p className="mt-0.5 truncate text-sm font-semibold text-neutral-900">
+                  {auction.winner_name}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-neutral-500">Ended with no sale</p>
+            )}
+          </div>
+        )}
 
         <p className="mt-3 text-xs text-neutral-500">
           {formatDateTime(auction.starts_at)} – {formatDateTime(auction.ends_at)}
@@ -98,8 +115,8 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
           <span
             className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs ${
               auction.room_access === "invite_only"
-                ? "bg-blue-500/10 text-amber-700"
-                : "bg-sky-500/10 text-sky-700"
+                ? "bg-blue-100/10 text-amber-700"
+                : "bg-blue-100 text-sky-700"
             }`}
           >
             {auction.room_access === "invite_only" ? <Lock size={11} /> : <Users size={11} />}

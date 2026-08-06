@@ -12,7 +12,7 @@ interface Option {
 }
 
 const OPTIONS: Option[] = [
-  { value: "open",        label: "Open",        triggerClass: "border-blue-200 bg-blue-50 text-blue-600",       dotClass: "bg-blue-500" },
+  { value: "open",        label: "Open",        triggerClass: "border-blue-200 bg-blue-50 text-blue-600",       dotClass: "bg-blue-100" },
   { value: "in_progress", label: "In Progress", triggerClass: "border-amber-200 bg-amber-50 text-amber-700",    dotClass: "bg-amber-500" },
   { value: "resolved",    label: "Resolved",    triggerClass: "border-emerald-200 bg-emerald-50 text-emerald-700", dotClass: "bg-emerald-500" },
   { value: "closed",      label: "Closed",      triggerClass: "border-blue-700 bg-blue-600 text-white",         dotClass: "bg-white" },

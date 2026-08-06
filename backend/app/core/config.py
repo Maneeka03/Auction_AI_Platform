@@ -142,6 +142,7 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     smtp_from_name: str = "Support Team"
 
+
     @property
     def vapid_private_key_pem(self) -> str:
         return self.vapid_private_key

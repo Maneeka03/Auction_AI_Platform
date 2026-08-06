@@ -2,7 +2,7 @@ import { ApproverChip } from "@/components/approvals/ApproverChip";
 import type { ApprovalItem, ApproverRole } from "@/types/approval";
 
 const outcomeBadge: Record<ApprovalItem["outcome"], { label: string; className: string }> = {
-  awaiting_approval: { label: "Awaiting Approval", className: "bg-blue-500/10 text-amber-600" },
+  awaiting_approval: { label: "Awaiting Approval", className: "bg-blue-100/10 text-amber-600" },
   approved: { label: "Approved — Ready to Proceed", className: "bg-success-500/10 text-success-500" },
   rejected: { label: "Rejected", className: "bg-danger-500/10 text-danger-600" },
   cancelled: { label: "Cancelled", className: "bg-neutral-100 text-neutral-500" },

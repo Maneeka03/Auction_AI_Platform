@@ -17,7 +17,7 @@ export default function SellerFaqPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50">
           <HelpCircle size={22} className="text-brand-600" />

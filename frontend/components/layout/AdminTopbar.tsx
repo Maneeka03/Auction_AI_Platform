@@ -196,7 +196,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             onClick={() => toggleMenu("reports")}
             aria-label="Reports"
             aria-expanded={openMenu === "reports"}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-amber-600 hover:bg-blue-500/15"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100/10 text-amber-600 hover:bg-blue-100/15"
           >
             <FileBarChart size={17} />
           </button>
