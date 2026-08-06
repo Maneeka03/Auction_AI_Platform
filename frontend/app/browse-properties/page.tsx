@@ -270,7 +270,7 @@ export default function BrowsePropertiesPage() {
         />
       </div>
 
-      <div className="relative z-20 mx-auto -mt-90 w-full max-w-[1600px] px-8 pb-16">
+      <div className="relative z-20 mx-auto -mt-24 w-full max-w-[1600px] px-8 pb-16 sm:-mt-40 lg:-mt-90">
         <div className="mb-6 text-white">
           <Link
             href="/"

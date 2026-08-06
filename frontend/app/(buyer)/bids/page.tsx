@@ -3,6 +3,7 @@
 import { Trophy, XCircle, Clock, Gavel } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { RibbonKpiCard } from "@/components/dashboard/RibbonKpiCard";
 import { getMyBids } from "@/lib/api/bids";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -77,7 +78,7 @@ export default function MyBidsPage() {
   const active = bids.filter((b) => b.auction.status === "live").length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">My Bids</h1>
@@ -94,22 +95,38 @@ export default function MyBidsPage() {
       {/* Summary cards */}
       {!loading && bids.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-green-100 bg-green-50 p-4 text-center">
-            <p className="text-2xl font-bold text-green-700">{won}</p>
-            <p className="mt-0.5 text-xs font-medium text-green-600">Auctions Won</p>
-          </div>
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-center">
-            <p className="text-2xl font-bold text-red-600">{lost}</p>
-            <p className="mt-0.5 text-xs font-medium text-red-500">Auctions Lost</p>
-          </div>
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
-            <p className="text-2xl font-bold text-neutral-500">{noSale}</p>
-            <p className="mt-0.5 text-xs font-medium text-neutral-400">No Sale</p>
-          </div>
-          <div className="rounded-xl border border-brand-100 bg-brand-50 p-4 text-center">
-            <p className="text-2xl font-bold text-brand-600">{active}</p>
-            <p className="mt-0.5 text-xs font-medium text-brand-500">Active Bids</p>
-          </div>
+          <RibbonKpiCard
+            label="Auctions Won"
+            value={String(won)}
+            changePercent={0}
+            changeLabel="total wins"
+            accent="success"
+            hideChange
+          />
+          <RibbonKpiCard
+            label="Auctions Lost"
+            value={String(lost)}
+            changePercent={0}
+            changeLabel="didn't win"
+            accent="danger"
+            hideChange
+          />
+          <RibbonKpiCard
+            label="No Sale"
+            value={String(noSale)}
+            changePercent={0}
+            changeLabel="ended unsold"
+            accent="neutral"
+            hideChange
+          />
+          <RibbonKpiCard
+            label="Active Bids"
+            value={String(active)}
+            changePercent={0}
+            changeLabel="currently live"
+            accent="brand"
+            hideChange
+          />
         </div>
       )}
 
@@ -127,7 +144,15 @@ export default function MyBidsPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col className="w-[30%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+            </colgroup>
             <thead className="border-b border-neutral-100 bg-neutral-50">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Property</th>
@@ -135,7 +160,7 @@ export default function MyBidsPage() {
                 <th className="px-4 py-3 text-right font-medium text-neutral-600">Final Bid</th>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Result</th>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Date</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600"></th>
+                <th className="px-4 py-3 text-right font-medium text-neutral-600">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -155,7 +180,7 @@ export default function MyBidsPage() {
                     <BidResultBadge b={b} />
                   </td>
                   <td className="px-4 py-3 text-neutral-500">{formatDate(b.auction.ends_at)}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-right">
                     <Link
                       href={`/live-auctions/${b.auction.id}`}
                       className="text-xs text-brand-600 hover:underline"

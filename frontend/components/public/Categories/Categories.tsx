@@ -66,10 +66,7 @@ export default function Categories() {
         <div className="overflow-hidden pb-4" ref={emblaRef}>
           <div className="flex">
             {categories.map((category) => (
-              <div
-                key={category.id}
-                className="flex-[0_0_80%] px-3 sm:flex-[0_0_50%] md:flex-[0_0_33.333%] xl:flex-[0_0_25%]"
-              >
+              <div key={category.id} className="flex-[0_0_100%] px-3 sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] xl:flex-[0_0_25%]">
                 <CategoryCard category={category} />
               </div>
             ))}

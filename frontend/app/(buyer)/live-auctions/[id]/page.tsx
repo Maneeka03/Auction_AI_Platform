@@ -116,7 +116,7 @@ export default function LiveBiddingRoomPage() {
   const iLost = isEnded && !!auction.winner_id && auction.winner_id !== session?.id && canBid;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-6">
+    <div className="mx-auto max-w-7xl space-y-5 p-6">
 
       {/* Top bar: back + watchlist */}
       <div className="flex items-center justify-between">

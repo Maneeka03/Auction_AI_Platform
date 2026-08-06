@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth/session-context";
 import type { Auction } from "@/types/auction";
 import type { Property } from "@/types/property";
 
-// Persist clicked item IDs in localStorage so they surface first on next visit.
+
 function markViewed(id: string, categoryId: string) {
   try {
     const prev: string[] = JSON.parse(localStorage.getItem("provenix_viewed") ?? "[]");
@@ -255,7 +255,7 @@ export default function RecommendationsPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-6xl space-y-6 p-6">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-neutral-900">Recommended Properties &amp; Assets</h1>
