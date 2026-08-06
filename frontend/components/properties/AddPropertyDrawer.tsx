@@ -210,7 +210,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
                       key={preview}
                       className="relative h-24 overflow-hidden rounded-lg border border-neutral-200"
                     >
-                      <img src={preview} alt="" className="h-full w-full object-cover" />
+                      <img src={preview} alt="" className="h-full w-full object-contain" />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}

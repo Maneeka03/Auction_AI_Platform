@@ -49,7 +49,7 @@ useEffect(() => {
 const active = TESTIMONIALS[activeIndex];
   return (
     <div className="relative hidden overflow-hidden lg:block lg:flex-1">
-        <Image src="/images/auth-showcase.avif" alt="" fill priority sizes="(min-width: 1024px) 60vw, 0vw" className="object-cover"/>
+        <Image src="/images/auth-showcase.avif" alt="" fill priority sizes="(min-width: 1024px) 60vw, 0vw" className="object-contain"/>
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/90 via-brand-600/90 to-brand-900/95" />
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
             {FLOATING_SHAPES.map((shape, index) => (
@@ -63,7 +63,7 @@ const active = TESTIMONIALS[activeIndex];
                 <p key={activeIndex} className="mt-4 text-left text-xl font-medium text-white animate-slide-in">{active.quote}</p>
                 <div className="mt-8 flex items-center gap-3">
                   <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/20">
-                    <Image key={active.avatarSrc} src={active.avatarSrc} alt="" fill sizes="44px" className="object-cover" />
+                    <Image key={active.avatarSrc} src={active.avatarSrc} alt="" fill sizes="44px" className="object-contain" />
                   </span>
                     <div className="text-left">
                         <p className="text-sm font-semibold text-white">{active.name}</p>

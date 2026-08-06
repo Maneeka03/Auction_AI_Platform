@@ -10,6 +10,7 @@ import {
   Settings,
   ShoppingBag,
   Tag,
+  User,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
 
@@ -43,7 +44,10 @@ export const sellerNav: NavSection[] = [
   },
   {
     title: "Account",
-    items: [{ label: "Settings", href: "/seller/settings", icon: Settings }],
+    items: [
+      { label: "Profile", href: "/seller/profile", icon: User },
+      { label: "Settings", href: "/seller/settings", icon: Settings },
+    ],
   },
   {
     title: "Support",

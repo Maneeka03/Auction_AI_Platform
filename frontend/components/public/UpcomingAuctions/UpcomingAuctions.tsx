@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BedDouble, Bath, Ruler, Gavel, Users, Star, TrendingUp, Tag } from "lucide-react";
+import { BedDouble, Bath, Ruler, Gavel, Users, TrendingUp, Tag } from "lucide-react";
 import { listPublicAuctions } from "@/lib/api/auctions";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { getPublicProperty } from "@/lib/api/properties";
@@ -55,7 +55,6 @@ export default function UpcomingAuctions() {
     const [rows, setRows] = useState<Row[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [favorited, setFavorited] = useState<Set<string>>(new Set());
     const [now, setNow] = useState(() => Date.now());
 
     useEffect(() => {
@@ -84,15 +83,6 @@ export default function UpcomingAuctions() {
     }, [activeTab]);
 
     useEffect(() => { void load();}, [load]);
-
-    function toggleFavorite(id: string) {
-        setFavorited((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    }
 
     return (
         <section className="relative py-20">
@@ -124,12 +114,13 @@ export default function UpcomingAuctions() {
                             <div key={auction.id} role="button" tabIndex={0} onClick={() => router.push(targetFor(auction.id, session))}
                                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(targetFor(auction.id, session));}}
                                 style={{ animationDelay: `${index * 80}ms`, animationFillMode: "backwards" }}
-                                className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-neutral-200 shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 hover:-translate-y-1 hover:shadow-xl md:flex-row"
+                                className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 hover:-translate-y-1 hover:shadow-xl md:flex-row"
                             >
-                                <div className="relative h-56 w-full shrink-0 overflow-hidden bg-neutral-100 md:h-auto md:w-72">
+                                {/* Image */}
+                                <div className="relative h-48 w-full shrink-0 overflow-hidden bg-neutral-100 sm:h-56 md:h-auto md:w-56 lg:w-64">
                                     {auction.image_url ? (
                                         <Image src={resolveMinioUrl(auction.image_url)!} alt={auction.title} fill
-                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                            className="object-contain transition-transform duration-500 group-hover:scale-105"
                                             unoptimized
                                         />
                                     ) : (
@@ -140,94 +131,87 @@ export default function UpcomingAuctions() {
                                     <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-success-500 text-white shadow-md">
                                         <Gavel size={16} />
                                     </span>
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); toggleFavorite(auction.id);}}
-                                        aria-label="Save to favorites"
-                                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:scale-110"
-                                    >
-                                        <Star size={16} className={favorited.has(auction.id) ? "fill-amber-400 text-amber-400" : "text-neutral-400"}/>
-                                    </button>
                                 </div>
-                                <div className="flex flex-1 flex-col items-start gap-4 px-6 py-5 sm:flex-row sm:items-center sm:gap-6">
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="text-lg font-semibold text-neutral-900">{auction.title}</h3>
-                                        <p className="text-sm text-neutral-500">{auction.address}</p>
-                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-500">
+
+                                {/* Main content */}
+                                <div className="flex min-w-0 flex-1 flex-col gap-4 p-4 sm:p-5">
+                                    {/* Title + IDs */}
+                                    <div>
+                                        <h3 className="truncate text-base font-semibold text-neutral-900 sm:text-lg">{auction.title}</h3>
+                                        <p className="truncate text-sm text-neutral-500">{auction.address}</p>
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 sm:text-sm">
                                             <span>
-                                            <span className="font-medium text-neutral-700">Listing ID:</span>{" "}
+                                                <span className="font-medium text-neutral-700">Listing ID:</span>{" "}
                                                 {property ? shortCode(property.id) : "—"}
                                             </span>
                                             <span className="text-neutral-300">|</span>
                                             <span>
-                                            <span className="font-medium text-neutral-700">Item #:</span>{" "}
+                                                <span className="font-medium text-neutral-700">Item #:</span>{" "}
                                                 {shortCode(auction.id)}
                                             </span>
                                         </div>
                                         {property && (property.bedrooms || property.bathrooms || property.area_sqft) && (
-                                            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-neutral-500">
+                                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500 sm:text-sm">
                                                 {property.bedrooms != null && (
-                                                    <span className="flex items-center gap-1">
-                                                        <BedDouble size={15} /> {property.bedrooms} Beds
-                                                    </span>
+                                                    <span className="flex items-center gap-1"><BedDouble size={13} /> {property.bedrooms} Beds</span>
                                                 )}
                                                 {property.bathrooms != null && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Bath size={15} /> {property.bathrooms} Baths
-                                                    </span>
+                                                    <span className="flex items-center gap-1"><Bath size={13} /> {property.bathrooms} Baths</span>
                                                 )}
                                                 {property.area_sqft != null && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Ruler size={15} /> {property.area_sqft.toLocaleString()} Sq. Ft.
-                                                    </span>
+                                                    <span className="flex items-center gap-1"><Ruler size={13} /> {property.area_sqft.toLocaleString()} Sq. Ft.</span>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex shrink-0 items-center border-l-2 border-dashed border-neutral-300 pl-6">
-                                        <div className="border-r-2 border-dashed border-neutral-300 px-3 sm:px-6">
-                                            <p className="flex items-center gap-1.5 text-xs font-medium text-success-500">
-                                                <TrendingUp size={14} /> Current Bid
+
+                                    {/* Bid stats grid — always 3 columns on mobile too */}
+                                    <div className="grid grid-cols-3 gap-2 rounded-xl border border-dashed border-neutral-200 bg-neutral-50 p-3 sm:gap-4 sm:p-4">
+                                        <div>
+                                            <p className="flex items-center gap-1 text-[10px] font-medium text-success-500 sm:text-xs">
+                                                <TrendingUp size={12} /> Current Bid
                                             </p>
-                                            <p className="mt-0.5 text-lg font-bold text-neutral-900">
+                                            <p className="mt-0.5 text-sm font-bold text-neutral-900 sm:text-base">
                                                 {formatMoney(auction.current_bid)}
                                             </p>
                                         </div>
-                                        <div className="border-r-2 border-dashed border-neutral-300 px-3 sm:px-6">
-                                            <p className="flex items-center gap-1.5 text-xs font-medium text-danger-500">
-                                                <Tag size={14} /> Reserve Price
+                                        <div>
+                                            <p className="flex items-center gap-1 text-[10px] font-medium text-danger-500 sm:text-xs">
+                                                <Tag size={12} /> Reserve
                                             </p>
-                                            <p className="mt-0.5 text-lg font-bold text-neutral-900">
+                                            <p className="mt-0.5 text-sm font-bold text-neutral-900 sm:text-base">
                                                 {formatMoney(auction.reserve_price)}
                                             </p>
                                         </div>
-                                        <div className="px-6 text-sm text-neutral-500">
-                                            <p className="flex items-center gap-1.5">
-                                                <Users size={14} /> {auction.bidder_count} bidder{auction.bidder_count === 1 ? "" : "s"}
+                                        <div>
+                                            <p className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 sm:text-xs">
+                                                <Users size={12} /> Bidders
+                                            </p>
+                                            <p className="mt-0.5 text-sm font-bold text-neutral-900 sm:text-base">
+                                                {auction.bidder_count}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex w-full flex-col items-center justify-center gap-3 bg-neutral-50 px-6 py-6 md:w-56">
-                                    <div className="text-center">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-600">
-                                            Bidding ends in
+
+                                {/* CTA column */}
+                                <div className="flex flex-row items-center justify-between gap-3 border-t border-neutral-100 bg-neutral-50 px-4 py-4 sm:px-5 md:w-48 md:flex-col md:items-center md:justify-center md:border-l md:border-t-0 lg:w-52">
+                                    <div className="md:text-center">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500 sm:text-xs">
+                                            Ends in
                                         </p>
-                                        <p className="mt-1 text-lg font-bold text-danger-600">
+                                        <p className="text-sm font-bold text-danger-600 sm:text-base">
                                             {timeRemaining(auction.ends_at, now)}
                                         </p>
-                                    </div>
-                                    <div className="text-center text-sm text-neutral-500">Next Minimum Bid
-                                        <p className="text-base font-semibold text-neutral-900">
-                                            {formatMoney(auction.minimum_bid)}
+                                        <p className="mt-1 text-[10px] text-neutral-400 sm:text-xs">
+                                            Min bid:{" "}
+                                            <span className="font-semibold text-neutral-700">{formatMoney(auction.minimum_bid)}</span>
                                         </p>
                                     </div>
-                                    <div className="text-center text-xs text-neutral-400">
-                                        Increments of{" "}
-                                        {auction.increments.length? `$${Number(Math.min(...auction.increments.map(Number))).toLocaleString()}`: "—"}
-                                    </div>
                                     <Link href={targetFor(auction.id, session)} onClick={(e) => e.stopPropagation()}
-                                        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
+                                        className="flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2 text-xs font-semibold text-white transition hover:scale-105 sm:px-5 sm:py-2.5 sm:text-sm md:w-full md:justify-center"
                                     >
-                                        <Gavel size={15} /> Submit A Bid
+                                        <Gavel size={13} /> Bid Now
                                     </Link>
                                 </div>
                             </div>

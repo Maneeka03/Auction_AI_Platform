@@ -22,7 +22,7 @@ function ItemThumbnail({ imageSrc, color, icon: Icon }: { imageSrc?: string; col
   if (imageSrc) {
     return (
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-neutral-100">
-        <Image src={imageSrc} alt="" fill sizes="36px" className="object-cover" />
+        <Image src={imageSrc} alt="" fill sizes="36px" className="object-contain" />
       </span>
     );
   }

@@ -35,7 +35,18 @@ export function verifyEmail(token: string): Promise<void> {
   return apiClient.post<void>(`${BASE}/verify-email`, { token });
 }
 
-
 export function resendVerification(email: string): Promise<void> {
   return apiClient.post<void>(`${BASE}/resend-verification`, { email });
+}
+
+export function changePassword(
+  accessToken: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  return apiClient.post<void>(
+    `${BASE}/change-password`,
+    { current_password: currentPassword, new_password: newPassword },
+    { accessToken },
+  );
 }

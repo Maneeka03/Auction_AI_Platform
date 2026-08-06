@@ -61,6 +61,8 @@ export default function LoginPage() {
         }
       } else if (isSeller) {
         destination = "/seller/dashboard";
+                // destination = "/login";
+
       } else {
         if (redirect?.startsWith("/browse-properties/")) {
           const propertyId = redirect.slice("/browse-properties/".length);

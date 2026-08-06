@@ -107,7 +107,7 @@ export default function LiveAuctionsPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <Navbar solid />
+      <Navbar />
 
       <div
         className="relative w-full overflow-hidden pt-16"

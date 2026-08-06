@@ -9,6 +9,7 @@ import {
   Settings,
   Sparkles,
   Star,
+  User,
   Wallet,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
@@ -43,7 +44,10 @@ export const buyerNav: NavSection[] = [
   },
   {
     title: "Account",
-    items: [{ label: "Settings", href: "/settings", icon: Settings }],
+    items: [
+      { label: "Profile", href: "/profile", icon: User },
+      { label: "Settings", href: "/settings", icon: Settings },
+    ],
   },
   {
     title: "Support",

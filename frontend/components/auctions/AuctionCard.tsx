@@ -50,13 +50,13 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
       {/* Thumbnail — single status badge here, no duplicate in the header */}
-      <div className="relative h-44 w-full bg-neutral-100">
+      {/* <div className="relative h-44 w-full bg-neutral-100">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={auction.title}
             fill
-            className="object-contain"
+            className="object-cover"
             unoptimized
           />
         ) : (
@@ -72,8 +72,32 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
           ) : null}
           {statusLabels[auction.status]}
         </span>
-      </div>
+      </div> */}
 
+<div className="relative h-64 w-full overflow-hidden bg-neutral-100">
+  {imageUrl ? (
+    <Image
+      src={imageUrl}
+      alt={auction.title}
+      fill
+      className="object-contain object-center bg-neutral-100"
+      unoptimized
+    />
+  ) : (
+    <div className="flex h-full items-center justify-center">
+      <Package size={32} className="text-neutral-300" />
+    </div>
+  )}
+
+  <span
+    className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${statusStyles[auction.status]}`}
+  >
+    {auction.status === "live" ? (
+      <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-danger-500 align-middle" />
+    ) : null}
+    {statusLabels[auction.status]}
+  </span>
+</div>
       <div className="p-5">
         <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">{auction.category_name}</p>
         <h3 className="mt-0.5 text-base font-semibold text-neutral-900">{auction.title}</h3>

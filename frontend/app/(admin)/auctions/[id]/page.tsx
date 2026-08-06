@@ -103,7 +103,7 @@ export default function AdminAuctionRoomPage() {
                     <img
                       src={auction.image_url}
                       alt={auction.title}
-                      className="h-52 w-full object-cover"
+                      className="h-52 w-full object-contain"
                     />
                   ) : (
                     <div className="flex h-52 w-full items-center justify-center bg-neutral-100 text-neutral-400">

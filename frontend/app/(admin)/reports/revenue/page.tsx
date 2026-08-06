@@ -1,10 +1,11 @@
 "use client";
 
-import { Download, Gavel, Receipt, ShoppingBag, Wallet } from "lucide-react";
+import { Download } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
+import { RibbonKpiCard } from "@/components/dashboard/RibbonKpiCard";
 import { Button } from "@/components/ui/Button";
 import { SortByDropdown, type SortOrder } from "@/components/crm/SortByDropdown";
 import { DateRangeDropdown } from "@/components/crm/DateRangeDropdown";
@@ -143,30 +144,10 @@ export default function RevenueReportPage() {
               ) : null}
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  label="Total Revenue"
-                  value={formatCurrency(displayStats.total_revenue)}
-                  icon={Wallet}
-                  accent="success"
-                />
-                <StatCard
-                  label="Auction Revenue"
-                  value={formatCurrency(displayStats.auction_revenue)}
-                  icon={Gavel}
-                  accent="brand"
-                />
-                <StatCard
-                  label="Direct Sales Revenue"
-                  value={formatCurrency(displayStats.direct_sales_revenue)}
-                  icon={ShoppingBag}
-                  accent="amber"
-                />
-                <StatCard
-                  label="Sales Count"
-                  value={displayStats.sales_count.toLocaleString()}
-                  icon={Receipt}
-                  accent="sky"
-                />
+                <RibbonKpiCard label="Total Revenue" value={formatCurrency(displayStats.total_revenue)} changePercent={0} changeLabel="all time" accent="success" hideChange />
+                <RibbonKpiCard label="Auction Revenue" value={formatCurrency(displayStats.auction_revenue)} changePercent={0} changeLabel="from auction awards" accent="brand" hideChange />
+                <RibbonKpiCard label="Direct Sales Revenue" value={formatCurrency(displayStats.direct_sales_revenue)} changePercent={0} changeLabel="from buy now" accent="amber" hideChange />
+                <RibbonKpiCard label="Sales Count" value={displayStats.sales_count.toLocaleString()} changePercent={0} changeLabel="completed sales" accent="sky" hideChange />
               </div>
 
               <div className="rounded-xl border border-neutral-200 bg-white p-5">
@@ -271,33 +252,3 @@ export default function RevenueReportPage() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  icon: typeof Wallet;
-  accent: "success" | "brand" | "amber" | "sky";
-}) {
-  const iconBg: Record<typeof accent, string> = {
-    success: "bg-success-500/10 text-success-500",
-    brand: "bg-brand-500/10 text-brand-600",
-    amber: "bg-blue-100/10 text-amber-600",
-    sky: "bg-blue-100 text-sky-600",
-  };
-
-  return (
-    <div className="flex flex-col justify-center rounded-xl border border-neutral-200 bg-white p-5">
-      <div className="flex items-center gap-2 text-sm text-neutral-500">
-        <span className={`flex h-8 w-8 items-center justify-center rounded-full ${iconBg[accent]}`}>
-          <Icon size={16} />
-        </span>
-        {label}
-      </div>
-      <p className="mt-4 text-2xl font-semibold text-neutral-900">{value}</p>
-    </div>
-  );
-}

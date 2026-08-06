@@ -74,7 +74,7 @@ export default function BlogPage() {
       </Link>
       {/* Hero */}
       <section className="relative overflow-hidden" style={{ aspectRatio: "1812 / 629" }}>
-        <Image src="/images/property-detail/hero-bg.png" alt="" fill className="object-cover object-top" priority />
+        <Image src="/images/property-detail/hero-bg.png" alt="" fill className="object-contain object-top" priority />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-[1600px] items-center px-8 pt-16 text-center">
           <div className="mx-auto">
             <span className="inline-flex rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur">

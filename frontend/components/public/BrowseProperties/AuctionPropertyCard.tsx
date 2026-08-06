@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Gavel, Star, TrendingUp, Tag, Users } from "lucide-react";
+import { Gavel, TrendingUp, Tag, Users } from "lucide-react";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Property } from "@/types/property";
 import type { Auction } from "@/types/auction";
@@ -12,8 +12,6 @@ interface Props {
   auction: Auction;
   now: number;
   loggedIn: boolean;
-  favorited: boolean;
-  onToggleFavorite: () => void;
 }
 
 function formatMoney(value: string | null): string {
@@ -36,8 +34,6 @@ export default function AuctionPropertyCard({
   auction,
   now,
   loggedIn,
-  favorited,
-  onToggleFavorite,
 }: Props) {
   const router = useRouter();
   const detailTarget = `/browse-properties/${property.id}`;
@@ -70,22 +66,6 @@ export default function AuctionPropertyCard({
         <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-success-500 text-white shadow-md">
           <Gavel size={16} />
         </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite();
-          }}
-          aria-label="Save to favorites"
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:scale-110"
-        >
-          <Star
-            size={16}
-            className={
-              favorited ? "fill-amber-400 text-amber-400" : "text-neutral-400"
-            }
-          />
-        </button>
       </div>
 
       <div className="flex flex-1 flex-col p-5">

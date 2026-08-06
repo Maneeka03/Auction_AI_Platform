@@ -13,6 +13,7 @@ import {
   Radio,
   Settings,
   TrendingUp,
+  User,
   Users,
   UserSquare2,
   Wallet,
@@ -62,6 +63,7 @@ export const auctionManagerNav: NavSection[] = [
   {
     title: "Administration",
     items: [
+      { label: "Profile", href: "/admin/profile", icon: User },
       { label: "Settings", href: "/admin/settings", icon: Settings },
       { label: "FAQ", href: "/admin/faqs", icon: HelpCircle },
       { label: "Contact Support", href: "/help/contact", icon: LifeBuoy },

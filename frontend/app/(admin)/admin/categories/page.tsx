@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight, FolderPlus, Plus, RefreshCw, Settings2 } from "lucide-react";
-import { useState } from "react";
+import { useState,useMemo } from "react";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
@@ -29,9 +29,38 @@ export default function CategoriesAdminPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const [search, setSearch] = useState("");
   function toggleExpand(id: string) {
     setExpandedId((prev) => (prev === id ? null : id));
   }
+const filteredCategories = useMemo(() => {
+  const term = search.trim().toLowerCase();
+
+  if (!term) return categories;
+
+  return categories
+    .map((main) => {
+      const mainMatch = main.name.toLowerCase().includes(term);
+
+      const matchedChildren = main.children.filter((sub) =>
+        sub.name.toLowerCase().includes(term)
+      );
+
+      if (mainMatch) {
+        return main;
+      }
+
+      if (matchedChildren.length > 0) {
+        return {
+          ...main,
+          children: matchedChildren,
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean) as CategoryTree[];
+}, [categories, search]);
 
   async function handleSubmit(name: string) {
     if (!accessToken || !drawer) return;
@@ -106,18 +135,35 @@ export default function CategoriesAdminPage() {
           ) : null}
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <input
+    type="text"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    placeholder="Search main category or subcategory..."
+    className="w-full rounded-lg border border-neutral-200 px-4 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+  />
+</div>
             {isLoading ? (
               <p className="px-4 py-8 text-center text-sm text-neutral-500">Loading categories...</p>
             ) : error ? (
               <p className="px-4 py-8 text-center text-sm text-danger-600">{error}</p>
-            ) : categories.length === 0 ? (
+            // ) : categories.length === 0 ? (
+            ) : filteredCategories.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-neutral-500">
                 No categories yet. Add a main category to get started.
               </p>
             ) : (
               <ul className="divide-y divide-neutral-100">
-                {categories.map((main) => {
-                  const isOpen = expandedId === main.id;
+                {/* {categories.map((main) => { */}
+                  {filteredCategories.map((main) => {
+                  // const isOpen = expandedId === main.id;
+                  const isOpen =
+  expandedId === main.id ||
+  (search.trim() !== "" &&
+    main.children.some((sub) =>
+      sub.name.toLowerCase().includes(search.toLowerCase())
+    ));
                   return (
                     <li key={main.id}>
                       {/* Main category row */}

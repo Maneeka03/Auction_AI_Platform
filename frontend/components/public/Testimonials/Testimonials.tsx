@@ -140,7 +140,7 @@ export default function Testimonials() {
                           alt={t.name}
                           width={44}
                           height={44}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-fuchsia-600 to-violet-600 text-sm font-semibold text-white">

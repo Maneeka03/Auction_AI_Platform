@@ -389,7 +389,7 @@ export default function EditListingPage() {
           {imagePreview ? (
             <div className="relative">
               <div className="relative h-52 w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
-                <Image src={imagePreview} alt="Preview" fill className="object-cover" unoptimized />
+                <Image src={imagePreview} alt="Preview" fill className="object-contain" unoptimized />
                 {isUploading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                     <Loader2 size={24} className="animate-spin text-white" />

@@ -552,7 +552,7 @@ export default function NewListingPage() {
                   src={imagePreview}
                   alt="Preview"
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   unoptimized
                 />
                 {isUploading && (
@@ -637,7 +637,7 @@ export default function NewListingPage() {
               {extraImages.map((img, idx) => (
                 <div key={idx} className="relative">
                   <div className="relative h-24 w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
-                    <Image src={img.preview} alt="" fill className="object-cover" unoptimized />
+                    <Image src={img.preview} alt="" fill className="object-contain" unoptimized />
                     {!img.url && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <Loader2 size={18} className="animate-spin text-white" />

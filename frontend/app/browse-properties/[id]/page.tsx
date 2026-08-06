@@ -171,7 +171,7 @@ export default function PropertyDetailPage() {
           src="/images/property-detail/hero-bg.png"
           alt=""
           fill
-          className="object-cover object-top"
+          className="object-contain object-top"
           priority
         />
       </div>
