@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth/session-context";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import type { CategoryTree, CategoryField } from "@/types/category";
 import type { Property } from "@/types/property";
+import toast from "react-hot-toast";
 
 export default function EditListingPage() {
   const { accessToken } = useAuth();
@@ -117,37 +118,54 @@ export default function EditListingPage() {
       setIsUploading(false);
     }
   }
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setError(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!title.trim() || !address.trim() || !categoryId || !reservePrice) {
-      setError("Title, address, category, and reserve price are required.");
-      return;
-    }
-    if (isUploading) {
-      setError("Please wait — image is still uploading.");
-      return;
-    }
-    if (!accessToken) return;
-    setIsSubmitting(true);
-    try {
-      await updateListing(accessToken, params.id, {
-        title: title.trim(),
-        address: address.trim(),
-        category_id: categoryId,
-        reserve_price: reservePrice,
-        description: description.trim() || null,
-        image_url: imageUrl ?? null,
-        custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : null,
-      });
-      router.push("/seller/listings");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save changes.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!title.trim() || !address.trim() || !categoryId || !reservePrice) {
+    const message = "Title, address, category, and reserve price are required.";
+    setError(message);
+    toast.error(message);
+    return;
   }
+
+  if (isUploading) {
+    const message = "Please wait — image is still uploading.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
+
+  if (!accessToken) return;
+
+  setIsSubmitting(true);
+
+  try {
+    await updateListing(accessToken, params.id, {
+      title: title.trim(),
+      address: address.trim(),
+      category_id: categoryId,
+      reserve_price: reservePrice,
+      description: description.trim() || null,
+      image_url: imageUrl ?? null,
+      custom_fields:
+        Object.keys(customFieldValues).length > 0
+          ? customFieldValues
+          : null,
+    });
+
+    toast.success("Listing updated successfully");
+    router.push("/seller/listings");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to save changes.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   if (isLoading) {
     return (

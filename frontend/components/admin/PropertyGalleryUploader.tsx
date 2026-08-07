@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Upload, X, Loader2 } from "lucide-react";
 import { uploadImage } from "@/lib/utils/uploadImage";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
@@ -43,8 +44,10 @@ export default function PropertyGalleryUploader({
         current = updated.images;
         onChange(current);
       }
+      toast.success("Images uploaded successfully");
     } catch {
       setError("One or more photos failed to upload. Try again.");
+      toast.error("One or more photos failed to upload. Try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -59,8 +62,10 @@ export default function PropertyGalleryUploader({
         imageId,
       );
       onChange(updated.images);
+      toast.success("Image removed successfully");
     } catch {
       setError("Failed to remove that photo. Try again.");
+      toast.error("Failed to remove that photo. Try again.");
     }
   }
 

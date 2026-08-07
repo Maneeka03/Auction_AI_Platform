@@ -2,6 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { withdrawFromWallet } from "@/lib/api/wallet";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -38,8 +39,10 @@ export function WithdrawModal({ availableBalance, onClose, onSuccess }: Withdraw
       const summary = await withdrawFromWallet(accessToken, { amount: amountNumber.toFixed(2) });
       setSucceeded(true);
       onSuccess(summary);
+      toast.success("Withdrawal completed successfully");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to withdraw funds.");
+      toast.error(err instanceof ApiRequestError ? err.message : "Failed to withdraw funds.");
     } finally {
       setIsProcessing(false);
     }

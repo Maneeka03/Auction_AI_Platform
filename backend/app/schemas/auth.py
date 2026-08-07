@@ -53,6 +53,10 @@ class ChangePasswordRequest(BaseModel):
     new_password: Password
 
 
+class UpdateProfileRequest(BaseModel):
+    full_name: str = Field(min_length=2, max_length=120)
+
+
 class AccessToken(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"

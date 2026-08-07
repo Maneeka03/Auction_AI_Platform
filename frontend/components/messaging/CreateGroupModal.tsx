@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { chatSearch, createGroup } from "@/lib/api/messages";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -68,8 +69,10 @@ export function CreateGroupModal({ onClose, onCreate }: Props) {
         selected.map((u) => u.id),
       );
       onCreate(group);
+      toast.success("Group created successfully");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to create group.");
+      toast.error(err instanceof ApiRequestError ? err.message : "Failed to create group.");
     } finally {
       setSaving(false);
     }

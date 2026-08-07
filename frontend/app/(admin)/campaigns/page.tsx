@@ -2,6 +2,8 @@
 
 import { Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { Pagination } from "@/components/ui/Pagination";
@@ -115,6 +117,7 @@ export default function CampaignsPage() {
     } else {
       await updateCampaign(accessToken, drawer.campaign.id, payload);
     }
+    toast.success(drawer.mode === "create" ? "Campaign created successfully" : "Campaign updated successfully");
 
     setDrawer(null);
     void fetchCampaigns();
@@ -122,12 +125,13 @@ export default function CampaignsPage() {
 
   async function handleSend(campaign: Campaign) {
     if (!accessToken) return;
-    const confirmed = window.confirm(`Send "${campaign.name}" now? This can't be undone.`);
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Send campaign?", text: `"${campaign.name}" will be sent now and this cannot be undone.`, icon: "warning", showCancelButton: true, confirmButtonText: "Send", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     try {
       await sendCampaign(accessToken, campaign.id);
+      toast.success("Campaign sent successfully");
       void fetchCampaigns();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to send campaign.");
@@ -136,12 +140,13 @@ export default function CampaignsPage() {
 
   async function handleDelete(campaign: Campaign) {
     if (!accessToken) return;
-    const confirmed = window.confirm(`Delete "${campaign.name}"? This can't be undone.`);
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Delete campaign?", text: `"${campaign.name}" will be permanently deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     try {
       await deleteCampaign(accessToken, campaign.id);
+      toast.success("Campaign deleted successfully");
       void fetchCampaigns();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to delete campaign.");

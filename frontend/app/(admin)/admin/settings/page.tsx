@@ -12,7 +12,7 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PushEnableButton } from "@/components/notifications/PushEnableButton";
-
+import toast from "react-hot-toast";
 type Tab = "general" | "auction" | "notifications" | "security";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
@@ -150,10 +150,18 @@ export default function SettingsPage() {
   const [maxLoginAttempts, setMaxLoginAttempts] = useState("5");
   const [ipWhitelist, setIpWhitelist] = useState("");
 
+  // function handleSave() {
+  //   setSaved(true);
+  //   setTimeout(() => setSaved(false), 3000);
+  // }
   function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }
+  // TODO: call your API here when settings persistence is implemented
+
+  setSaved(true);
+  toast.success("Settings saved successfully");
+
+  setTimeout(() => setSaved(false), 3000);
+}
 
   return (
     <AdminShell>

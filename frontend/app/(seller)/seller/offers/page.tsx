@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getMyListings } from "@/lib/api/seller";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
+import toast from "react-hot-toast";
 
 export default function OffersPage() {
   const { accessToken } = useAuth();

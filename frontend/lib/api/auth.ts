@@ -23,6 +23,10 @@ export function getMe(accessToken: string): Promise<Session> {
   return apiClient.get<Session>(`${BASE}/me`, { accessToken });
 }
 
+export function updateMyProfile(accessToken: string, fullName: string): Promise<Session> {
+  return apiClient.patch<Session>(`${BASE}/me`, { full_name: fullName }, { accessToken });
+}
+
 export function forgotPassword(email: string): Promise<void> {
   return apiClient.post<void>(`${BASE}/forgot-password`, { email });
 }

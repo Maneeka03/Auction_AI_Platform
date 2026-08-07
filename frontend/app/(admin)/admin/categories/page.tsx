@@ -2,6 +2,8 @@
 
 import { ChevronDown, ChevronRight, FolderPlus, Plus, RefreshCw, Settings2 } from "lucide-react";
 import { useState,useMemo } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
@@ -72,6 +74,7 @@ const filteredCategories = useMemo(() => {
     } else {
       await updateCategory(accessToken, drawer.category.id, { name });
     }
+    toast.success(drawer.mode === "edit" ? "Category updated successfully" : "Category created successfully");
 
     setDrawer(null);
     void refetch();
@@ -80,16 +83,13 @@ const filteredCategories = useMemo(() => {
   async function handleDelete(category: Category) {
     if (!accessToken) return;
     const isMain = category.parent_id === null;
-    const confirmed = window.confirm(
-      isMain
-        ? `Delete "${category.name}" and all its subcategories? This can't be undone.`
-        : `Delete "${category.name}"? This can't be undone.`,
-    );
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Delete category?", text: isMain ? `"${category.name}" and all of its subcategories will be deleted.` : `"${category.name}" will be deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     try {
       await deleteCategory(accessToken, category.id);
+      toast.success("Category deleted successfully");
       void refetch();
     } catch (err) {
       setActionError(

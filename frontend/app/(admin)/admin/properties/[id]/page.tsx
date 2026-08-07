@@ -235,7 +235,7 @@ export default function AdminPropertyDetailPage() {
 
               <Link
                 href={relatedAuction ? `/auctions/${relatedAuction.id}` : "/auctions"}
-                className="mt-3 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
+                className="mt-3 flex w-full items-center justify-center rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:scale-105"
               >
                 Book Now
               </Link>

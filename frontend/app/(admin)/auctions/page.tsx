@@ -3,6 +3,8 @@
 import { Plus, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
@@ -73,6 +75,7 @@ export default function LiveAuctionsPage() {
   async function handleCreate(payload: Parameters<typeof createAuction>[1]) {
     if (!accessToken) return;
     await createAuction(accessToken, payload);
+    toast.success("Auction created successfully");
     setShowCreateDrawer(false);
     void fetchAuctions();
   }
@@ -80,6 +83,7 @@ export default function LiveAuctionsPage() {
   async function handleSaveEdit(payload: Parameters<typeof updateAuction>[2]) {
     if (!accessToken || !editingAuction) return;
     await updateAuction(accessToken, editingAuction.id, payload);
+    toast.success("Auction updated successfully");
     setEditingAuction(null);
     void fetchAuctions();
   }
@@ -88,33 +92,31 @@ export default function LiveAuctionsPage() {
     if (!accessToken) return;
     const hasBids = !!auction.current_bid;
     if (hasBids) {
-      const choice = window.confirm(
-        `"${auction.title}" has active bids (highest: $${Number(auction.current_bid).toLocaleString()}).\n\nClick OK to award to the highest bidder.\nClick Cancel to end with no sale.`,
-      );
-      if (choice) {
+      const choice = await Swal.fire({ title: "End auction?", text: `"${auction.title}" has active bids (highest: $${Number(auction.current_bid).toLocaleString()}).`, icon: "warning", showCancelButton: true, showDenyButton: true, confirmButtonText: "Award highest bidder", denyButtonText: "End with no sale", cancelButtonText: "Keep auction open" });
+      if (choice.isConfirmed) {
         await awardAuctionToHighest(accessToken, auction.id);
-      } else {
-        const noSaleConfirm = window.confirm(`End "${auction.title}" with no sale? This can't be undone.`);
-        if (!noSaleConfirm) return;
+      } else if (choice.isDenied) {
+        const noSaleConfirm = await Swal.fire({ title: "End with no sale?", text: `"${auction.title}" will be closed and this cannot be undone.`, icon: "warning", showCancelButton: true, confirmButtonText: "End auction", cancelButtonText: "Cancel" });
+        if (!noSaleConfirm.isConfirmed) return;
         await endAuction(accessToken, auction.id);
-      }
+      } else return;
     } else {
-      const confirmed = window.confirm(
-        `End "${auction.title}" now? This closes the auction with no sale and can't be undone.`,
-      );
-      if (!confirmed) return;
+      const confirmed = await Swal.fire({ title: "End auction?", text: `"${auction.title}" will close with no sale and this cannot be undone.`, icon: "warning", showCancelButton: true, confirmButtonText: "End auction", cancelButtonText: "Cancel" });
+      if (!confirmed.isConfirmed) return;
       await endAuction(accessToken, auction.id);
     }
     void fetchAuctions();
+    toast.success("Auction action completed successfully");
   }
 
   async function handleDeleteAuction(auction: Auction) {
     if (!accessToken) return;
-    const confirmed = window.confirm(`Delete "${auction.title}"? This can't be undone.`);
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Delete auction?", text: `"${auction.title}" will be permanently deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     setActionError(null);
     try {
       await deleteAuction(accessToken, auction.id);
+      toast.success("Auction deleted successfully");
       void fetchAuctions();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to delete auction.");

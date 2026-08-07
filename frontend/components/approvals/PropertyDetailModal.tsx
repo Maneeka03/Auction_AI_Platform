@@ -12,6 +12,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ApproverSeatChip } from "@/components/approvals/ApproverSeatChip";
 import { ModelViewer } from "@/components/properties/ModelViewer";
@@ -152,8 +153,10 @@ export function PropertyDetailModal({
         category_id: finalCatId,
       });
       onPropertyUpdated?.(updated);
+      toast.success("Property category updated successfully");
     } catch {
       setCatError("Failed to update category.");
+      toast.error("Failed to update category.");
     } finally {
       setSavingCat(false);
     }

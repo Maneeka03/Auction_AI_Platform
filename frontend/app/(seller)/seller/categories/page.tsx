@@ -2,6 +2,7 @@
 
 import { FolderPlus, Loader2, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { createCategory, listCategories } from "@/lib/api/categories";
 import { useAuth } from "@/lib/auth/session-context";
@@ -106,9 +107,11 @@ export default function ProposeCategoryPage() {
       listCategories(accessToken).then(setCategories).catch(() => null);
 
       setSuccess(`Category "${catName.trim()}" created successfully.`);
+      toast.success("Category created successfully");
       reset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create category.");
+      toast.error(err instanceof Error ? err.message : "Failed to create category.");
     } finally {
       setIsCreating(false);
     }

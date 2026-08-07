@@ -3,6 +3,8 @@
 import { ArrowRight, Building2, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -102,12 +104,8 @@ export default function EscrowAdminPage() {
     const next = NEXT_STATE[escrow.state];
     if (!next) return;
 
-    const confirmed = window.confirm(
-      next === "released"
-        ? `Release ${formatMoney(escrow.amount)} to the seller for "${escrow.property_title}"? This pays out immediately and can't be undone.`
-        : `Move "${escrow.property_title}" from ${STATE_LABEL[escrow.state]} to ${STATE_LABEL[next]}?`,
-    );
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: next === "released" ? "Release escrow payment?" : "Advance escrow?", text: next === "released" ? `Release ${formatMoney(escrow.amount)} to the seller for "${escrow.property_title}"? This cannot be undone.` : `Move "${escrow.property_title}" from ${STATE_LABEL[escrow.state]} to ${STATE_LABEL[next]}?`, icon: "warning", showCancelButton: true, confirmButtonText: next === "released" ? "Release payment" : "Advance", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     setAdvancingId(escrow.id);
@@ -123,6 +121,7 @@ export default function EscrowAdminPage() {
 
     try {
       await advanceEscrow(accessToken, escrow.id);
+      toast.success("Escrow advanced successfully");
       void fetchEscrows();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to advance escrow.");

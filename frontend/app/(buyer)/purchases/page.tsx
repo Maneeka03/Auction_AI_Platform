@@ -2,6 +2,7 @@
 
 import { CheckCircle, Package } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { confirmDelivery, getPurchases } from "@/lib/api/buyer";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -45,7 +46,8 @@ export default function PurchasesPage() {
     try {
       const updated = await confirmDelivery(accessToken, escrowId);
       setPurchases((prev) => prev.map((p) => p.escrow_id === escrowId ? updated : p));
-    } catch { /* ignore */ } finally {
+      toast.success("Delivery confirmed successfully");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to confirm delivery."); } finally {
       setConfirming(null);
     }
   }

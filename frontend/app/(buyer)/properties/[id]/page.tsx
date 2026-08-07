@@ -13,6 +13,7 @@ import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -67,23 +68,27 @@ export default function BuyerPropertyDetailPage() {
       .catch(() => {});
   }, [accessToken, params.id]);
 
-  async function toggleWatchlist() {
-    if (!accessToken || watchlistLoading) return;
-    setWatchlistLoading(true);
-    try {
-      if (inWatchlist) {
-        await removeFromWatchlist(accessToken, params.id);
-        setInWatchlist(false);
-      } else {
-        await addToWatchlist(accessToken, params.id);
-        setInWatchlist(true);
-      }
-    } catch {
-      // silent
-    } finally {
-      setWatchlistLoading(false);
+ async function toggleWatchlist() {
+  if (!accessToken || watchlistLoading) return;
+
+  setWatchlistLoading(true);
+
+  try {
+    if (inWatchlist) {
+      await removeFromWatchlist(accessToken, params.id);
+      setInWatchlist(false);
+      toast.success("Removed from watchlist");
+    } else {
+      await addToWatchlist(accessToken, params.id);
+      setInWatchlist(true);
+      toast.success("Saved to watchlist");
     }
+  } catch {
+    toast.error("Unable to update watchlist");
+  } finally {
+    setWatchlistLoading(false);
   }
+}
 
   const gallery = property
     ? [property.image_url, ...(property.images?.map((img) => img.image_url) ?? [])]
@@ -250,7 +255,8 @@ export default function BuyerPropertyDetailPage() {
                     type="button"
                     disabled={property.status !== "published"}
                     onClick={() => setPurchasing(true)}
-                    className="mt-3 w-full rounded-2xl bg-gradient-to-r from-brand-500 to-purple-600 py-3 text-sm font-bold text-white shadow transition hover:opacity-90 disabled:cursor-not-allowed disabled:from-neutral-300 disabled:to-neutral-300 disabled:text-neutral-500"
+                    className="mt-3 w-full rounded-2xl bg-violet-600 py-3 text-sm font-bold text-white shadow transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
+                    // className="mt-3 w-full rounded-2xl bg-gradient-to-r from-brand-500 to-purple-600 py-3 text-sm font-bold text-white shadow transition hover:opacity-90 disabled:cursor-not-allowed disabled:from-neutral-300 disabled:to-neutral-300 disabled:text-neutral-500"
                   >
                     {property.status === "published"
                       ? "Book Now"

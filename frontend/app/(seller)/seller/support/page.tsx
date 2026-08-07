@@ -11,6 +11,8 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { SupportTicket, TicketStatus } from "@/types/supportTicket";
 import type { TicketSubject } from "@/types/ticketSubject";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const OTHER_VALUE = "__other__";
 
@@ -84,25 +86,33 @@ export default function SellerSupportPage() {
       const payload = isOther
         ? { subject_id: null, custom_subject: form.customSubject.trim(), message: form.message.trim() }
         : { subject_id: form.subjectId, custom_subject: null, message: form.message.trim() };
-      if (form.id) await updateTicket(accessToken, form.id, payload);
-      else await createTicket(accessToken, payload);
-      setForm(null);
-      await load();
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to save.");
-    } finally {
+      // if (form.id) 
+      //   await updateTicket(accessToken, form.id, payload);
+      // else await createTicket(accessToken, payload);
+      // setForm(null);
+      // await load();
+      if (form.id) { await updateTicket(accessToken, form.id, payload); toast.success("Ticket updated successfully"); } else { await createTicket(accessToken, payload); toast.success("Support ticket submitted successfully"); }
+    // } catch (err) {
+    //   setError(err instanceof ApiRequestError ? err.message : "Failed to save.");
+    // } finally {
+    } catch (err) { const message = err instanceof ApiRequestError ? err.message : "Failed to save."; setError(message); toast.error(message); } 
+    finally {
       setIsSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!accessToken || !window.confirm("Delete this ticket?")) return;
+    if (!accessToken) return;
+    const confirmed = await Swal.fire({ title: "Delete ticket?", text: "This cannot be undone.", icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     try {
       await deleteTicket(accessToken, id);
+      toast.success("Ticket deleted successfully");
       await load();
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to delete.");
-    }
+    // } catch (err) {
+    //   setError(err instanceof ApiRequestError ? err.message : "Failed to delete.");
+    // }
+    } catch (err) { const message = err instanceof ApiRequestError ? err.message : "Failed to delete."; setError(message); toast.error(message); }
   }
 
   return (

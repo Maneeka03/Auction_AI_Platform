@@ -2,6 +2,7 @@
 
 import { Download, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -18,6 +19,7 @@ import { PropertyRowMenu } from "@/components/properties/PropertyRowMenu";
 import { PropertyImagesDrawer } from "@/components/properties/PropertyImagesDrawer";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property, PropertyImage } from "@/types/property";
+import toast from "react-hot-toast";
 
 function formatPrice(value: string): string {
   return `$${Number(value).toLocaleString()}`;
@@ -59,37 +61,68 @@ export default function ListingsPage() {
     [properties, page],
   );
 
-  async function handleCreate(payload: Parameters<typeof createProperty>[1], galleryImageUrls: string[]) {
-    if (!accessToken) return;
+async function handleCreate(
+  payload: Parameters<typeof createProperty>[1],
+  galleryImageUrls: string[],
+) {
+  if (!accessToken) return;
+
+  try {
     const created = await createProperty(accessToken, payload);
+
     for (const url of galleryImageUrls) {
       await addPropertyImage(accessToken, created.id, url);
     }
+
+    toast.success("Property created successfully");
     setShowAddDrawer(false);
-    void fetchProperties();
-  }
+    await fetchProperties();
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError ? err.message : "Failed to create property.";
 
-  async function handleSave(updates: Parameters<typeof updateProperty>[2]) {
-    if (!accessToken || !editingProperty) return;
+    toast.error(message);
+  }
+}
+
+async function handleSave(updates: Parameters<typeof updateProperty>[2]) {
+  if (!accessToken || !editingProperty) return;
+
+  try {
     await updateProperty(accessToken, editingProperty.id, updates);
-    setEditingProperty(null);
-    void fetchProperties();
-  }
 
-  async function handleDelete(property: Property) {
-    if (!accessToken) return;
-    const confirmed = window.confirm(`Delete "${property.title}"? This can't be undone.`);
-    if (!confirmed) return;
-    setActionError(null);
-    try {
-      await deleteProperty(accessToken, property.id);
-      void fetchProperties();
-    } catch (err) {
-      setActionError(
-        err instanceof ApiRequestError ? err.message : "Failed to delete property.",
-      );
-    }
+    toast.success("Property updated successfully");
+    setEditingProperty(null);
+    await fetchProperties();
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError ? err.message : "Failed to update property.";
+
+    toast.error(message);
   }
+}
+
+async function handleDelete(property: Property) {
+  if (!accessToken) return;
+
+  const confirmed = await Swal.fire({ title: "Delete property?", text: `"${property.title}" will be permanently deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+  if (!confirmed.isConfirmed) return;
+
+  setActionError(null);
+
+  try {
+    await deleteProperty(accessToken, property.id);
+
+    toast.success("Property deleted successfully");
+    await fetchProperties();
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError ? err.message : "Failed to delete property.";
+
+    setActionError(message);
+    toast.error(message);
+  }
+}
 
   function handleImagesUpdate(propertyId: string, images: PropertyImage[]) {
     setProperties((prev) =>

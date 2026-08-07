@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import type { Auction, RoomAccess, UpdateAuctionRequest } from "@/types/auction";
+import { toast } from "react-hot-toast/headless";
 
 interface EditAuctionDrawerProps {
   auction: Auction;
@@ -39,44 +40,101 @@ export function EditAuctionDrawer({ auction, onClose, onSave }: EditAuctionDrawe
     setTimeout(onClose, 200);
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  // async function handleSubmit(event: React.FormEvent) {
+  //   event.preventDefault();
+  //   setError(null);
 
-    const endDate = new Date(endsAt);
-    if (endDate <= new Date()) {
-      setError("End time must be in the future.");
+  //   const endDate = new Date(endsAt);
+  //   if (endDate <= new Date()) {
+  //     setError("End time must be in the future.");
+  //     return;
+  //   }
+
+  //   const payload: UpdateAuctionRequest = {
+  //     ends_at: endDate.toISOString(),
+  //     reserve_price: reservePrice,
+  //   };
+
+  //   if (isUpcoming) {
+  //     const incrementList = increments
+  //       .split(",")
+  //       .map((v) => v.trim())
+  //       .filter(Boolean);
+  //     if (incrementList.length === 0 || incrementList.some((v) => Number.isNaN(Number(v)))) {
+  //       setError("Increments must be a comma-separated list of numbers.");
+  //       return;
+  //     }
+  //     payload.increments = incrementList;
+  //     payload.room_access = roomAccess;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSave(payload);
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Something went wrong.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
+async function handleSubmit(event: React.FormEvent) {
+  event.preventDefault();
+  setError(null);
+
+  const endDate = new Date(endsAt);
+
+  if (endDate <= new Date()) {
+    const message = "End time must be in the future.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
+
+  const payload: UpdateAuctionRequest = {
+    ends_at: endDate.toISOString(),
+    reserve_price: reservePrice,
+  };
+
+  if (isUpcoming) {
+    const incrementList = increments
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    if (
+      incrementList.length === 0 ||
+      incrementList.some((v) => Number.isNaN(Number(v)))
+    ) {
+      const message =
+        "Increments must be a comma-separated list of numbers.";
+
+      setError(message);
+      toast.error(message);
       return;
     }
 
-    const payload: UpdateAuctionRequest = {
-      ends_at: endDate.toISOString(),
-      reserve_price: reservePrice,
-    };
-
-    if (isUpcoming) {
-      const incrementList = increments
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (incrementList.length === 0 || incrementList.some((v) => Number.isNaN(Number(v)))) {
-        setError("Increments must be a comma-separated list of numbers.");
-        return;
-      }
-      payload.increments = incrementList;
-      payload.room_access = roomAccess;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSave(payload);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    payload.increments = incrementList;
+    payload.room_access = roomAccess;
   }
 
+  setIsSubmitting(true);
+
+  try {
+    await onSave(payload);
+
+    toast.success("Auction updated successfully");
+
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div

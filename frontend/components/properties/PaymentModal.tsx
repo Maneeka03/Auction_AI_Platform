@@ -3,6 +3,7 @@
 import { AlertCircle, CheckCircle2, Coins, CreditCard, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { purchaseProperty } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -39,7 +40,9 @@ export function PaymentModal({ property, onClose, onConfirm }: PaymentModalProps
       const updated = await purchaseProperty(accessToken, property.id, { method });
       setResult(updated);
       onConfirm(updated);
+      toast.success("Property purchased successfully");
     } catch (err) {
+      toast.error(err instanceof ApiRequestError ? err.message : "Something went wrong. Please try again.");
       setError(
         err instanceof ApiRequestError
           ? { code: err.code, message: err.message }

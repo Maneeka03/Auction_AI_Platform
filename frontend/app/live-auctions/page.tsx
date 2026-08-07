@@ -13,7 +13,7 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Auction, AuctionStatus } from "@/types/auction";
 import type { Property } from "@/types/property";
-
+import toast from "react-hot-toast";
 type FilterTab = "all" | AuctionStatus;
 
 const TABS: { key: FilterTab; label: string }[] = [
@@ -82,7 +82,14 @@ export default function LiveAuctionsPage() {
       );
       setRows(withProperties);
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load auctions.");
+      // setError(err instanceof ApiRequestError ? err.message : "Failed to load auctions.");
+      const message =
+  err instanceof ApiRequestError
+    ? err.message
+    : "Failed to load auctions.";
+
+setError(message);
+toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -92,14 +99,21 @@ export default function LiveAuctionsPage() {
     void load();
   }, [load]);
 
-  function toggleFavorite(id: string) {
-    setFavorited((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+function toggleFavorite(id: string) {
+  setFavorited((prev) => {
+    const next = new Set(prev);
+
+    if (next.has(id)) {
+      next.delete(id);
+      toast.success("Removed from favourites");
+    } else {
+      next.add(id);
+      toast.success("Added to favourites");
+    }
+
+    return next;
+  });
+}
 
   function bidTarget(auctionId: string): string {
     return session ? `/live-auctions/${auctionId}` : `/login?redirect=/live-auctions/${auctionId}`;

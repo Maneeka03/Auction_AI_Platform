@@ -2,6 +2,7 @@
 
 import { Radio, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { getMyAuctions, getMyListings } from "@/lib/api/seller";
 import { listMyAuctionRequests, submitAuctionRequest } from "@/lib/api/auctionRequests";
@@ -94,22 +95,43 @@ function AddLiveAuctionModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     setIsSubmitting(true);
     try {
+      // await submitAuctionRequest(accessToken, {
+      //   title: title.trim(),
+      //   description: description.trim() || undefined,
+      //   requested_at: dt.toISOString(),
+      //   ...(hasAuctionDetails && {
+      //     property_id: propertyId,
+      //     opening_bid: openingBid,
+      //     reserve_price: reservePrice,
+      //     ends_at: new Date(endsAt).toISOString(),
+      //     increments,
+      //   }),
+      // });
+      // onSuccess();
       await submitAuctionRequest(accessToken, {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        requested_at: dt.toISOString(),
-        ...(hasAuctionDetails && {
-          property_id: propertyId,
-          opening_bid: openingBid,
-          reserve_price: reservePrice,
-          ends_at: new Date(endsAt).toISOString(),
-          increments,
-        }),
-      });
-      onSuccess();
+  title: title.trim(),
+  description: description.trim() || undefined,
+  requested_at: dt.toISOString(),
+  ...(hasAuctionDetails && {
+    property_id: propertyId,
+    opening_bid: openingBid,
+    reserve_price: reservePrice,
+    ends_at: new Date(endsAt).toISOString(),
+    increments,
+  }),
+});
+
+toast.success("Auction request submitted successfully");
+
+onSuccess();
+    // } catch (err) {
+    //   setError(err instanceof Error ? err.message : "Failed to submit.");
+    // } finally {
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit.");
-    } finally {
+  const message = err instanceof Error ? err.message : "Failed to submit.";
+  setError(message);
+  toast.error(message);
+} finally {
       setIsSubmitting(false);
     }
   }
