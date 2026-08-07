@@ -45,7 +45,7 @@ function formatRelative(iso: string): string {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-export default function BuyerMessagesPage() {
+export default function MessagesPage() {
   const { session, accessToken } = useAuth();
   const [tab, setTab] = useState<Tab>("dms");
   const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
@@ -294,13 +294,13 @@ export default function BuyerMessagesPage() {
               </div>
             </div>
           ) : (
-           <MessageView
-            title={activeTitle}
-            messages={active.kind === "dm" ? dmMessages : groupMessages}
-            currentUserId={session?.id ?? ""}
-            loading={loadingMessages}
-            onSend={active.kind === "dm" ? handleSendDm : handleSendGroup}
-          />
+            <MessageView
+              title={activeTitle}
+              messages={active.kind === "dm" ? dmMessages : groupMessages}
+              currentUserId={session?.id ?? ""}
+              loading={loadingMessages}
+              onSend={active.kind === "dm" ? handleSendDm : handleSendGroup}
+            />
           )}
         </main>
       </div>

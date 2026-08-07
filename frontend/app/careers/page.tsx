@@ -120,7 +120,7 @@ export default function CareersPage() {
           </div>
           <p className="mt-8 text-center text-sm text-neutral-400">
             Don&apos;t see the right role?{" "}
-            <a href="mailto:help@aucto.com" className="font-semibold text-brand-600 hover:underline">
+            <a href="mailto:help@Provenix.com" className="font-semibold text-brand-600 hover:underline">
               Send us your CV anyway →
             </a>
           </p>

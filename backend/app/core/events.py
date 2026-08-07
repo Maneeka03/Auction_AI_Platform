@@ -14,6 +14,14 @@ def ticket_channel() -> str:
     return "support_tickets"
 
 
+def user_ticket_channel(user_id: uuid.UUID) -> str:
+    return f"support_tickets:{user_id}"
+
+
+def notification_channel(user_id: uuid.UUID) -> str:
+    return f"notifications:{user_id}"
+
+
 async def publish(channel: str, payload: dict[str, Any]) -> None:
     await redis.publish(channel, json.dumps(payload))
 

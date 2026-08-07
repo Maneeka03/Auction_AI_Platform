@@ -324,6 +324,44 @@ export default function BrowsePropertiesPage() {
                   </span>
                 </p>
               )}
+              {priceRange && (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <label className="text-xs font-medium text-neutral-600">
+                    Min price
+                    <input
+                      type="number"
+                      min={priceBounds.min}
+                      max={priceRange[1]}
+                      value={priceRange[0]}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        if (Number.isFinite(value)) {
+                          setPriceRange([Math.max(priceBounds.min, Math.min(value, priceRange[1])), priceRange[1]]);
+                          setPage(1);
+                        }
+                      }}
+                      className="mt-1 w-full rounded-lg border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 focus:border-brand-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="text-xs font-medium text-neutral-600">
+                    Max price
+                    <input
+                      type="number"
+                      min={priceRange[0]}
+                      max={priceBounds.max}
+                      value={priceRange[1]}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        if (Number.isFinite(value)) {
+                          setPriceRange([priceRange[0], Math.min(priceBounds.max, Math.max(value, priceRange[0]))]);
+                          setPage(1);
+                        }
+                      }}
+                      className="mt-1 w-full rounded-lg border border-neutral-200 px-2 py-1.5 text-sm text-neutral-900 focus:border-brand-500 focus:outline-none"
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             {categories.length > 0 && (
@@ -503,7 +541,7 @@ export default function BrowsePropertiesPage() {
                 />
               </div>
 
-              <div className="relative flex-1 md:max-w-xs">
+              <div className="relative w-full md:w-44 md:flex-none">
                 <Search
                   size={16}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"

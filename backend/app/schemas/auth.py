@@ -55,6 +55,7 @@ class ChangePasswordRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
+    avatar_url: str | None = Field(default=None, max_length=500)
 
 
 class AccessToken(BaseModel):
@@ -67,6 +68,7 @@ class Session(BaseModel):
     id: uuid.UUID
     email: EmailStr
     full_name: str
+    avatar_url: str | None
     status: UserStatus
     country: str | None
     business_type: str | None
@@ -81,6 +83,7 @@ class Session(BaseModel):
             id=user.id,
             email=user.email,
             full_name=user.full_name,
+            avatar_url=user.avatar_url,
             status=user.status,
             country=user.country,
             business_type=user.business_type,

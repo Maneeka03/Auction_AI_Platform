@@ -42,8 +42,8 @@ function NavContent({ showLabels, onNavigate }: { showLabels: boolean; onNavigat
                     title={showLabels ? undefined : item.label}
                     className={`flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                       isActive
-                        ? "bg-brand-50 text-brand-700"
-                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                          ? "bg-brand-50 text-brand-700 dark:bg-brand-600 dark:text-white"
+                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white"
                     } ${showLabels ? "" : "justify-center"}`}
                   >
                     {/* OLD: <item.icon size={18} className="shrink-0" /> */}

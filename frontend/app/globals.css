@@ -124,6 +124,11 @@
 }
 
 :root {
+  --toast-text: #111827;
+  --toast-success-bg: #dcfce7;
+  --toast-success-border: #86efac;
+  --toast-error-bg: #fee2e2;
+  --toast-error-border: #fca5a5;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -159,6 +164,12 @@
 }
 
 .dark {
+  color-scheme: dark;
+  --toast-text: #f9fafb;
+  --toast-success-bg: #14532d;
+  --toast-success-border: #22c55e;
+  --toast-error-bg: #7f1d1d;
+  --toast-error-border: #f87171;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -190,4 +201,37 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Existing screens use Tailwind's neutral and white utility palette. These overrides
+   give all roles, tables, drawers, and forms a consistent dark surface. */
+.dark body { background: #111827; color: #f9fafb; }
+.dark .bg-white, .dark .bg-white\/95 { background-color: #1f2937 !important; }
+.dark .bg-neutral-50 { background-color: #111827 !important; }
+.dark .bg-neutral-100 { background-color: #263244 !important; }
+.dark .bg-neutral-200 { background-color: #334155 !important; }
+.dark .bg-neutral-900 { background-color: #f9fafb !important; }
+.dark .text-neutral-900 { color: #f9fafb !important; }
+.dark .text-neutral-800 { color: #e5e7eb !important; }
+.dark .text-neutral-700, .dark .text-neutral-600 { color: #cbd5e1 !important; }
+.dark .text-neutral-500, .dark .text-neutral-400 { color: #94a3b8 !important; }
+.dark .border-neutral-100, .dark .border-neutral-200, .dark .border-neutral-300 { border-color: #475569 !important; }
+.dark .hover\:bg-neutral-50:hover, .dark .hover\:bg-neutral-100:hover { background-color: #334155 !important; }
+.dark input, .dark textarea, .dark select { background-color: #111827 !important; color: #f9fafb !important; border-color: #475569 !important; }
+.dark .bg-brand-50 { background-color: #30275d !important; }
+.dark .bg-brand-100 { background-color: #3c3277 !important; }
+.dark .buyer-shell .bg-brand-50,
+.dark .seller-shell .bg-brand-50 { background-color: #ffffff !important; }
+.dark .swal2-popup { background: #1f2937; color: #f9fafb; }
+.dark .swal2-title, .dark .swal2-html-container { color: #f9fafb; }
+.dark .swal2-cancel { background-color: #475569 !important; }
+
+.welcome-banner {
+  background: rgb(31, 41, 55);
+  box-shadow: 0 14px 30px rgb(42 31 102 / 20%);
+}
+.dark .welcome-banner {
+  background: rgb(31, 41, 55);
+  border: 1px solid rgb(75 85 99);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 35%);
 }

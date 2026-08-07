@@ -17,7 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+      
       {/* <body>
         <AuthProvider>{children}</AuthProvider>
       </body> */}
@@ -32,30 +33,26 @@ export default function RootLayout({
     duration: 3000,
     style: {
       borderRadius: "12px",
-      color: "#111827", // black text
+      color: "var(--toast-text)",
       padding: "12px 16px",
       fontSize: "14px",
     },
     success: {
       style: {
-        background: "#DCFCE7", // light green
-        color: "#111827",      // black text
-        border: "1px solid #86EFAC",
+        background: "var(--toast-success-bg)", color: "var(--toast-text)", border: "1px solid var(--toast-success-border)",
       },
       iconTheme: {
         primary: "#16A34A", // green check icon
-        secondary: "#DCFCE7",
+        secondary: "var(--toast-success-bg)",
       },
     },
     error: {
       style: {
-        background: "#FEE2E2", // light red
-        color: "#111827",
-        border: "1px solid #FCA5A5",
+        background: "var(--toast-error-bg)", color: "var(--toast-text)", border: "1px solid var(--toast-error-border)",
       },
       iconTheme: {
         primary: "#DC2626",
-        secondary: "#FEE2E2",
+        secondary: "var(--toast-error-bg)",
       },
     },
   }}

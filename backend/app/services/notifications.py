@@ -22,6 +22,7 @@ PUSH_TITLES: dict[NotificationKind, str] = {
     NotificationKind.AUCTION_WON: "Auction won",
     NotificationKind.AUCTION_LOST: "Auction ended",
     NotificationKind.NEW_MESSAGE: "New message",
+    NotificationKind.SUPPORT_TICKET: "New support ticket",
 }
 
 _background: set[asyncio.Task] = set()

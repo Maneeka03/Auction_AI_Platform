@@ -162,7 +162,7 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 ">
-      <Navbar solid />
+      <Navbar />
       <div
         className="relative w-full overflow-hidden pt-16"
         style={{ aspectRatio: "1812 / 629" }}

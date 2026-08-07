@@ -107,6 +107,7 @@ async def me(user: CurrentUser) -> Session:
 @router.patch("/me", response_model=Session)
 async def update_profile(payload: UpdateProfileRequest, user: CurrentUser, session: DbSession) -> Session:
     user.full_name = payload.full_name.strip()
+    user.avatar_url = payload.avatar_url
     await session.commit()
     await session.refresh(user)
     return Session.of(user)

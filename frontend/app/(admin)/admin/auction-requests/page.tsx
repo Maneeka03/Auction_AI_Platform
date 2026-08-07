@@ -82,7 +82,7 @@ async function handleReview(id: string, status: "approved" | "rejected") {
             key={f.value}
             type="button"
             onClick={() => setFilter(f.value)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === f.value
                 ? "bg-brand-500 text-white"
                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"

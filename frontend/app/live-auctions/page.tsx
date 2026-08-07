@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { BedDouble, Bath, Ruler, Gavel, Star, Tag, TrendingUp, Users } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { BedDouble, Bath, Ruler, Gavel, Star, Tag, TrendingUp, Users, Search } from "lucide-react";
 import Navbar from "@/components/public/Navbar/Navbar";
 import Footer from "@/components/public/Footer/Footer";
 import { listPublicAuctions } from "@/lib/api/auctions";
@@ -56,6 +56,7 @@ export default function LiveAuctionsPage() {
   const [now, setNow] = useState(() => Date.now());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -119,6 +120,20 @@ function toggleFavorite(id: string) {
     return session ? `/live-auctions/${auctionId}` : `/login?redirect=/live-auctions/${auctionId}`;
   }
 
+  const filteredRows = useMemo(() => {
+  const query = search.trim().toLowerCase();
+
+  if (!query) return rows;
+
+  return rows.filter(({ auction, property }) => {
+    return (
+      auction.title.toLowerCase().includes(query) ||
+      auction.address.toLowerCase().includes(query) ||
+      auction.category_name?.toLowerCase().includes(query) ||
+      property?.id.toLowerCase().includes(query)
+    );
+  });
+}, [rows, search]);
   return (
     <div className="min-h-screen bg-neutral-50">
       <Navbar />
@@ -186,7 +201,7 @@ function toggleFavorite(id: string) {
           return (
           <>
             {/* Toolbar */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white px-5 py-3 shadow-sm">
+            {/* <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white px-5 py-3 shadow-sm">
               <span className="text-sm text-neutral-600">
                 {rows.length} auction{rows.length === 1 ? "" : "s"} found
               </span>
@@ -207,8 +222,57 @@ function toggleFavorite(id: string) {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
+<div className="mb-4 flex flex-col gap-3 rounded-2xl bg-white px-5 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+  {/* Search */}
+  <div className="relative w-full sm:max-w-sm">
+    <Search
+      size={16}
+      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+    />
 
+    <input
+      type="text"
+      value={search}
+      onChange={(e) => {
+        setSearch(e.target.value);
+        setPage(1);
+      }}
+      placeholder="Search auctions..."
+      className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+    />
+  </div>
+
+  {/* Count + Page size */}
+  <div className="flex items-center justify-between gap-4 sm:justify-end">
+    {/* <span className="text-sm text-neutral-600">
+      {filteredRows.length} auction
+      {filteredRows.length === 1 ? "" : "s"} found
+    </span> */}
+
+    <div className="flex items-center gap-2 text-sm">
+      <span className="font-medium text-neutral-600">Show:</span>
+
+      {[5, 10, 15].map((size) => (
+        <button
+          key={size}
+          type="button"
+          onClick={() => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          className={`rounded-lg px-3 py-1.5 font-medium transition ${
+            pageSize === size
+              ? "bg-violet-600 text-white"
+              : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+          }`}
+        >
+          {size}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
           <div className="space-y-5">
             {pageItems.map(({ auction, property }, index) => (
               <Link

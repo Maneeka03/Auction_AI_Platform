@@ -13,7 +13,7 @@ export const STAFF_ROLES: StaffRole[] = [
 ];
 
 export interface AdminUserListItem
-  extends Pick<Session, "id" | "email" | "full_name" | "status" | "roles" | "country" | "last_login_at"> {}
+  extends Pick<Session, "id" | "email" | "full_name" | "avatar_url" | "status" | "roles" | "country" | "last_login_at"> {}
 export interface PaginatedUsers {
   items: AdminUserListItem[];
   total: number;

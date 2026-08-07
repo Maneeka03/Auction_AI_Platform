@@ -494,15 +494,13 @@ export default function ContactSupportPage() {
                   <Settings2 size={16} /> Manage Subjects
                 </button>
               )}
-              {!isAdmin && (
-                <button
-                  type="button"
-                  onClick={openCreate}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 sm:flex-none"
-                >
-                  <Plus size={16} /> New Ticket
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={openCreate}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 sm:flex-none"
+              >
+                <Plus size={16} /> New Ticket
+              </button>
             </div>
           </div>
 

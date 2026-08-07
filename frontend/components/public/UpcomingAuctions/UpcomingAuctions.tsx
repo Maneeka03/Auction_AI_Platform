@@ -85,7 +85,7 @@ export default function UpcomingAuctions() {
     useEffect(() => { void load();}, [load]);
 
     return (
-        <section className="relative py-20">
+        <section className="relative">
             <div className="relative z-20 mx-auto w-full max-w-[1600px] px-8">
                 <div className="text-center -mt-5 mb-5">
                     <h2 className="text-4xl font-bold text-neutral-900">Upcoming Auctions</h2>

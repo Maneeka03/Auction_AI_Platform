@@ -2,7 +2,7 @@
 
 // MessageSquare removed — new_message notifications moved to the Messages icon
 // import { Bell, CheckCheck, Gavel, MessageSquare, ShieldCheck, Trophy, XCircle } from "lucide-react";
-import { Bell, CheckCheck, Gavel, ShieldCheck, Trophy, X, XCircle } from "lucide-react";
+import { Bell, CheckCheck, Gavel, LifeBuoy, ShieldCheck, Trophy, X, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { dismissNotification, listNotifications, markNotificationsRead } from "@/lib/api/notifications";
@@ -32,6 +32,7 @@ const KIND_ICON: Record<BellNotificationKind, typeof Bell> = {
   property_approved: CheckCheck,
   property_rejected: XCircle,
   kyc_reviewed: ShieldCheck,
+  support_ticket: LifeBuoy,
 };
 
 const KIND_COLOR: Record<BellNotificationKind, string> = {
@@ -41,6 +42,7 @@ const KIND_COLOR: Record<BellNotificationKind, string> = {
   property_approved: "bg-success-500/10 text-success-500",
   property_rejected: "bg-danger-500/10 text-danger-600",
   kyc_reviewed: "bg-brand-500/10 text-brand-600",
+  support_ticket: "bg-sky-100 text-sky-600",
 };
 
 function formatTime(iso: string): string {
@@ -55,6 +57,7 @@ function formatTime(iso: string): string {
 
 const MENU_WIDTH = 340;
 const MENU_HEIGHT_ESTIMATE = 420;
+const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 
 export function NotificationBell() {
   const { accessToken } = useAuth();
@@ -87,6 +90,13 @@ export function NotificationBell() {
     void fetchNotifications();
     const interval = setInterval(() => void fetchNotifications(), 30000);
     return () => clearInterval(interval);
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const ws = new WebSocket(`${WS_BASE}/api/v1/notifications/ws?token=${encodeURIComponent(accessToken)}`);
+    ws.onmessage = () => void fetchNotifications();
+    return () => ws.close();
   }, [accessToken]);
 
   function toggleOpen() {

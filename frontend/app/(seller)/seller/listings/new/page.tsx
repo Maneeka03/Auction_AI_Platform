@@ -168,8 +168,8 @@ export default function NewListingPage() {
     e.preventDefault();
     setError(null);
 
-    if (!title.trim() || !address.trim() || !categoryId || !reservePrice) {
-      setError("Title, address, category, and reserve price are required.");
+    if (!title.trim() || !categoryId || !reservePrice) {
+      setError("Title, category, and reserve price are required.");
       return;
     }
     if (isUploading || extraUploading) {
@@ -259,7 +259,7 @@ export default function NewListingPage() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">
-              Address <span className="text-red-500">*</span>
+              Address
             </label>
             <input
               value={address}
