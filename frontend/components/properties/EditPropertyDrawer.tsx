@@ -12,7 +12,7 @@ import { uploadImage } from "@/lib/utils/uploadImage";
 import type { Property, UpdatePropertyRequest } from "@/types/property";
 import PropertyGalleryUploader from "@/components/admin/PropertyGalleryUploader";
 import type { PropertyImage } from "@/types/property";
-
+import toast from "react-hot-toast";
 const GLB_CONTENT_TYPE = "model/gltf-binary";
 
 interface EditPropertyDrawerProps {
@@ -101,61 +101,95 @@ export function EditPropertyDrawer({
     if (file) setModelFile(file);
     event.target.value = "";
   }
+async function handleSubmit(event: React.FormEvent) {
+  event.preventDefault();
+  setError(null);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  if (!title.trim() || !address.trim() || !reservePrice) {
+    const message = "Title, address, and reserve price are required.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-    if (!title.trim() || !address.trim() || !reservePrice) {
-      setError("Title, address, and reserve price are required.");
-      return;
-    }
+  setIsSubmitting(true);
 
-    setIsSubmitting(true);
-    try {
-      let imageUrl: string | undefined;
-      let modelUrl: string | undefined;
+  try {
+    let imageUrl: string | undefined;
+    let modelUrl: string | undefined;
 
-      if (imageFile || modelFile) {
-        if (!accessToken) {
-          setError("You must be signed in to upload files.");
-          setIsSubmitting(false);
-          return;
-        }
-        setIsUploadingImage(true);
-        try {
-          if (imageFile) imageUrl = await uploadImage(accessToken, imageFile, "property");
-          if (modelFile) {
-            modelUrl = await uploadImage(accessToken, modelFile, "property", GLB_CONTENT_TYPE);
-          }
-        } finally {
-          setIsUploadingImage(false);
-        }
+    if (imageFile || modelFile) {
+      if (!accessToken) {
+        const message = "You must be signed in to upload files.";
+        setError(message);
+        toast.error(message);
+        setIsSubmitting(false);
+        return;
       }
 
-      await onSave({
-        title,
-        address,
-        category_id: categoryId,
-        reserve_price: reservePrice,
-        status,
-        description: description || undefined,
-        image_url: imageUrl,
-        // Preserve the existing model_url if no new file was uploaded
-        model_url: modelUrl ?? existingModelUrl ?? undefined,
-        bedrooms:
-          showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
-        bathrooms:
-          showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
-        area_sqft: areaSqft ? Number(areaSqft) : undefined,
-        custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : null,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
+      setIsUploadingImage(true);
+
+      try {
+        if (imageFile) {
+          imageUrl = await uploadImage(accessToken, imageFile, "property");
+          toast.success("Photo uploaded successfully");
+        }
+
+        if (modelFile) {
+          modelUrl = await uploadImage(
+            accessToken,
+            modelFile,
+            "property",
+            GLB_CONTENT_TYPE,
+          );
+          toast.success("3D model uploaded successfully");
+        }
+      } catch (uploadErr) {
+        const message =
+          uploadErr instanceof Error
+            ? uploadErr.message
+            : "File upload failed.";
+
+        setError(message);
+        toast.error(message);
+        return;
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
+
+    await onSave({
+      title,
+      address,
+      category_id: categoryId,
+      reserve_price: reservePrice,
+      status,
+      description: description || undefined,
+      image_url: imageUrl,
+      model_url: modelUrl ?? existingModelUrl ?? undefined,
+      bedrooms:
+        showResidentialFields && bedrooms ? Number(bedrooms) : undefined,
+      bathrooms:
+        showResidentialFields && bathrooms ? Number(bathrooms) : undefined,
+      area_sqft: areaSqft ? Number(areaSqft) : undefined,
+      custom_fields:
+        Object.keys(customFieldValues).length > 0
+          ? customFieldValues
+          : null,
+    });
+
+    toast.success("Property updated successfully");
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

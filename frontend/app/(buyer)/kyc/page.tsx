@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Clock, FileText, Trash2, Upload, XCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { getMyKyc, submitKyc } from "@/lib/api/kyc";
 import { ApiRequestError } from "@/lib/api/client";
 import { uploadKycDocument } from "@/lib/utils/uploadKycDocument";
@@ -80,8 +81,10 @@ export default function KycPage() {
       const result = await submitKyc(accessToken, { legal_name: legalName, document_keys: documentKeys });
       setSubmission(result);
       setFiles([]);
+      toast.success("KYC submitted successfully");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Submission failed. Please try again.");
+      toast.error(err instanceof ApiRequestError ? err.message : "Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
       setUploadProgress(null);

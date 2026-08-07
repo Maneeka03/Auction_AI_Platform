@@ -2,6 +2,8 @@
 
 import { HelpCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { createFaq, deleteFaq, listFaqs, updateFaq } from "@/lib/api/faqs";
@@ -105,6 +107,7 @@ export default function AdminFaqsPage() {
         await createFaq(accessToken, payload);
       }
       setForm(null);
+      toast.success(form.id ? "FAQ updated successfully" : "FAQ created successfully");
       await load();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to save.");
@@ -115,9 +118,11 @@ export default function AdminFaqsPage() {
 
   async function handleDelete(id: string) {
     if (!accessToken) return;
-    if (!window.confirm("Delete this FAQ? This can't be undone.")) return;
+    const confirmed = await Swal.fire({ title: "Delete FAQ?", text: "This cannot be undone.", icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     try {
       await deleteFaq(accessToken, id);
+      toast.success("FAQ deleted successfully");
       await load();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to delete.");

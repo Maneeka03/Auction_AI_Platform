@@ -2,6 +2,7 @@
 
 import { Radio } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import {
   listMyAuctionRequests,
@@ -106,8 +107,10 @@ export default function AuctionRequestPage() {
       setEndsAt("");
       setIncrementsRaw("100,500,1000");
       setSuccess(true);
+      toast.success("Auction request submitted successfully");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to submit request.");
+      toast.error(err instanceof Error ? err.message : "Failed to submit request.");
     } finally {
       setIsSubmitting(false);
     }

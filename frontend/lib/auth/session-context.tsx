@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getMe, login as apiLogin, logout as apiLogout, refresh as apiRefresh } from "@/lib/api/auth";
+import { getMe, login as apiLogin, logout as apiLogout, refresh as apiRefresh, updateMyProfile } from "@/lib/api/auth";
 import { ApiRequestError } from "@/lib/api/client";
 import type { LoginPayload, Session } from "@/types/auth";
 
@@ -19,6 +19,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<Session>;
   logout: () => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -103,8 +104,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [accessToken, clearRefreshTimer]);
 
+  const updateProfile = useCallback(async (fullName: string) => {
+    if (!accessToken) throw new Error("You must be signed in.");
+    const updated = await updateMyProfile(accessToken, fullName);
+    setSession(updated);
+  }, [accessToken]);
+
   return (
-    <AuthContext.Provider value={{ session, accessToken, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ session, accessToken, isLoading, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

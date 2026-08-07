@@ -2,6 +2,8 @@
 
 import { Download, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
@@ -73,6 +75,7 @@ export default function UserManagementPage() {
   async function handleCreate(payload: Parameters<typeof createUser>[1]) {
     if (!accessToken) return;
     await createUser(accessToken, payload);
+    toast.success("User created successfully");
     setShowAddDrawer(false);
     void fetchUsers();
   }
@@ -80,6 +83,7 @@ export default function UserManagementPage() {
   async function handleUpdate(payload: Parameters<typeof updateUser>[2]) {
     if (!accessToken || !editingUser) return;
     await updateUser(accessToken, editingUser.id, payload);
+    toast.success("User updated successfully");
     setEditingUser(null);
     void fetchUsers();
   }
@@ -100,9 +104,10 @@ export default function UserManagementPage() {
 
   async function handleDelete(user: AdminUserListItem) {
     if (!accessToken) return;
-    const confirmed = window.confirm(`Delete ${user.full_name}? This can't be undone from here.`);
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Delete user?", text: `${user.full_name} will be permanently deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     await deleteUser(accessToken, user.id);
+    toast.success("User deleted successfully");
     void fetchUsers();
   }
 

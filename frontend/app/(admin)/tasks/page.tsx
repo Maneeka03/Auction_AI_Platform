@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { createTask, deleteTask, listTasks, updateTask } from "@/lib/api/tasks";
@@ -65,6 +66,7 @@ export default function TasksPage() {
         due_date: dueDate || null,
       });
       setTasks((prev) => [task, ...prev]);
+      toast.success("Task created successfully");
       setTitle(""); setDescription(""); setDueDate("");
       setShowForm(false);
     } catch { /* ignore */ } finally {
@@ -77,7 +79,8 @@ export default function TasksPage() {
     try {
       const updated = await updateTask(accessToken, taskId, { status });
       setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t));
-    } catch { /* ignore */ }
+      toast.success("Task updated successfully");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to update task."); }
   }
 
   async function handleDelete(taskId: string) {
@@ -85,7 +88,8 @@ export default function TasksPage() {
     try {
       await deleteTask(accessToken, taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    } catch { /* ignore */ }
+      toast.success("Task deleted successfully");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to delete task."); }
   }
 
   return (

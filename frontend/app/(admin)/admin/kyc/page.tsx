@@ -2,6 +2,7 @@
 
 import { ExternalLink, FileText, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 import { getKycDocumentUrl, listKycSubmissions, reviewKyc } from "@/lib/api/kyc";
@@ -62,6 +63,7 @@ export default function AdminKycReviewPage() {
     setDecidingId(item.id);
     try {
       await reviewKyc(accessToken, item.id, { approved, notes: noteDrafts[item.id] || undefined });
+      toast.success(approved ? "KYC approved successfully" : "KYC rejected successfully");
       void fetchQueue();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to submit review.");

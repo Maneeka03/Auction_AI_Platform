@@ -7,7 +7,7 @@ import { RequirePermission } from "@/components/auth/RequirePermission";
 import { listAllAuctionRequests, reviewAuctionRequest } from "@/lib/api/auctionRequests";
 import { useAuth } from "@/lib/auth/session-context";
 import type { AuctionRequest, AuctionRequestStatus } from "@/types/auctionRequest";
-
+import toast from "react-hot-toast";
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700",
   approved: "bg-green-50 text-green-700",
@@ -40,21 +40,30 @@ export default function AdminAuctionRequestsPage() {
 
   useEffect(load, [accessToken, filter]);
 
-  async function handleReview(id: string, status: "approved" | "rejected") {
-    if (!accessToken) return;
-    setReviewing(id);
-    try {
-      const updated = await reviewAuctionRequest(accessToken, id, {
-        status,
-        admin_note: noteMap[id] || undefined,
-      });
-      setRequests((prev) => prev.map((r) => (r.id === id ? updated : r)));
-    } catch {
-      /* ignore */
-    } finally {
-      setReviewing(null);
-    }
+async function handleReview(id: string, status: "approved" | "rejected") {
+  if (!accessToken) return;
+
+  setReviewing(id);
+
+  try {
+    const updated = await reviewAuctionRequest(accessToken, id, {
+      status,
+      admin_note: noteMap[id] || undefined,
+    });
+
+    setRequests((prev) => prev.map((r) => (r.id === id ? updated : r)));
+
+    toast.success(
+      status === "approved"
+        ? "Auction request approved successfully"
+        : "Auction request rejected successfully"
+    );
+  } catch {
+    toast.error("Failed to review auction request");
+  } finally {
+    setReviewing(null);
   }
+}
 
   return (
     <AdminShell>

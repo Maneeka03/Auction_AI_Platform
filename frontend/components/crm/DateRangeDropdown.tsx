@@ -3,7 +3,7 @@
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatRangeLabel, getPresetRange, type DateRange, type DateRangePresetKey } from "@/lib/utils/dateRangePresets";
-
+import { useDropdownPosition } from "../../hooks/useDropDown";
 interface DateRangeDropdownProps {
   range: DateRange | null;
   onChange: (range: DateRange | null) => void;
@@ -99,7 +99,7 @@ export function DateRangeDropdown({ range, onChange }: DateRangeDropdownProps) {
   const [tentativeStart, setTentativeStart] = useState<Date | null>(range?.start ?? null);
   const [tentativeEnd, setTentativeEnd] = useState<Date | null>(range?.end ?? null);
   const containerRef = useRef<HTMLDivElement>(null);
-
+const { panelRef, dropUp } = useDropdownPosition(isOpen, containerRef); // add this line
   useEffect(() => {
     if (!isOpen) {
       setIsVisible(false);
@@ -168,7 +168,9 @@ export function DateRangeDropdown({ range, onChange }: DateRangeDropdownProps) {
       </button>
 
       {isOpen ? (
-        <div className={`absolute left-0 z-30 mt-2 flex w-[min(680px,calc(100vw-2rem))] origin-top-left flex-col rounded-xl border border-neutral-200 bg-white shadow-lg transition-all duration-150 ease-out sm:flex-row ${
+        <div 
+          ref={panelRef}
+        className={`absolute right-0 z-30 flex w-[min(710px,calc(100vw-2rem))] origin-bottom-right flex-col rounded-xl border border-neutral-200 bg-white shadow-lg transition-all duration-150 ease-out sm:flex-row ${
           isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}>
           <div className="flex shrink-0 flex-col gap-0.5 border-b border-neutral-100 p-2 sm:w-40 sm:border-b-0 sm:border-r">

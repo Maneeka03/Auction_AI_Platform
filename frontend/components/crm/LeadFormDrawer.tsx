@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import type { Lead, LeadStatus } from "@/types/crm";
-
+import toast from "react-hot-toast";
 interface LeadFormValues {
   name: string;
   companyName: string;
@@ -56,24 +56,63 @@ export function LeadFormDrawer({ lead, initialStatus, onClose, onSubmit }: LeadF
     setTimeout(onClose, 200);
   }
 
+  // async function handleSubmit(event: React.FormEvent) {
+  //   event.preventDefault();
+  //   setError(null);
+
+  //   if (!name.trim()) {
+  //     setError("Name is required.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSubmit({ name: name.trim(), companyName, email, phone, source, status, notes });
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Something went wrong.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  event.preventDefault();
+  setError(null);
 
-    if (!name.trim()) {
-      setError("Name is required.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSubmit({ name: name.trim(), companyName, email, phone, source, status, notes });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!name.trim()) {
+    const message = "Name is required.";
+    setError(message);
+    toast.error(message);
+    return;
   }
+
+  setIsSubmitting(true);
+
+  try {
+    await onSubmit({
+      name: name.trim(),
+      companyName,
+      email,
+      phone,
+      source,
+      status,
+      notes,
+    });
+
+    toast.success(
+      isEditing ? "Lead updated successfully" : "Lead created successfully",
+    );
+
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

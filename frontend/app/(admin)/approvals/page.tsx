@@ -10,6 +10,7 @@ import { listProperties, voteOnProperty } from "@/lib/api/properties";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { ApproverSeat, Property, PropertyStatus } from "@/types/property";
+import toast from "react-hot-toast";
 
 function resolveApproverSeat(roles: string[]): ApproverSeat | undefined {
   if (roles.includes("super_admin") || roles.includes("executive")) return "director";
@@ -56,21 +57,21 @@ export default function ApprovalsPage() {
     void fetchProperties();
   }, [fetchProperties]);
 
-  async function handleVote(propertyId: string, approved: boolean) {
-    if (!accessToken) return;
-    setVotingId(propertyId);
-    setError(null);
-    try {
-      const updated = await voteOnProperty(accessToken, propertyId, { approved });
-      setProperties((prev) => prev.map((p) => (p.id === propertyId ? updated : p)));
-      if (detailProperty?.id === propertyId) setDetailProperty(updated);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to cast vote.");
-    } finally {
-      setVotingId(null);
-    }
-  }
-
+  // async function handleVote(propertyId: string, approved: boolean) {
+  //   if (!accessToken) return;
+  //   setVotingId(propertyId);
+  //   setError(null);
+  //   try {
+  //     const updated = await voteOnProperty(accessToken, propertyId, { approved });
+  //     setProperties((prev) => prev.map((p) => (p.id === propertyId ? updated : p)));
+  //     if (detailProperty?.id === propertyId) setDetailProperty(updated);
+  //   } catch (err) {
+  //     setError(err instanceof ApiRequestError ? err.message : "Failed to cast vote.");
+  //   } finally {
+  //     setVotingId(null);
+  //   }
+  // }
+async function handleVote(propertyId: string, approved: boolean) { if (!accessToken) return; setVotingId(propertyId); setError(null); try { const updated = await voteOnProperty(accessToken, propertyId, { approved }); setProperties((prev) => prev.map((p) => (p.id === propertyId ? updated : p)) ); if (detailProperty?.id === propertyId) { setDetailProperty(updated); } toast.success( approved ? "Approval recorded successfully" : "Rejection recorded successfully" ); } catch (err) { const message = err instanceof ApiRequestError ? err.message : "Failed to cast vote."; setError(message); toast.error(message); } finally { setVotingId(null); } }
   const filtered = activeTab === "all" ? properties : properties.filter((p) => p.status === activeTab);
 
   return (

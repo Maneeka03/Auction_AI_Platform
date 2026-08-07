@@ -17,6 +17,7 @@ from app.schemas.auth import (
     SellerEnrolmentRequest,
     Session,
     TokenRequest,
+    UpdateProfileRequest,
 )
 from app.schemas.user import UserOut
 from app.services import auth
@@ -100,6 +101,14 @@ async def logout(
 
 @router.get("/me", response_model=Session)
 async def me(user: CurrentUser) -> Session:
+    return Session.of(user)
+
+
+@router.patch("/me", response_model=Session)
+async def update_profile(payload: UpdateProfileRequest, user: CurrentUser, session: DbSession) -> Session:
+    user.full_name = payload.full_name.strip()
+    await session.commit()
+    await session.refresh(user)
     return Session.of(user)
 
 

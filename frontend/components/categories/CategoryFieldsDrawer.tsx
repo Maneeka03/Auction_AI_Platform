@@ -2,6 +2,8 @@
 
 import { Pencil, Plus, Trash2, X, GripVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import {
   createCategoryField,
@@ -138,8 +140,10 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
       setShowForm(false);
       setEditingId(null);
       setForm(EMPTY_FORM);
+      toast.success(editingId ? "Category field updated successfully" : "Category field created successfully");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Something went wrong.");
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);
     }
@@ -147,9 +151,15 @@ export function CategoryFieldsDrawer({ categoryId, categoryName, onClose }: Prop
 
   async function handleDelete(fieldId: string) {
     if (!accessToken) return;
-    if (!confirm("Delete this field? Existing listings will keep their stored value.")) return;
-    await deleteCategoryField(accessToken, categoryId, fieldId);
-    setFields((prev) => prev.filter((f) => f.id !== fieldId));
+    const confirmed = await Swal.fire({ title: "Delete field?", text: "Existing listings will keep their stored value.", icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
+    try {
+      await deleteCategoryField(accessToken, categoryId, fieldId);
+      setFields((prev) => prev.filter((f) => f.id !== fieldId));
+      toast.success("Category field deleted successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete category field.");
+    }
   }
 
   // ── Drag-and-drop handlers ──────────────────────────────────────────────────

@@ -114,6 +114,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ApiRequestError } from "@/lib/api/client";
+import toast from "react-hot-toast";
 import { useAuth } from "@/lib/auth/session-context";
 import { listWatchlist, removeFromWatchlist, updateWatchlistStatus } from "@/lib/api/watchlist";
 import type { WatchlistItem, WatchlistStatus } from "@/types/watchlist";
@@ -159,7 +160,8 @@ export default function WatchlistPage() {
     try {
       await updateWatchlistStatus(accessToken, propertyId, status);
       setItems((prev) => prev.map((i) => i.property.id === propertyId ? { ...i, status } : i));
-    } catch { /* ignore */ }
+      toast.success("Watchlist status updated successfully");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to update watchlist status."); }
   }
 
   async function handleRemove(propertyId: string) {
@@ -167,7 +169,8 @@ export default function WatchlistPage() {
     try {
       await removeFromWatchlist(accessToken, propertyId);
       setItems((prev) => prev.filter((i) => i.property.id !== propertyId));
-    } catch { /* ignore */ }
+      toast.success("Removed from watchlist");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to remove from watchlist."); }
   }
 
   return (

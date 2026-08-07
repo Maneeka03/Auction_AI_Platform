@@ -2,6 +2,7 @@
 
 import { Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { createSavedSearch, deleteSavedSearch, listSavedSearches } from "@/lib/api/savedSearches";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -36,6 +37,7 @@ export default function SavedSearchesPage() {
       const created = await createSavedSearch(accessToken, { name: name.trim() });
       setSearches((prev) => [created, ...prev]);
       setName("");
+      toast.success("Saved search created successfully");
       setShowForm(false);
     } catch { /* ignore */ } finally {
       setSaving(false);
@@ -47,7 +49,8 @@ export default function SavedSearchesPage() {
     try {
       await deleteSavedSearch(accessToken, id);
       setSearches((prev) => prev.filter((s) => s.id !== id));
-    } catch { /* ignore */ }
+      toast.success("Saved search deleted successfully");
+    } catch (err) { toast.error(err instanceof ApiRequestError ? err.message : "Failed to delete saved search."); }
   }
 
   return (

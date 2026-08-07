@@ -11,6 +11,7 @@ import { uploadImage } from "@/lib/utils/uploadImage";
 import { useAuth } from "@/lib/auth/session-context";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import type { CategoryTree, CategoryField } from "@/types/category";
+import toast from "react-hot-toast";
 
 
 export default function NewListingPage() {
@@ -209,9 +210,14 @@ export default function NewListingPage() {
       for (const img of validExtras) {
         await addListingImage(accessToken, listing.id, img.url!);
       }
+      toast.success("Listing submitted successfully");
+
       router.push("/seller/listings");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit listing.");
+      // setError(err instanceof Error ? err.message : "Failed to submit listing.");
+        const message = err instanceof Error ? err.message : "Failed to submit listing.";
+  setError(message);
+  toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

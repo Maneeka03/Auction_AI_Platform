@@ -4,7 +4,7 @@ import { BellOff, BellRing, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { disablePush, enablePush } from "@/lib/push";
 import { useAuth } from "@/lib/auth/session-context";
-
+import toast from "react-hot-toast";
 type PushState = "unsupported" | "checking" | "denied" | "enabled" | "disabled";
 
 async function getCurrentState(): Promise<PushState> {
@@ -25,24 +25,56 @@ export function PushEnableButton() {
     void getCurrentState().then(setState);
   }, []);
 
-  async function toggle() {
-    if (!accessToken || loading) return;
-    setLoading(true);
-    try {
-      if (state === "enabled") {
-        await disablePush(accessToken);
-        setState("disabled");
-      } else {
-        const ok = await enablePush(accessToken);
-        setState(ok ? "enabled" : "denied");
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }
+  // async function toggle() {
+  //   if (!accessToken || loading) return;
+  //   setLoading(true);
+  //   try {
+  //     if (state === "enabled") {
+  //       await disablePush(accessToken);
+  //       setState("disabled");
+  //     } else {
+  //       const ok = await enablePush(accessToken);
+  //       setState(ok ? "enabled" : "denied");
+  //     }
+  //   } catch {
+  //     // silent
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+async function toggle() {
+  if (!accessToken || loading) return;
 
+  setLoading(true);
+
+  try {
+    if (state === "enabled") {
+      await disablePush(accessToken);
+      setState("disabled");
+
+      toast.success("Push notifications disabled");
+    } else {
+      const ok = await enablePush(accessToken);
+
+      if (ok) {
+        setState("enabled");
+        toast.success("Push notifications enabled");
+      } else {
+        setState("denied");
+        toast.error("Notification permission denied");
+      }
+    }
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : "Failed to update notification settings";
+
+    toast.error(message);
+  } finally {
+    setLoading(false);
+  }
+}
   // Don't render while checking or if browser doesn't support it
   if (state === "checking" || state === "unsupported") return null;
 

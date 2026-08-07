@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import type { UserStatus } from "@/types/auth";
 import { STAFF_ROLES, type AdminUserListItem, type StaffRole, type UpdateUserPayload } from "@/types/adminUsers";
+import { toast } from "react-hot-toast/headless";
 
 const roleLabels: Record<StaffRole, string> = {
   super_admin: "Super Admin",
@@ -44,24 +45,57 @@ export function EditUserDrawer({ user, onClose, onSave }: EditUserDrawerProps) {
     setRoles((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
   }
 
+  // async function handleSubmit(event: React.FormEvent) {
+  //   event.preventDefault();
+  //   setError(null);
+
+  //   if (!fullName.trim() || roles.length === 0) {
+  //     setError("Full name and at least one role are required.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSave({ full_name: fullName, status, roles });
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Something went wrong.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  event.preventDefault();
+  setError(null);
 
-    if (!fullName.trim() || roles.length === 0) {
-      setError("Full name and at least one role are required.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSave({ full_name: fullName, status, roles });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!fullName.trim() || roles.length === 0) {
+    const message = "Full name and at least one role are required.";
+    setError(message);
+    toast.error(message);
+    return;
   }
+
+  setIsSubmitting(true);
+
+  try {
+    await onSave({
+      full_name: fullName.trim(),
+      status,
+      roles,
+    });
+
+    toast.success("User updated successfully");
+
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

@@ -120,7 +120,7 @@ export function LeadFilterDropdown({ filters, availableSources, onChange }: Lead
 
       {isOpen ? (
         <div
-          className={`absolute left-0 z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl border border-neutral-200 bg-white shadow-lg transition-all duration-150 ease-out ${
+          className={`absolute right-0 z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl border border-neutral-200 bg-white shadow-lg transition-all duration-150 ease-out ${
             isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
           }`}
         >

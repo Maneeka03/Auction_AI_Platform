@@ -2,6 +2,8 @@
 
 import { Plus, RefreshCw, Search, StickyNote } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -159,6 +161,7 @@ export default function LeadsCrmPage() {
     } else {
       await updateLead(accessToken, drawer.lead.id, payload);
     }
+    toast.success(drawer.mode === "create" ? "Lead created successfully" : "Lead updated successfully");
 
     setDrawer(null);
     void fetchLeads();
@@ -166,12 +169,13 @@ export default function LeadsCrmPage() {
 
   async function handleDelete(lead: Lead) {
     if (!accessToken) return;
-    const confirmed = window.confirm(`Delete lead "${lead.name}"? This can't be undone.`);
-    if (!confirmed) return;
+    const confirmed = await Swal.fire({ title: "Delete lead?", text: `"${lead.name}" will be permanently deleted.`, icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     try {
       await deleteLead(accessToken, lead.id);
+      toast.success("Lead deleted successfully");
       void fetchLeads();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to delete lead.");
@@ -211,7 +215,7 @@ export default function LeadsCrmPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          {/* <div className="flex flex-wrap items-center gap-2">
             <SortByDropdown value={sortOrder} onChange={setSortOrder} />
             <DateRangeDropdown range={dateRange} onChange={setDateRange} />
             <LeadFilterDropdown filters={filters} availableSources={availableSources} onChange={setFilters} />
@@ -225,8 +229,34 @@ export default function LeadsCrmPage() {
               />
             </div>
             <ViewToggle value={viewMode} onChange={setViewMode} />
-          </div>
+          </div> */}
+<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  {/* Search on left */}
+  <div className="relative w-full sm:max-w-xs">
+    <Search
+      size={16}
+      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+    />
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search leads..."
+      className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+    />
+  </div>
 
+  {/* Controls on right */}
+  <div className="flex flex-wrap items-center justify-end gap-2">
+    <SortByDropdown value={sortOrder} onChange={setSortOrder} />
+    <DateRangeDropdown range={dateRange} onChange={setDateRange} />
+    <LeadFilterDropdown
+      filters={filters}
+      availableSources={availableSources}
+      onChange={setFilters}
+    />
+    <ViewToggle value={viewMode} onChange={setViewMode} />
+  </div>
+</div>
           {actionError ? (
             <p className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-600">{actionError}</p>
           ) : null}

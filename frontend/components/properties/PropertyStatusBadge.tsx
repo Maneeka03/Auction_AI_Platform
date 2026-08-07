@@ -1,5 +1,6 @@
 import type { PropertyStatus } from "@/types/property";
 
+
 const styles: Record<PropertyStatus, string> = {
   draft: "bg-neutral-100 text-neutral-500",
   published: "bg-success-500/10 text-success-500",

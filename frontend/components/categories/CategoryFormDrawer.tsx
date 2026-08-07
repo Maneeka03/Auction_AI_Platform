@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Category } from "@/types/category";
+import { toast } from "react-hot-toast/headless";
 
 interface CategoryFormDrawerProps {
   category?: Category;
@@ -30,24 +31,59 @@ export function CategoryFormDrawer({ category, parentName, onClose, onSubmit }: 
     setTimeout(onClose, 200);
   }
 
+  // async function handleSubmit(event: React.FormEvent) {
+  //   event.preventDefault();
+  //   setError(null);
+
+  //   if (!name.trim()) {
+  //     setError("Name is required.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSubmit(name.trim());
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Something went wrong.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  event.preventDefault();
+  setError(null);
 
-    if (!name.trim()) {
-      setError("Name is required.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSubmit(name.trim());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!name.trim()) {
+    const message = "Name is required.";
+    setError(message);
+    toast.error(message);
+    return;
   }
+
+  setIsSubmitting(true);
+
+  try {
+    await onSubmit(name.trim());
+
+    toast.success(
+      isEditing
+        ? "Category updated successfully"
+        : parentName
+          ? "Subcategory created successfully"
+          : "Category created successfully",
+    );
+
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

@@ -4,6 +4,8 @@ import { LifeBuoy, Pencil, Plus, Send, Settings2, Trash2, X } from "lucide-react
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { TicketStatusDropdown } from "@/components/ui/TicketStatusDropdown";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import Link from "next/link";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Select } from "@/components/ui/Select";
@@ -94,6 +96,7 @@ function AdminTicketsTable({ accessToken }: { accessToken: string }) {
     setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, status: newStatus } : t)));
     try {
       await updateTicketStatus(accessToken, ticket.id, newStatus);
+      toast.success("Ticket status updated successfully");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to update status.");
       await load();
@@ -360,6 +363,7 @@ export default function ContactSupportPage() {
     setSubjectError(null);
     try {
       await createTicketSubject(accessToken, newSubjectName.trim());
+      toast.success("Ticket subject created successfully");
       setNewSubjectName("");
       await refreshEverything();
     } catch (err) {
@@ -372,6 +376,7 @@ export default function ContactSupportPage() {
     setSubjectError(null);
     try {
       await updateTicketSubject(accessToken, editingSubject.id, { name: editingSubject.name.trim() });
+      toast.success("Ticket subject updated successfully");
       setEditingSubject(null);
       await refreshEverything();
     } catch (err) {
@@ -383,6 +388,7 @@ export default function ContactSupportPage() {
     if (!accessToken) return;
     try {
       await updateTicketSubject(accessToken, subject.id, { is_active: !subject.is_active });
+      toast.success("Ticket subject updated successfully");
       await refreshEverything();
     } catch (err) {
       setSubjectError(err instanceof ApiRequestError ? err.message : "Failed to update subject.");
@@ -390,9 +396,12 @@ export default function ContactSupportPage() {
   }
 
   async function handleDeleteSubject(id: string) {
-    if (!accessToken || !window.confirm("Delete this subject? It will show as 'Other' on any existing tickets that used it.")) return;
+    if (!accessToken) return;
+    const confirmed = await Swal.fire({ title: "Delete ticket subject?", text: "Existing tickets that use it will show ‘Other’.", icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     try {
       await deleteTicketSubject(accessToken, id);
+      toast.success("Ticket subject deleted successfully");
       await refreshEverything();
     } catch (err) {
       setSubjectError(err instanceof ApiRequestError ? err.message : "Failed to delete subject.");
@@ -423,6 +432,7 @@ export default function ContactSupportPage() {
         : { subject_id: form.subjectId, custom_subject: null, message: form.message.trim() };
       if (form.id) await updateTicket(accessToken, form.id, payload);
       else await createTicket(accessToken, payload);
+      toast.success(form.id ? "Ticket updated successfully" : "Ticket created successfully");
       setForm(null);
       await load();
     } catch (err) {
@@ -433,9 +443,12 @@ export default function ContactSupportPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!accessToken || !window.confirm("Delete this ticket? This can't be undone.")) return;
+    if (!accessToken) return;
+    const confirmed = await Swal.fire({ title: "Delete ticket?", text: "This cannot be undone.", icon: "warning", showCancelButton: true, confirmButtonText: "Delete", cancelButtonText: "Cancel" });
+    if (!confirmed.isConfirmed) return;
     try {
       await deleteTicket(accessToken, id);
+      toast.success("Ticket deleted successfully");
       await load();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to delete.");

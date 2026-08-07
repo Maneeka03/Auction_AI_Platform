@@ -2,6 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { topUpWallet } from "@/lib/api/wallet";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
@@ -39,8 +40,10 @@ export function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps) {
       const summary = await topUpWallet(accessToken, { amount: amountNumber.toFixed(2) });
       setSucceeded(true);
       onSuccess(summary);
+      toast.success("Funds added successfully");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Failed to add funds.");
+      toast.error(err instanceof ApiRequestError ? err.message : "Failed to add funds.");
     } finally {
       setIsProcessing(false);
     }

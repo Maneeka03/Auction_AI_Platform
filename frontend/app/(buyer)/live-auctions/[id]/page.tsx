@@ -380,7 +380,7 @@ import { useAuth } from "@/lib/auth/session-context";
 import { can } from "@/lib/auth/permissions";
 import { resolveMinioUrl } from "@/lib/utils/resolveMinioUrl";
 import type { Bid } from "@/types/bid";
-
+import toast from "react-hot-toast";
 function formatMoney(value: string | null): string {
   return value ? `$${Number(value).toLocaleString()}` : "—";
 }
@@ -416,46 +416,76 @@ export default function LiveBiddingRoomPage() {
       .catch(() => {});
   }, [accessToken, auction?.property_id]);
 
+  // async function toggleWatchlist() {
+  //   if (!accessToken || !auction?.property_id || watchlistLoading) return;
+  //   setWatchlistLoading(true);
+  //   try {
+  //     if (isWatched) {
+  //       await removeFromWatchlist(accessToken, auction.property_id);
+  //       setIsWatched(false);
+  //     } else {
+  //       await addToWatchlist(accessToken, auction.property_id);
+  //       setIsWatched(true);
+  //     }
+  //   } catch {
+  //   } finally {
+  //     setWatchlistLoading(false);
+  //   }
+  // }
   async function toggleWatchlist() {
-    if (!accessToken || !auction?.property_id || watchlistLoading) return;
-    setWatchlistLoading(true);
-    try {
-      if (isWatched) {
-        await removeFromWatchlist(accessToken, auction.property_id);
-        setIsWatched(false);
-      } else {
-        await addToWatchlist(accessToken, auction.property_id);
-        setIsWatched(true);
-      }
-    } catch {
-    } finally {
-      setWatchlistLoading(false);
+  if (!accessToken || !auction?.property_id || watchlistLoading) return;
+
+  setWatchlistLoading(true);
+
+  try {
+    if (isWatched) {
+      await removeFromWatchlist(accessToken, auction.property_id);
+      setIsWatched(false);
+      toast.success("Removed from watchlist");
+    } else {
+      await addToWatchlist(accessToken, auction.property_id);
+      setIsWatched(true);
+      toast.success("Saved to watchlist");
     }
+  } catch {
+    toast.error("Unable to update watchlist");
+  } finally {
+    setWatchlistLoading(false);
   }
+}
 
   useEffect(() => {
     if (!accessToken) return;
     void listBids(accessToken, auctionId).then(setBids).catch(() => {});
   }, [accessToken, auctionId, eventCount]);
 
-  async function submitBid(amount: string) {
-    if (!accessToken) return;
-    setBidError(null);
-    setIsBidding(true);
-    try {
-      await placeBid(accessToken, auctionId, { amount });
-      setCustomAmount("");
-    } catch (err) {
-      setBidError(
-        err instanceof ApiRequestError
-          ? { code: err.code, message: err.message }
-          : { code: "unknown_error", message: "Failed to place bid." },
-      );
-    } finally {
-      setIsBidding(false);
-    }
-  }
+async function submitBid(amount: string) {
+  if (!accessToken) return;
 
+  setBidError(null);
+  setIsBidding(true);
+
+  try {
+    await placeBid(accessToken, auctionId, { amount });
+
+    setCustomAmount("");
+
+    // ✅ Success Toast
+    toast.success("Bid placed successfully!");
+  } catch (err) {
+    const error =
+      err instanceof ApiRequestError
+        ? { code: err.code, message: err.message }
+        : { code: "unknown_error", message: "Failed to place bid." };
+
+    setBidError(error);
+
+    // ✅ Error Toast
+    toast.error(error.message);
+  } finally {
+    setIsBidding(false);
+  }
+}
   function handleCustomSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!customAmount) return;

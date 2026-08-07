@@ -2,6 +2,7 @@
 
 import { Download, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Pagination } from "@/components/ui/Pagination";
 import { RequirePermission } from "@/components/auth/RequirePermission";
@@ -109,6 +110,7 @@ export default function BuyersCrmPage() {
     try {
       setBlocking(true);
       await updateUser(accessToken, buyerToBlock.id, { status: "suspended" });
+      toast.success("Buyer suspended successfully");
       setBuyerToBlock(null);
       await fetchBuyers();
     } catch (err) {
@@ -129,6 +131,7 @@ export default function BuyersCrmPage() {
       ...payload,
       roles: ["buyer"],
     });
+    toast.success("Buyer created successfully");
 
     setShowAddBuyer(false);
 

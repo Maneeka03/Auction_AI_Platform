@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import type { Campaign, CampaignChannel } from "@/types/campaign";
+import { toast } from "react-hot-toast/headless";
 
 interface CampaignFormValues {
   name: string;
@@ -58,28 +59,77 @@ export function AddCampaignDrawer({ campaign, onClose, onSubmit }: AddCampaignDr
     setTimeout(onClose, 200);
   }
 
+  // async function handleSubmit(event: React.FormEvent) {
+  //   event.preventDefault();
+  //   setError(null);
+
+  //   if (!name.trim()) {
+  //     setError("Campaign name is required.");
+  //     return;
+  //   }
+  //   if (!body.trim()) {
+  //     setError("Message body is required.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSubmit({ name: name.trim(), channel, audience, subject, body, scheduledAt });
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Something went wrong.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
+  event.preventDefault();
+  setError(null);
 
-    if (!name.trim()) {
-      setError("Campaign name is required.");
-      return;
-    }
-    if (!body.trim()) {
-      setError("Message body is required.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSubmit({ name: name.trim(), channel, audience, subject, body, scheduledAt });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!name.trim()) {
+    const message = "Campaign name is required.";
+    setError(message);
+    toast.error(message);
+    return;
   }
+
+  if (!body.trim()) {
+    const message = "Message body is required.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    await onSubmit({
+      name: name.trim(),
+      channel,
+      audience,
+      subject,
+      body,
+      scheduledAt,
+    });
+
+    toast.success(
+      isEditing
+        ? "Campaign updated successfully"
+        : scheduledAt
+          ? "Campaign scheduled successfully"
+          : "Campaign created successfully",
+    );
+
+    handleClose();
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong.";
+
+    setError(message);
+    toast.error(message);
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

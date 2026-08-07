@@ -6,6 +6,7 @@ import { getMyListings } from "@/lib/api/seller";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { Property } from "@/types/property";
+import toast from "react-hot-toast";
 
 const VOTE_LABEL: Record<string, string> = {
   director: "Director",
@@ -104,3 +105,4 @@ export default function PendingVerificationPage() {
     </div>
   );
 }
+
