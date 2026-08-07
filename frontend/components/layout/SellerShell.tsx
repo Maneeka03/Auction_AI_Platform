@@ -1,10 +1,11 @@
 "use client";
 
-import { HelpCircle, LifeBuoy, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { HelpCircle, LifeBuoy, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationPromptBanner } from "@/components/notifications/NotificationPromptBanner";
 // PushEnableButton removed from navbar — now in /seller/settings page
 // import { PushEnableButton } from "@/components/notifications/PushEnableButton";
@@ -52,7 +53,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
   const userInitials = session ? initialsFromName(session.full_name) : "?";
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
+    <div className="seller-shell flex min-h-screen bg-neutral-50">
       <SellerSidebar
         isOpen={isSidebarOpen}
         isMobileOpen={isMobileNavOpen}
@@ -116,6 +117,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
             </div>
 
             {/* PushEnableButton moved to /seller/settings page */}
+            <ThemeToggle />
             <NotificationBell />
 
             {/* Account menu */}
@@ -127,7 +129,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
                 aria-expanded={profileOpen}
                 className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
               >
-                {userInitials}
+                {session?.avatar_url ? <img src={session.avatar_url} alt="" className="h-full w-full object-cover" /> : userInitials}
                 <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success-500" />
               </button>
 
@@ -137,6 +139,13 @@ export function SellerShell({ children }: { children: ReactNode }) {
                     <p className="text-sm font-medium text-neutral-900">{session?.full_name}</p>
                     <p className="text-xs text-neutral-500">{session?.email}</p>
                   </div>
+                  <div className="my-1 border-t border-neutral-100" />
+                  <Link href="/seller/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
+                    <User size={16} /> Profile
+                  </Link>
+                  <Link href="/seller/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
+                    <Settings size={16} /> Settings
+                  </Link>
                   <div className="my-1 border-t border-neutral-100" />
                   <button
                     type="button"

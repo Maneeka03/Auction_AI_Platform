@@ -5,9 +5,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
+from app.core import events
 from app.models.support_ticket import SupportTicket
 from app.schemas.support_ticket import CreateTicketRequest, UpdateTicketRequest
-from app.models.user import User
+from app.models.notification import NotificationKind
+from app.models.user import User, UserRole, UserStatus
+from app.rbac.permissions import Role
+from app.services import notifications
 
 
 
@@ -40,6 +44,34 @@ async def create(session: AsyncSession, user_id: uuid.UUID, data: CreateTicketRe
     await session.commit()
     await session.refresh(ticket)
     return ticket
+
+
+async def notify_staff_of_new_ticket(
+    session: AsyncSession, ticket: SupportTicket, raised_by: User
+) -> None:
+    """Create one unread support notification for every staff role that handles tickets."""
+    recipient_ids = list((await session.scalars(
+        select(User.id)
+        .join(UserRole, UserRole.user_id == User.id)
+        .where(
+            User.status == UserStatus.ACTIVE,
+            UserRole.role.in_(
+                (Role.SUPER_ADMIN, Role.GEMOLOGIST, Role.AUCTION_MANAGER)
+            ),
+        )
+        .distinct()
+    )).all())
+    subject = ticket.subject.name if ticket.subject else (ticket.custom_subject or "Support request")
+    for recipient_id in recipient_ids:
+        notifications.push(
+            session,
+            recipient_id,
+            NotificationKind.SUPPORT_TICKET,
+            f"New support ticket from {raised_by.full_name}: {subject}",
+        )
+    await session.commit()
+    for recipient_id in recipient_ids:
+        await events.publish(events.notification_channel(recipient_id), {"type": "notification_created"})
 
 
 async def update(

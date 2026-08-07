@@ -5,7 +5,8 @@ export type NotificationKind =
   | "property_approved"
   | "property_rejected"
   | "kyc_reviewed"
-  | "new_message";
+  | "new_message"
+  | "support_ticket";
 
 export interface Notification {
   id: string;

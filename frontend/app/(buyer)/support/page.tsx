@@ -16,6 +16,7 @@ import Swal from "sweetalert2";
 
 
 const OTHER_VALUE = "__other__";
+const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000").replace(/^http/, "ws");
 
 const STATUS_STYLES: Record<TicketStatus, string> = {
   open: "bg-blue-50 text-blue-600",
@@ -66,6 +67,20 @@ export default function BuyerSupportPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    if (!accessToken) return;
+    const ws = new WebSocket(`${WS_BASE}/api/v1/support-tickets/ws?token=${encodeURIComponent(accessToken)}`);
+    ws.onmessage = (event) => {
+      try {
+        const { type, ticket } = JSON.parse(event.data as string) as { type: string; ticket: SupportTicket };
+        if (type === "ticket_created") {
+          setTickets((current) => current.some((item) => item.id === ticket.id) ? current : [ticket, ...current]);
+        }
+      } catch {}
+    };
+    return () => ws.close();
+  }, [accessToken]);
+
   const openCreate = () => setForm(EMPTY_FORM);
   const openEdit = (ticket: SupportTicket) =>
     setForm({
@@ -91,7 +106,10 @@ export default function BuyerSupportPage() {
       // else await createTicket(accessToken, payload);
       // setForm(null);
       // await load();
-            if (form.id) { await updateTicket(accessToken, form.id, payload); toast.success("Ticket updated successfully"); } else { await createTicket(accessToken, payload); toast.success("Support ticket submitted successfully"); }
+      const saved = form.id ? await updateTicket(accessToken, form.id, payload) : await createTicket(accessToken, payload);
+      if (form.id) setTickets((current) => current.map((ticket) => ticket.id === saved.id ? saved : ticket));
+      setForm(null);
+      toast.success(form.id ? "Ticket updated successfully" : "Support ticket submitted successfully");
 
     // } catch (err) {
     //   setError(err instanceof ApiRequestError ? err.message : "Failed to save.");

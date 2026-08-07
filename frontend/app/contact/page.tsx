@@ -11,7 +11,7 @@ import Footer from "@/components/public/Footer/Footer";
 
 const CONTACT_INFO = [
   { icon: Phone, label: "Phone", value: "+1 (000) 000-0000", sub: "Mon – Fri, 9 am – 6 pm" },
-  { icon: Mail, label: "Email", value: "help@aucto.com", sub: "We reply within 24 hours" },
+  { icon: Mail, label: "Email", value: "help@Provenix.com", sub: "We reply within 24 hours" },
   { icon: MapPin, label: "Address", value: "Democountry, AB", sub: "Head Office" },
   { icon: Clock, label: "Support Hours", value: "24 / 7 Online", sub: "Live chat & ticket system" },
 ];

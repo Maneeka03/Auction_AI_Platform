@@ -10,6 +10,7 @@ from app.models.user import User, UserStatus
 class BuyerCrmOut(BaseModel):
     id: uuid.UUID
     full_name: str
+    avatar_url: str | None
     email: str
     status: UserStatus
     created_at: datetime
@@ -22,6 +23,7 @@ class BuyerCrmOut(BaseModel):
         return cls(
             id=user.id,
             full_name=user.full_name,
+            avatar_url=user.avatar_url,
             email=user.email,
             status=user.status,
             created_at=user.created_at,
@@ -34,6 +36,7 @@ class BuyerCrmOut(BaseModel):
 class SellerCrmOut(BaseModel):
     id: uuid.UUID
     full_name: str
+    avatar_url: str | None
     email: str
     status: UserStatus
     created_at: datetime
@@ -46,6 +49,7 @@ class SellerCrmOut(BaseModel):
         return cls(
             id=user.id,
             full_name=user.full_name,
+            avatar_url=user.avatar_url,
             email=user.email,
             status=user.status,
             created_at=user.created_at,

@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Phone, Mail, MapPin } from "lucide-react";
+import { listPublicCategories } from "@/lib/api/categories";
 
 function FacebookIcon() {
   return (
@@ -75,21 +76,19 @@ function HexMark({ className }: { className?: string }) {
 const CONTACT = {
   phone1: "+1 (000) 000-0000",
   phone2: "+1 (000) 000-0001",
-  email: "help@aucto.com",
+  email: "help@Provenix.com",
   address: "Democountry, AB",
 };
 
 const AUCTION_CATEGORIES = [
-  "Ending Now",
-  "Fine Jewellery",
+  "Agricultural Machinery",
   "Antique Watches",
-  "Carpets & Textiles",
-  "Fine Art",
-  "Collectibles",
+  "Jewellery",
+  "Residential"
 ];
 
 const ABOUT_LINKS = [
-  { label: "About Aucto", href: "/about" },
+  { label: "About Provenix", href: "/about" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Our Blog", href: "/blog" },
 ];
@@ -107,6 +106,34 @@ const PAYMENT_BADGES = ["PayPal", "Visa", "Discover", "Mastercard"];
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [categoryHrefs, setCategoryHrefs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let active = true;
+
+    void listPublicCategories()
+      .then((categories) => {
+        if (!active) return;
+        const allCategories = categories.flatMap((category) => [category, ...category.children]);
+        setCategoryHrefs(
+          Object.fromEntries(
+            AUCTION_CATEGORIES.flatMap((label) => {
+              const category = allCategories.find(
+                (item) => item.name.trim().toLowerCase() === label.toLowerCase(),
+              );
+              return category ? [[label, `/browse-properties?category=${category.id}`]] : [];
+            }),
+          ),
+        );
+      })
+      .catch(() => {
+        // Keep the unfiltered Browse Assets fallback if categories are unavailable.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleSubscribe(e: FormEvent) {
     e.preventDefault();
@@ -193,7 +220,7 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {AUCTION_CATEGORIES.map((label) => (
                 <li key={label}>
-                  <Link href="/browse-properties" className="text-purple-100 transition hover:text-white">
+                  <Link href={categoryHrefs[label] ?? "/browse-properties"} className="text-purple-100 transition hover:text-white">
                     {label}
                   </Link>
                 </li>
@@ -255,9 +282,9 @@ export default function Footer() {
         <div className="mt-16 flex flex-col items-center gap-6 border-t border-white/10 pb-10 pt-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-              <span className="text-lg font-bold text-brand-700">A</span>
+              <span className="text-lg font-bold text-brand-700">P</span>
             </div>
-            <span className="text-xl font-bold text-white">Aucto</span>
+            <span className="text-xl font-bold text-white">Provenix</span>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -272,7 +299,7 @@ export default function Footer() {
           </div>
 
           <p className="text-sm text-purple-200">
-            © {new Date().getFullYear()} Aucto. All rights reserved.
+            © {new Date().getFullYear()} Provenix. All rights reserved.
           </p>
         </div>
       </div>

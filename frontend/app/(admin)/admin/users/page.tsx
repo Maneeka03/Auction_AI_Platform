@@ -233,8 +233,8 @@ export default function UserManagementPage() {
                   <tr key={user.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                          {initialsFromName(user.full_name)}
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
+                          {user.avatar_url ? <img src={user.avatar_url} alt="" className="h-full w-full object-cover" /> : initialsFromName(user.full_name)}
                         </span>
                         <span className="font-medium text-neutral-900">{user.full_name}</span>
                       </div>

@@ -313,6 +313,21 @@ const ENDING_WINDOWS: Record<EndingWithinFilter, number> = {
   "3m": 90 * 86_400_000,
 };
 
+const AUCTION_TYPE_OPTIONS = [
+  { value: "", label: "All Types" },
+  { value: "live", label: "Live" },
+  { value: "upcoming", label: "Timed" },
+  { value: "buy_now", label: "Buy Now" },
+];
+
+const ENDING_WITHIN_OPTIONS = [
+  { value: "", label: "Any Time" },
+  { value: "1d", label: "1 Day" },
+  { value: "1w", label: "1 Week" },
+  { value: "1m", label: "1 Month" },
+  { value: "3m", label: "3 Months" },
+];
+
 export default function AdminBrowsePropertiesPage() {
   const { accessToken } = useAuth();
   const { categories } = useCategories();
@@ -325,20 +340,15 @@ export default function AdminBrowsePropertiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
 
-  const [auctionTypes, setAuctionTypes] = useState<Set<AuctionTypeFilter>>(new Set());
-  const [endingWithin, setEndingWithin] = useState<Set<EndingWithinFilter>>(new Set());
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [auctionTypes, setAuctionTypes] = useState<AuctionTypeFilter | "">("");
+  const [endingWithin, setEndingWithin] = useState<EndingWithinFilter | "">("");
+
+const [minPrice, setMinPrice] = useState("");
+const [maxPrice, setMaxPrice] = useState("");
 
   const selectedParent = categories.find((c) => c.id === selectedParentId) ?? null;
   const subcategories = selectedParent?.children ?? [];
   const activeCategoryId = selectedSubId || selectedParentId || null;
-
-  const priceBounds = useMemo(() => {
-    if (properties.length === 0) return { min: 0, max: 10_000_000 };
-    const prices = properties.map((p) => Number(p.reserve_price));
-    return { min: Math.floor(Math.min(...prices)), max: Math.ceil(Math.max(...prices)) };
-  }, [properties]);
 
   const fetchAll = useCallback(async () => {
     if (!accessToken) return;
@@ -364,13 +374,6 @@ export default function AdminBrowsePropertiesPage() {
     void fetchAll();
   }, [fetchAll]);
 
-  function toggleSet<T>(set: Set<T>, value: T, setter: (s: Set<T>) => void) {
-    const next = new Set(set);
-    if (next.has(value)) next.delete(value);
-    else next.add(value);
-    setter(next);
-  }
-
   function handleParentChange(id: string) {
     setSelectedParentId(id);
     setSelectedSubId("");
@@ -379,43 +382,88 @@ export default function AdminBrowsePropertiesPage() {
   function handleReset() {
     setSelectedParentId("");
     setSelectedSubId("");
-    setMinPrice("");
-    setMaxPrice("");
-    setAuctionTypes(new Set());
-    setEndingWithin(new Set());
+    setAuctionTypes("");
+    setEndingWithin("");
+      setMinPrice("");
+  setMaxPrice("");
   }
 
-  const visibleProperties = useMemo(() => {
-    return properties.filter((p) => {
-      const minVal = minPrice ? Number(minPrice) : null;
-      const maxVal = maxPrice ? Number(maxPrice) : null;
-      const price = Number(p.reserve_price);
-      if (minVal !== null && price < minVal) return false;
-      if (maxVal !== null && price > maxVal) return false;
+  // const visibleProperties = useMemo(() => {
+  //   return properties.filter((p) => {
+  //     const auction = auctionByProperty.get(p.id);
 
-      const auction = auctionByProperty.get(p.id);
-      if (auctionTypes.size > 0) {
-        const matches =
-          (auctionTypes.has("live") && auction?.status === "live") ||
-          (auctionTypes.has("upcoming") && auction?.status === "upcoming") ||
-          (auctionTypes.has("buy_now") && !auction);
-        if (!matches) return false;
-      }
+  //     if (auctionTypes) {
+  //       const matches =
+  //         (auctionTypes === "live" && auction?.status === "live") ||
+  //         (auctionTypes === "upcoming" && auction?.status === "upcoming") ||
+  //         (auctionTypes === "buy_now" && !auction);
+  //       if (!matches) return false;
+  //     }
 
-      if (endingWithin.size > 0) {
-        if (!auction) return false;
-        const remaining = new Date(auction.ends_at).getTime() - now;
-        const matches = Array.from(endingWithin).some(
-          (w) => remaining > 0 && remaining <= ENDING_WINDOWS[w],
-        );
-        if (!matches) return false;
-      }
+  //     if (endingWithin) {
+  //       if (!auction) return false;
+  //       const remaining = new Date(auction.ends_at).getTime() - now;
+  //       const withinWindow = remaining > 0 && remaining <= ENDING_WINDOWS[endingWithin];
+  //       if (!withinWindow) return false;
+  //     }
 
-      return true;
-    });
-  }, [properties, minPrice, maxPrice, auctionTypes, endingWithin, auctionByProperty, now]);
+  //     return true;
+  //   });
+  // }, [properties, auctionTypes, endingWithin, auctionByProperty, now]);
 
-  const hasExtraFilters = !!minPrice || !!maxPrice || auctionTypes.size > 0 || endingWithin.size > 0;
+
+const visibleProperties = useMemo(() => {
+  return properties.filter((p) => {
+    const auction = auctionByProperty.get(p.id);
+
+    if (auctionTypes) {
+      const matches =
+        (auctionTypes === "live" && auction?.status === "live") ||
+        (auctionTypes === "upcoming" && auction?.status === "upcoming") ||
+        (auctionTypes === "buy_now" && !auction);
+
+      if (!matches) return false;
+    }
+
+    if (endingWithin) {
+      if (!auction) return false;
+
+      const remaining =
+        new Date(auction.ends_at).getTime() - now;
+
+      const withinWindow =
+        remaining > 0 &&
+        remaining <= ENDING_WINDOWS[endingWithin];
+
+      if (!withinWindow) return false;
+    }
+
+    // Price range
+    const price = Number(p.reserve_price);
+
+    if (minPrice && price < Number(minPrice)) {
+      return false;
+    }
+
+    if (maxPrice && price > Number(maxPrice)) {
+      return false;
+    }
+
+    return true;
+  });
+}, [
+  properties,
+  auctionTypes,
+  endingWithin,
+  minPrice,
+  maxPrice,
+  auctionByProperty,
+  now,
+]);
+
+  const hasExtraFilters = !!auctionTypes || !!endingWithin  ||
+  !!minPrice ||
+  !!maxPrice;;
 
   return (
     <AdminShell>
@@ -432,7 +480,8 @@ export default function AdminBrowsePropertiesPage() {
 
         {/* Filter bar */}
         <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"> */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {/* Category */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-neutral-500">Category</label>
@@ -462,76 +511,58 @@ export default function AdminBrowsePropertiesPage() {
               />
             </div>
 
-            {/* Price */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-neutral-500">
-                Price Range
-                {priceBounds.min > 0 && (
-                  <span className="ml-1 font-normal text-neutral-400">
-                    (${priceBounds.min.toLocaleString()} – ${priceBounds.max.toLocaleString()})
-                  </span>
-                )}
-              </label>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  placeholder="Min"
-                  className="h-9 w-full rounded-lg border border-neutral-200 px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200"
-                />
-                <span className="shrink-0 text-xs text-neutral-400">–</span>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  placeholder="Max"
-                  className="h-9 w-full rounded-lg border border-neutral-200 px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200"
-                />
-              </div>
-            </div>
-
-            {/* Auction type */}
+            {/* Auction Type */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-neutral-500">Auction Type</label>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {([["live", "Live"], ["upcoming", "Timed"], ["buy_now", "Buy Now"]] as [AuctionTypeFilter, string][]).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => toggleSet(auctionTypes, value, setAuctionTypes)}
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                      auctionTypes.has(value)
-                        ? "bg-brand-500 text-white"
-                        : "border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <SearchableSelect
+                value={auctionTypes}
+                options={AUCTION_TYPE_OPTIONS}
+                placeholder="All Types"
+                onChange={(value) => setAuctionTypes(value as AuctionTypeFilter | "")}
+              />
             </div>
 
-            {/* Ending within */}
+            {/* Ending Within */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-neutral-500">Ending Within</label>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {([["1d", "1 Day"], ["1w", "1 Week"], ["1m", "1 Month"], ["3m", "3 Months"]] as [EndingWithinFilter, string][]).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => toggleSet(endingWithin, value, setEndingWithin)}
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                      endingWithin.has(value)
-                        ? "bg-brand-500 text-white"
-                        : "border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <SearchableSelect
+                value={endingWithin}
+                options={ENDING_WITHIN_OPTIONS}
+                placeholder="Any Time"
+                onChange={(value) => setEndingWithin(value as EndingWithinFilter | "")}
+              />
             </div>
+
+
+{/* Price Range */}
+<div className="flex flex-col gap-1">
+  <label className="text-xs font-medium text-neutral-500">
+    Price Range
+  </label>
+
+  <div className="flex items-center gap-2">
+    <input
+      type="number"
+      min="0"
+      value={minPrice}
+      onChange={(e) => setMinPrice(e.target.value)}
+      placeholder="Min"
+      className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+    />
+
+    <span className="text-sm text-neutral-400">–</span>
+
+    <input
+      type="number"
+      min="0"
+      value={maxPrice}
+      onChange={(e) => setMaxPrice(e.target.value)}
+      placeholder="Max"
+      className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+    />
+  </div>
+</div>
+
           </div>
 
           {(selectedParentId || selectedSubId || hasExtraFilters) && (

@@ -27,7 +27,8 @@ Longitude = Annotated[Decimal, Field(ge=-180, le=180, max_digits=9, decimal_plac
 
 class CreatePropertyRequest(BaseModel):
     title: str = Field(min_length=2, max_length=200)
-    address: str = Field(min_length=2, max_length=300)
+    # Listings may represent movable assets, so a street address is optional.
+    address: str = Field(default="", max_length=300)
     category_id: uuid.UUID
     reserve_price: Money
     description: str | None = Field(default=None, max_length=5000)
@@ -43,7 +44,7 @@ class CreatePropertyRequest(BaseModel):
 
 class UpdatePropertyRequest(BaseModel):
     title: str | None = Field(default=None, min_length=2, max_length=200)
-    address: str | None = Field(default=None, min_length=2, max_length=300)
+    address: str | None = Field(default=None, max_length=300)
     category_id: uuid.UUID | None = None
     status: EditableStatus | None = None
     reserve_price: Money | None = None

@@ -121,8 +121,8 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
     event.preventDefault();
     setError(null);
 
-    if (!title.trim() || !address.trim() || !reservePrice || !categoryId) {
-      setError("Title, address, category, and reserve price are required.");
+    if (!title.trim() || !reservePrice || !categoryId) {
+      setError("Title, category, and reserve price are required.");
       return;
     }
 
@@ -291,7 +291,7 @@ export function AddPropertyDrawer({ onClose, onCreate }: AddPropertyDrawerProps)
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
-                Address <span className="text-danger-500">*</span>
+                Address
               </label>
               <input
                 value={address}

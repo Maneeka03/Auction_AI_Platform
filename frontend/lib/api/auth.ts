@@ -23,8 +23,11 @@ export function getMe(accessToken: string): Promise<Session> {
   return apiClient.get<Session>(`${BASE}/me`, { accessToken });
 }
 
-export function updateMyProfile(accessToken: string, fullName: string): Promise<Session> {
-  return apiClient.patch<Session>(`${BASE}/me`, { full_name: fullName }, { accessToken });
+export function updateMyProfile(
+  accessToken: string,
+  payload: { full_name: string; avatar_url: string | null },
+): Promise<Session> {
+  return apiClient.patch<Session>(`${BASE}/me`, payload, { accessToken });
 }
 
 export function forgotPassword(email: string): Promise<void> {

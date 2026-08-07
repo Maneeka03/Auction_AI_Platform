@@ -17,7 +17,7 @@ class PresignRequest(BaseModel):
     content_type: ContentType
     # Where the object belongs. Listing photos are readable by anyone with the URL; identity
     # documents live behind a short-lived signed GET.
-    purpose: Literal["property", "kyc"] = "property"
+    purpose: Literal["property", "kyc", "avatar"] = "property"
 
 
 class PresignOut(BaseModel):

@@ -53,11 +53,16 @@ async def list_my_tickets(session: DbSession, actor: CurrentUser) -> TicketPage:
 @router.post("", response_model=TicketOut, status_code=status.HTTP_201_CREATED)
 async def create_ticket(payload: CreateTicketRequest, session: DbSession, actor: CurrentUser) -> TicketOut:
     ticket = await support_tickets.create(session, actor.id, payload)
+    await support_tickets.notify_staff_of_new_ticket(session, ticket, actor)
     out = TicketOut.of(ticket)
     admin_out = AdminTicketOut(**out.model_dump(), raiser_name=actor.full_name, raiser_email=actor.email)
     await events.publish(events.ticket_channel(), {
         "type": "ticket_created",
         "ticket": admin_out.model_dump(mode="json"),
+    })
+    await events.publish(events.user_ticket_channel(actor.id), {
+        "type": "ticket_created",
+        "ticket": out.model_dump(mode="json"),
     })
     return out
 
@@ -132,11 +137,16 @@ async def tickets_ws(websocket: WebSocket, token: str) -> None:
 
     async with SessionFactory() as session:
         user = await socket_user(session, token)
-        if user is None or not can(user.roles, Module.SYSTEM_SETTINGS, Access.FULL):
+        if user is None:
             await websocket.close(code=4401)
             return
+        channel = (
+            events.ticket_channel()
+            if can(user.roles, Module.SYSTEM_SETTINGS, Access.FULL)
+            else events.user_ticket_channel(user.id)
+        )
 
-    relay = asyncio.create_task(_relay(websocket, events.ticket_channel()))
+    relay = asyncio.create_task(_relay(websocket, channel))
     try:
         while True:
             await websocket.receive_text()

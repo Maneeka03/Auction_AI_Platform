@@ -8,7 +8,7 @@ const PRESS_RELEASES = [
   {
     date: "July 2026",
     tag: "Company",
-    title: "Aucto Raises Series A to Expand Fine Asset Auctions Globally",
+    title: "Provenix Raises Series A to Expand Fine Asset Auctions Globally",
     excerpt:
       "The funding will be used to grow our engineering team, expand into new asset categories, and deepen our seller-verification technology.",
   },
@@ -22,7 +22,7 @@ const PRESS_RELEASES = [
   {
     date: "March 2026",
     tag: "Community",
-    title: "Aucto Partners with Leading Gemological Institute for Jewellery Appraisal",
+    title: "Provenix Partners with Leading Gemological Institute for Jewellery Appraisal",
     excerpt:
       "Every fine jewellery listing is now reviewed by a certified gemologist before going live, ensuring reserve prices reflect real-world valuations.",
   },
@@ -31,7 +31,7 @@ const PRESS_RELEASES = [
     tag: "Milestone",
     title: "10,000 Assets Listed — A Milestone for the Community",
     excerpt:
-      "In just over a year of operation, Aucto has hosted more than 10,000 unique asset listings across fine art, antique watches, carpets, and jewellery.",
+      "In just over a year of operation, Provenix has hosted more than 10,000 unique asset listings across fine art, antique watches, carpets, and jewellery.",
   },
 ];
 
@@ -55,12 +55,12 @@ export default function PressPage() {
               Press
             </span>
             <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-extrabold leading-tight text-white md:text-5xl">
-              Aucto in the News
+              Provenix in the News
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-purple-100">
               For press enquiries contact{" "}
-              <a href="mailto:press@aucto.com" className="underline underline-offset-2">
-                press@aucto.com
+              <a href="mailto:press@Provenix.com" className="underline underline-offset-2">
+                press@Provenix.com
               </a>
             </p>
           </div>

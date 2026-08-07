@@ -29,7 +29,8 @@ export default function HowItWorks() {
         className="object-contain object-center"
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      {/* <div className="relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8"> */}
+        <div className="relative z-10 mx-auto w-full px-0">
         <div className="text-center">
           <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">
             How It Works

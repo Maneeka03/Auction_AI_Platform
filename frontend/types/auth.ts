@@ -32,6 +32,7 @@ export interface Session {
   id: string;
   email: string;
   full_name: string;
+  avatar_url: string | null;
   status: UserStatus;
   country: string | null;
   business_type: string | null;

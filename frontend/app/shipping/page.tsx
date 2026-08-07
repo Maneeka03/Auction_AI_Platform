@@ -56,7 +56,7 @@ export default function ShippingPage() {
               Safe Delivery, Every Time
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-purple-100">
-              Every item shipped through Aucto is tracked, insured, and handled with care.
+              Every item shipped through Provenix is tracked, insured, and handled with care.
             </p>
           </div>
         </div>

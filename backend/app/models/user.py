@@ -35,6 +35,7 @@ class User(Base, TimestampMixin):
         pg_enum(UserStatus, "user_status"), default=UserStatus.PENDING_VERIFICATION, index=True
     )
     full_name: Mapped[str] = mapped_column(String(120))
+    avatar_url: Mapped[str | None] = mapped_column(String(500), default=None)
     country: Mapped[str | None] = mapped_column(String(2), default=None)
     business_type: Mapped[str | None] = mapped_column(String(40), default=None)
     email_verified_at: Mapped[datetime | None] = mapped_column(

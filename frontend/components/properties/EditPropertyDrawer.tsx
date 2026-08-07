@@ -105,8 +105,8 @@ async function handleSubmit(event: React.FormEvent) {
   event.preventDefault();
   setError(null);
 
-  if (!title.trim() || !address.trim() || !reservePrice) {
-    const message = "Title, address, and reserve price are required.";
+  if (!title.trim() || !reservePrice) {
+    const message = "Title and reserve price are required.";
     setError(message);
     toast.error(message);
     return;
@@ -342,7 +342,7 @@ async function handleSubmit(event: React.FormEvent) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-neutral-800">
-                Address <span className="text-danger-500">*</span>
+                Address
               </label>
               <input
                 value={address}

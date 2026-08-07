@@ -3,6 +3,7 @@ import type { UserStatus } from "@/types/auth";
 export interface BuyerCrmRow {
   id: string;
   full_name: string;
+  avatar_url: string | null;
   email: string;
   status: UserStatus;
   created_at: string;
@@ -14,6 +15,7 @@ export interface BuyerCrmRow {
 export interface SellerCrmRow {
   id: string;
   full_name: string;
+  avatar_url: string | null;
   email: string;
   status: UserStatus;
   created_at: string;

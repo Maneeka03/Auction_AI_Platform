@@ -42,6 +42,7 @@ class UserOut(BaseModel):
     id: uuid.UUID
     email: EmailStr
     full_name: str
+    avatar_url: str | None
     status: UserStatus
     auth_provider: AuthProvider
     country: str | None

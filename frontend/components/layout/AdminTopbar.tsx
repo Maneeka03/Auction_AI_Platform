@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/lib/auth/session-context";
 import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
 
@@ -52,7 +53,6 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
   const { session, logout } = useAuth();
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
   const unreadMsgCount = useUnreadMessageCount();
-  const [isDark, setIsDark] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLElement>(null);
 
@@ -84,14 +84,6 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
     } else {
       document.documentElement.requestFullscreen();
     }
-  }
-
-  function toggleDarkMode() {
-    setIsDark((prev) => {
-      const next = !prev;
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
   }
 
   async function handleSignOut() {
@@ -246,6 +238,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
         </div>
 
         {/* Notifications */}
+        <ThemeToggle />
         <NotificationBell />
 
         {/* Profile */}
@@ -255,9 +248,9 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             onClick={() => toggleMenu("profile")}
             aria-label="Account menu"
             aria-expanded={openMenu === "profile"}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-600 dark:text-white"
           >
-            {userInitials}
+            {session?.avatar_url ? <img src={session.avatar_url} alt="" className="h-full w-full object-cover" /> : userInitials}
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success-500" />
           </button>
           {openMenu === "profile" ? (
@@ -267,10 +260,10 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
                 <p className="text-xs text-neutral-500">{session?.email}</p>
               </div>
               <div className="my-1 border-t border-neutral-100" />
-              <Link href="/admin/profile" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
+              <Link href="/admin/profile" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-700">
                 <UserCircle size={16} /> Profile Settings
               </Link>
-              <Link href="/settings" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
+              <Link href="/settings" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-700">
                 <Settings size={16} /> Settings
               </Link>
               <div className="my-1 border-t border-neutral-100" />

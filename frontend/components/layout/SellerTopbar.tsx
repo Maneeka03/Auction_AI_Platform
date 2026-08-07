@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
 
@@ -65,6 +66,7 @@ export function SellerTopbar() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <PushEnableButton />
           <NotificationBell />
           {session ? (

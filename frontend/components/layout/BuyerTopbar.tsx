@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 // PushEnableButton removed from navbar — now in /settings page
 // import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { useAuth } from "@/lib/auth/session-context";
@@ -90,6 +91,7 @@ export function BuyerTopbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           {/* PushEnableButton moved to /settings page */}
           <NotificationBell />
           {session ? (
@@ -123,7 +125,9 @@ export function BuyerTopbar() {
                 href={link.href}
                 onClick={() => setIsMobileNavOpen(false)}
                 className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium ${
-                  isActive ? "bg-brand-50 text-brand-700" : "text-neutral-700 hover:bg-neutral-50"
+                  isActive
+                    ? "bg-brand-50 text-brand-700 dark:bg-brand-600 dark:text-white"
+                    : "text-neutral-700 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white"
                 }`}
               >
                 {/* OLD: <link.icon size={16} /> */}

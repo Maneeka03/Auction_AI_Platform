@@ -19,7 +19,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<Session>;
   logout: () => Promise<void>;
-  updateProfile: (fullName: string) => Promise<void>;
+  updateProfile: (payload: { fullName: string; avatarUrl: string | null }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -104,9 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [accessToken, clearRefreshTimer]);
 
-  const updateProfile = useCallback(async (fullName: string) => {
+  const updateProfile = useCallback(async ({ fullName, avatarUrl }: { fullName: string; avatarUrl: string | null }) => {
     if (!accessToken) throw new Error("You must be signed in.");
-    const updated = await updateMyProfile(accessToken, fullName);
+    const updated = await updateMyProfile(accessToken, { full_name: fullName, avatar_url: avatarUrl });
     setSession(updated);
   }, [accessToken]);
 

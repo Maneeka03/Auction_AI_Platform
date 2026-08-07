@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { auctionManagerNav } from "@/lib/navigation/auctionManagerNav";
 import { superAdminNav } from "@/lib/navigation/superAdminNav";
 import { useAuth } from "@/lib/auth/session-context";
+import { useUnreadMessageCount } from "@/lib/hooks/useUnreadMessageCount";
+import { useUnreadSupportTicketCount } from "@/lib/hooks/useUnreadSupportTicketCount";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -26,6 +28,8 @@ const STAFF_ROLES = new Set([
 export function AdminSidebar({ isOpen, isMobileOpen, onCloseMobile }: AdminSidebarProps) {
   const pathname = usePathname();
   const { session, isLoading } = useAuth();
+  const unreadMsgCount = useUnreadMessageCount();
+  const unreadTicketCount = useUnreadSupportTicketCount();
 
   const isStaff = !isLoading && session ? session.roles.some((role) => STAFF_ROLES.has(role)) : false;
   const isRestrictedStaff =
@@ -52,6 +56,9 @@ export function AdminSidebar({ isOpen, isMobileOpen, onCloseMobile }: AdminSideb
             <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const isActive = pathname === item.href;
+                const isMessages = item.href === "/admin/messages";
+                const isSupport = item.href === "/help/contact";
+                const badgeCount = isMessages ? unreadMsgCount : isSupport ? unreadTicketCount : 0;
                 return (
                   <li key={item.href}>
                     <Link
@@ -60,11 +67,22 @@ export function AdminSidebar({ isOpen, isMobileOpen, onCloseMobile }: AdminSideb
                       title={showLabels ? undefined : item.label}
                       className={`flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-brand-50 text-brand-700"
-                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                          ? "bg-brand-50 text-brand-700 dark:bg-brand-600 dark:text-white"
+                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white"
                       } ${showLabels ? "" : "justify-center"}`}
                     >
-                      <item.icon size={18} className="shrink-0" />
+                      {isMessages || isSupport ? (
+                        <span className="relative shrink-0">
+                          <item.icon size={18} />
+                          {badgeCount > 0 ? (
+                            <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-0.5 text-[9px] font-semibold text-white">
+                              {badgeCount > 9 ? "9+" : badgeCount}
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : (
+                        <item.icon size={18} className="shrink-0" />
+                      )}
                       {showLabels ? <span>{item.label}</span> : null}
                     </Link>
                   </li>
