@@ -7,7 +7,8 @@ export type UserRole =
   | "gemologist"
   | "buyer"
   | "seller"
-  | "executive";
+  | "executive"
+  | "agency_admin";
 
 export type UserStatus = "pending_verification" | "active" | "suspended" | "deleted";
 

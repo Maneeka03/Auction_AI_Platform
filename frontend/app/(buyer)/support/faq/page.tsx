@@ -19,9 +19,9 @@ export default function BuyerFaqPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50">
+        {/* <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50">
           <HelpCircle size={22} className="text-brand-600" />
-        </div>
+        </div> */}
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Frequently Asked Questions</h1>
           <p className="mt-0.5 text-sm text-neutral-500">Answers to common questions about buying and bidding.</p>

@@ -300,7 +300,7 @@ export default function AdminMessagesPage() {
                         isActive ? "bg-brand-50" : "hover:bg-neutral-50"
                       }`}
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:text-white">
                         {initialsFromName(t.full_name)}
                       </span>
                       <div className="min-w-0 flex-1">

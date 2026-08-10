@@ -10,7 +10,7 @@ export function WalletBalanceCard({ summary }: { summary: WalletSummary }) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {[
         { label: "Available to Spend", value: summary.available, description: "Usable for bids and purchases right now", icon: Wallet, accent: "bg-brand-500", valueClass: "text-neutral-900" },
-        { label: "Held for Active Bids", value: summary.held, description: "Released automatically if you don&apos;t win", icon: Lock, accent: "bg-amber-500", valueClass: "text-amber-600" },
+        { label: "Held for Active Bids", value: summary.held, description: "Released automatically if you don't win", icon: Lock, accent: "bg-amber-500", valueClass: "text-amber-600" },
         { label: "Wallet Balance", value: summary.balance, description: "Total funds in your account", icon: CircleDollarSign, accent: "bg-success-500", valueClass: "text-neutral-900" },
       ].map(({ label, value, description, icon: Icon, accent, valueClass }) => (
         <div key={label} className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">

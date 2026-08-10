@@ -206,9 +206,9 @@ export default function WatchlistPage() {
                 )}
 
                 <span
-                  className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${
-                    STATUS_COLORS[item.status] ?? "bg-neutral-100 text-neutral-600"
-                  }`}
+                 className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm dark:text-white ${
+  STATUS_COLORS[item.status] ?? "bg-neutral-100 text-neutral-600"
+}`}
                 >
                   {STATUS_LABELS[item.status] ?? item.status}
                 </span>

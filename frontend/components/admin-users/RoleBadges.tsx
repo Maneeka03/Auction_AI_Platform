@@ -10,6 +10,7 @@ const roleLabels: Record<UserRole, string> = {
   executive: "Executive",
   buyer: "Buyer",
   seller: "Seller",
+  agency_admin: "Agency Admin",
 };
 
 export function RoleBadges({ roles }: { roles: UserRole[] }) {

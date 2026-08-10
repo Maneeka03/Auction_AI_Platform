@@ -416,22 +416,7 @@ export default function LiveBiddingRoomPage() {
       .catch(() => {});
   }, [accessToken, auction?.property_id]);
 
-  // async function toggleWatchlist() {
-  //   if (!accessToken || !auction?.property_id || watchlistLoading) return;
-  //   setWatchlistLoading(true);
-  //   try {
-  //     if (isWatched) {
-  //       await removeFromWatchlist(accessToken, auction.property_id);
-  //       setIsWatched(false);
-  //     } else {
-  //       await addToWatchlist(accessToken, auction.property_id);
-  //       setIsWatched(true);
-  //     }
-  //   } catch {
-  //   } finally {
-  //     setWatchlistLoading(false);
-  //   }
-  // }
+
   async function toggleWatchlist() {
   if (!accessToken || !auction?.property_id || watchlistLoading) return;
 
@@ -562,14 +547,14 @@ async function submitBid(amount: string) {
                   <img
                     src={resolveMinioUrl(auction.image_url)!}
                     alt={auction.title}
-                    className="h-full w-full object-cover opacity-70"
+                    className="h-full w-full object-scale-down opacity-70"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <Package size={48} className="text-neutral-600" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 via-neutral-900/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/10 via-neutral-900/10 to-transparent" />
 
                 <div className="absolute left-5 top-5">
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-sm">
@@ -670,7 +655,7 @@ async function submitBid(amount: string) {
                         </Link>
                       </div>
                     ) : (
-                      <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+                      <div className="rounded-xl bg-neutral-50 px-4 py-1 text-sm text-neutral-600">
                         This auction has ended{auction.winner_id ? " and a winner has been selected." : "."}
                       </div>
                     )}

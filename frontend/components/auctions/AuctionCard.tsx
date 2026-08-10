@@ -156,15 +156,25 @@ export function AuctionCard({ auction, canManage, onEdit, onEndAuction, onDelete
           </span>
         </div>
 
-        <a
+        {/* <a
           href={calendarUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
         >
           <CalendarPlus size={15} /> Add to Google Calendar
-        </a>
+        </a> */}
 
+{auction.status !== "ended" && (
+  <a
+    href={calendarUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+  >
+    <CalendarPlus size={15} /> Add to Google Calendar
+  </a>
+)}
         {canManage && auction.status !== "ended" ? (
           <div className="mt-2 flex gap-2">
             <button

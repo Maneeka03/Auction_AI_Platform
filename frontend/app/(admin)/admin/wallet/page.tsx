@@ -12,12 +12,20 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { BuyerWallet, WalletEntry, WalletEntryKind, WalletSummary } from "@/types/wallet";
 
+// const typeLabels: Record<WalletEntryKind, string> = {
+//   deposit: "Deposit",
+//   bid_hold: "Bid Hold",
+//   refund: "Refund",
+//   purchase: "Purchase",
+//   withdrawal: "Withdrawal",
+// };
 const typeLabels: Record<WalletEntryKind, string> = {
   deposit: "Deposit",
   bid_hold: "Bid Hold",
   refund: "Refund",
   purchase: "Purchase",
   withdrawal: "Withdrawal",
+  payout: "Seller Payout",
 };
 
 const BUYER_PAGE_SIZE = 10;

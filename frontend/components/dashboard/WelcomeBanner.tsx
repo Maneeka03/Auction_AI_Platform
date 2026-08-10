@@ -38,7 +38,10 @@ export function WelcomeBanner({
 }: WelcomeBannerProps) {
   return (
     // <div className="welcome-banner flex flex-col gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-    <div className="welcome-banner flex flex-col gap-4 rounded-xl border border-neutral-800 bg-black p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div 
+    // className="welcome-banner flex flex-col gap-4 rounded-xl border border-neutral-800 bg-black p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+    className="flex flex-col gap-4 rounded-xl border border-neutral-800 bg-black p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+    >
       <div>
         <h2 className="text-xl font-semibold text-white">
           Welcome back, {name}

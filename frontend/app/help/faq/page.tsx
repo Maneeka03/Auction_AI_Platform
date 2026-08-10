@@ -23,7 +23,7 @@ export default function PublicFaqPage() {
       <Navbar solid />
 
       <section className="py-32">
-        <div className="mx-auto w-full max-w-3xl px-8">
+        <div className="mx-auto w-full max-w-7xl px-8">
           <div className="text-center">
             <span className="text-sm font-bold uppercase tracking-[0.2em] text-brand-500">Help</span>
             <h1 className="mt-2 text-4xl font-bold text-neutral-900">Frequently Asked Questions</h1>

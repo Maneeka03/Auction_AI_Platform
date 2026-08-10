@@ -474,9 +474,7 @@ export default function ContactSupportPage() {
         <div className="mx-auto w-full max-w-none px-4 py-4 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                <LifeBuoy size={22} />
-              </div>
+          
               <div>
                 <h1 className="text-xl font-semibold text-neutral-900">Contact Support</h1>
                 <p className="mt-0.5 text-sm text-neutral-500">

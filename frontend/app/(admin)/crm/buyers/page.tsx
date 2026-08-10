@@ -241,8 +241,11 @@ export default function BuyersCrmPage() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                            {buyer.avatar_url ? <img src={buyer.avatar_url} alt="" className="h-full w-full object-cover" /> : initialsFromName(buyer.full_name)}
+                          <span
+                          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-xs font-semibold text-brand-700 dark:text-white"
+                          // className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-xs font-semibold text-brand-700"
+                          >
+                            {buyer.avatar_url ? <img src={buyer.avatar_url} alt="" className="h-full w-full object-cover rounded-full" /> : initialsFromName(buyer.full_name)}
                           </span>
                           <div>
                             <p className="font-medium text-neutral-900">

@@ -165,22 +165,32 @@ export default function MessagesPage() {
               <button
                 type="button"
                 onClick={() => setTab("dms")}
+                // className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                //   tab === "dms"
+                //     ? "bg-brand-50 text-brand-700"
+                //     : "text-neutral-600 hover:bg-neutral-100"
+                // }`}\
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  tab === "dms"
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-neutral-600 hover:bg-neutral-100"
-                }`}
+  tab === "dms"
+    ? "bg-brand-50 text-brand-700 dark:text-white"
+    : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+}`}
               >
                 <MessageSquare size={14} /> DMs
               </button>
               <button
                 type="button"
                 onClick={() => setTab("groups")}
+                // className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                //   tab === "groups"
+                //     ? "bg-brand-50 text-brand-700"
+                //     : "text-neutral-600 hover:bg-neutral-100"
+                // }`}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  tab === "groups"
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-neutral-600 hover:bg-neutral-100"
-                }`}
+  tab === "groups"
+    ? "bg-brand-50 text-brand-700 dark:text-white"
+    : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+}`}
               >
                 <Users size={14} /> Groups
               </button>
@@ -217,7 +227,7 @@ export default function MessagesPage() {
                         isActive ? "bg-brand-50" : "hover:bg-neutral-50"
                       }`}
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:text-white">
                         {initialsFromName(t.full_name)}
                       </span>
                       <div className="min-w-0 flex-1">

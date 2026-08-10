@@ -27,7 +27,7 @@ const statusStyles: Record<KycStatus, string> = {
 
 export default function AdminKycReviewPage() {
   const { accessToken } = useAuth();
-  const [activeTab, setActiveTab] = useState<FilterTab>("pending");
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [items, setItems] = useState<KycReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

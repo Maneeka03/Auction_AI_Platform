@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, Response, status
+from app.core.errors import AppError
 
 from app.api.deps import CurrentUser, DbSession, requires
 from app.models.kyc import KycStatus
@@ -60,4 +61,51 @@ async def get_kyc_document_url(
     submission_id: uuid.UUID, key: str, session: DbSession, _: User = Reviewer
 ) -> DocumentUrlOut:
     url = await kyc.document_url(session, submission_id, key)
+    return DocumentUrlOut(url=url)
+
+
+@router.get("/kyc/me/documents/{key:path}", response_model=DocumentUrlOut)
+async def get_my_kyc_document_url(
+    key: str,
+    session: DbSession,
+    actor: CurrentUser,
+) -> DocumentUrlOut:
+    submission = await kyc.mine(session, actor.id)
+
+    if submission is None:
+        raise AppError(
+            status.HTTP_404_NOT_FOUND,
+            "kyc_not_found",
+            "KYC submission not found.",
+        )
+
+    actual_key = key
+
+    if ":" in actual_key:
+        actual_key = actual_key.split(":", 1)[1]
+
+    url = await kyc.document_url(session, submission.id, actual_key)
+
+    return DocumentUrlOut(url=url)
+
+@router.get("/kyc/me/documents/{key:path}", response_model=DocumentUrlOut)
+async def get_my_kyc_document_url(
+    key: str,
+    session: DbSession,
+    actor: CurrentUser,
+) -> DocumentUrlOut:
+    submission = await kyc.mine(session, actor.id)
+
+    if submission is None:
+        raise AppError(
+            status.HTTP_404_NOT_FOUND,
+            "kyc_not_found",
+            "KYC submission not found.",
+        )
+
+    actual_key = key
+    if ":" in actual_key:
+        actual_key = actual_key.split(":", 1)[1]
+
+    url = await kyc.document_url(session, submission.id, actual_key)
     return DocumentUrlOut(url=url)

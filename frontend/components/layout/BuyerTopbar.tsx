@@ -96,7 +96,7 @@ export function BuyerTopbar() {
           <NotificationBell />
           {session ? (
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:text-white"
               title={session.full_name}
             >
               {initialsFromName(session.full_name)}

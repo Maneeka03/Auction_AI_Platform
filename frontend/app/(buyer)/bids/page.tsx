@@ -44,11 +44,16 @@ function BidResultBadge({ b }: { b: MyBid }) {
   }
   if (b.auction.status === "live") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-200">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
-        Active
-      </span>
-    );
+      // <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-200">
+      //   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
+      //   Active
+      // </span>
+  
+  <span className="inline-flex items-center gap-1 rounded-full bg-brand-500/10 px-2 py-1 text-xs font-medium text-brand-600 dark:text-white">
+    <Clock size={12} /> Active
+  </span>
+);
+    
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-600">

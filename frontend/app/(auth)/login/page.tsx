@@ -38,6 +38,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const session = await login(values);
+      const isAgencyAdmin = session.roles.includes("agency_admin");
       const isStaff = session.roles.some((role) =>
         ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
       );
@@ -45,7 +46,9 @@ export default function LoginPage() {
       const redirect = searchParams.get("redirect");
 
       let destination: string;
-      if (isStaff) {
+      if (isAgencyAdmin) {
+        destination = "/agency-admin/dashboard";
+      } else if (isStaff) {
         if (redirect?.startsWith("/browse-properties/")) {
           destination = redirect.replace("/browse-properties/", "/admin/properties/");
         } else if (redirect?.startsWith("/live-auctions/")) {

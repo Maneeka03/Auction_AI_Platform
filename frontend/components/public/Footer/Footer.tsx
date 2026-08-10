@@ -152,7 +152,7 @@ export default function Footer() {
           src="/images/footer/footer-bg.jpg"
           alt=""
           fill
-          className="object-contain object-top"
+          className="object-cover object-top"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-700/20 via-brand-700/35 to-brand-900/55" />
       </div>
@@ -173,6 +173,7 @@ export default function Footer() {
 
       <div className="relative z-20 mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8 rounded-3xl bg-white p-8 shadow-2xl md:flex-row md:justify-between md:p-10">
+          
           <Image
             src="/images/footer/newslater.png"
             alt=""
