@@ -71,16 +71,29 @@ export default function RevenueReportPage() {
     return result;
   }, [displayStats, dateRange, filters, sortOrder]);
 
+  // const chartData = useMemo(
+  //   () =>
+  //     [...visibleMonthly]
+  //       .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
+  //       .map((point) => ({
+  //         month: formatMonth(point.month),
+  //         amount: Number(point.amount),
+  //       })),
+  //   [visibleMonthly],
+  // );
   const chartData = useMemo(
-    () =>
-      [...visibleMonthly]
-        .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
-        .map((point) => ({
-          month: formatMonth(point.month),
-          amount: Number(point.amount),
-        })),
-    [visibleMonthly],
-  );
+  () =>
+    [...visibleMonthly]
+      .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
+      // Highlight: Exclude months where the amount is less than $10
+      .filter((point) => Number(point.amount) >= 10) 
+      .map((point) => ({
+        month: formatMonth(point.month),
+        amount: Number(point.amount),
+      })),
+  [visibleMonthly],
+);
+
 
   function handleDownload() {
     if (!stats) return;

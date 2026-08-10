@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, User } from "lucide-react";
+import {  User, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/lib/auth/session-context";
@@ -64,12 +64,16 @@ function ProfileEditorForm({ roleLabel, showStatus = false }: ProfileEditorProps
     }
   }
 
+  function handleRemoveAvatar() {
+  setAvatarUrl(null);
+  toast.success("Photo removed. Save your profile to apply the change.");
+}
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
       <div className="p-6">
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <label className="group relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-brand-100 text-brand-700">
-            {avatarUrl ? <img src={avatarUrl} alt="Profile photo" className="h-full w-full object-cover" /> : <User size={28} />}
+            {avatarUrl ? <img src={avatarUrl} alt="Profile photo" className="h-full w-full object-cover rounded-full" /> : <User size={28} />}
             <span className="absolute inset-0 hidden items-center justify-center bg-black/45 text-white group-hover:flex"><Camera size={20} /></span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={handleAvatarChange} disabled={isUploading} />
           </label>
@@ -78,8 +82,65 @@ function ProfileEditorForm({ roleLabel, showStatus = false }: ProfileEditorProps
             <p className="text-sm text-neutral-500">{roleLabel ?? session?.roles.join(", ") ?? "—"}</p>
             <p className="mt-1 text-xs text-neutral-400">{isUploading ? "Uploading photo…" : "Click the photo to change it"}</p>
           </div>
-        </div>
+        </div> */}<div className="flex items-center gap-4">
+  <label
+    htmlFor="avatar-upload"
+    className="group relative cursor-pointer"
+  >
+    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt="Profile"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <User className="h-10 w-10 text-neutral-400" />
+      )}
+    </div>
+{/* 
+    <div className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
+      <Camera className="h-4 w-4" />
+    </div> */}
 
+    <input
+      id="avatar-upload"
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={handleAvatarChange}
+      disabled={isUploading}
+    />
+  </label>
+
+  <div>
+    <p className="text-sm font-medium text-neutral-900">
+      {session?.full_name ?? "—"}
+    </p>
+
+    <p className="text-sm text-neutral-500">
+      {roleLabel ?? session?.roles.join(", ") ?? "—"}
+    </p>
+
+    <p className="mt-1 text-xs text-neutral-400">
+      {isUploading
+        ? "Uploading photo…"
+        : "Click the photo to change it"}
+    </p>
+
+    {avatarUrl ? (
+      <button
+        type="button"
+        onClick={handleRemoveAvatar}
+        disabled={isUploading || isSaving}
+        className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-danger-600 hover:text-danger-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <X className="h-4 w-4" />
+        Remove Photo
+      </button>
+    ) : null}
+  </div>
+</div>
         <form onSubmit={handleSave} className="mt-6 max-w-md space-y-4">
           <div>
             <label htmlFor="full-name" className="mb-1.5 block text-sm font-medium text-neutral-700">Full Name</label>

@@ -136,9 +136,7 @@ export default function AdminFaqsPage() {
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/10 to-violet-600/10 text-brand-600">
-                <HelpCircle size={22} />
-              </div>
+            
               <div>
                 <h1 className="text-xl font-semibold text-neutral-900">FAQs</h1>
                 <p className="mt-0.5 text-sm text-neutral-500">

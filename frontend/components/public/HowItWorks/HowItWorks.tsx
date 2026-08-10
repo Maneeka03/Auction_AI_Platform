@@ -26,7 +26,7 @@ export default function HowItWorks() {
         src="/images/how-it-works/real-bg.png"
         alt=""
         fill
-        className="object-contain object-center"
+        className="object-cover object-center"
       />
 
       {/* <div className="relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8"> */}

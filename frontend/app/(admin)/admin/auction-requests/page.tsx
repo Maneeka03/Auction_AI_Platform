@@ -25,7 +25,7 @@ export default function AdminAuctionRequestsPage() {
   const { accessToken } = useAuth();
   const [requests, setRequests] = useState<AuctionRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<AuctionRequestStatus | "all">("pending");
+  const [filter, setFilter] = useState<AuctionRequestStatus | "all">("all");
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [noteMap, setNoteMap] = useState<Record<string, string>>({});
 

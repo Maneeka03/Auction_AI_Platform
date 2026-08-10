@@ -2,7 +2,7 @@ import type { UserStatus } from "@/types/auth";
 
 const styles: Record<UserStatus, string> = {
   active: "bg-success-500/10 text-success-500",
-  pending_verification: "bg-blue-100/10 text-amber-600",
+  pending_verification: "bg-blue-100/10 text-amber-600 !important",
   suspended: "bg-danger-500/10 text-danger-600",
   deleted: "bg-neutral-100 text-neutral-500",
 };

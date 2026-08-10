@@ -177,7 +177,13 @@ const filteredCategories = useMemo(() => {
                           {isOpen ? (
                             <ChevronDown size={15} className="shrink-0 text-brand-500" />
                           ) : (
-                            <ChevronRight size={15} className="shrink-0 text-neutral-400" />
+                            // <ChevronRight size={15} className="shrink-0 text-neutral-400" />
+                            <ChevronRight
+  size={18}
+  className={`shrink-0 text-neutral-400 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    isOpen ? "rotate-90" : "rotate-0"
+  }`}
+/>
                           )}
                           <span className="min-w-0 truncate font-medium text-neutral-900">
                             {main.name}
@@ -194,7 +200,8 @@ const filteredCategories = useMemo(() => {
                           <button
                             type="button"
                             onClick={() => setFieldsDrawer({ categoryId: main.id, categoryName: main.name })}
-                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50"
+                            // className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50"
+                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/30"
                           >
                             <Settings2 size={14} />
                             <span className="hidden sm:inline">Manage Fields</span>
@@ -202,7 +209,8 @@ const filteredCategories = useMemo(() => {
                           <button
                             type="button"
                             onClick={() => setDrawer({ mode: "create-sub", parent: main })}
-                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                            // className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-brand-900/30"
                           >
                             <FolderPlus size={14} />
                             <span className="hidden sm:inline">Add Subcategory</span>
@@ -216,42 +224,103 @@ const filteredCategories = useMemo(() => {
 
                       {/* Subcategory dropdown — shown only when expanded */}
                       {isOpen && (
-                        <div className="border-t border-neutral-100 bg-neutral-50 px-4 pb-3 pt-2">
-                          {main.children.length > 0 ? (
-                            <ul className="max-h-52 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
-                              {main.children.map((sub) => (
-                                <li
-                                  key={sub.id}
-                                  className="flex items-center justify-between border-b border-neutral-100 px-3 py-2 last:border-0 hover:bg-neutral-50"
-                                >
-                                  <p className="text-sm text-neutral-700">{sub.name}</p>
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => setFieldsDrawer({ categoryId: sub.id, categoryName: `${main.name} › ${sub.name}` })}
-                                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-violet-600 hover:bg-violet-50"
-                                    >
-                                      <Settings2 size={13} />
-                                      <span className="hidden sm:inline">Fields</span>
-                                    </button>
-                                    <PropertyRowMenu
-                                      onEdit={() =>
-                                        setDrawer({
-                                          mode: "edit",
-                                          category: sub,
-                                          parentName: main.name,
-                                        })
-                                      }
-                                      onDelete={() => void handleDelete(sub)}
-                                    />
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="py-2 text-xs text-neutral-400">No subcategories yet.</p>
-                          )}
-                        </div>
+                        // <div className="border-t border-neutral-100 bg-neutral-50 px-4 pb-3 pt-2">
+                        //   {main.children.length > 0 ? (
+                        //     <ul className="max-h-52 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
+                        //       {main.children.map((sub) => (
+                        //         <li
+                        //           key={sub.id}
+                        //           className="flex items-center justify-between border-b border-neutral-100 px-3 py-2 last:border-0 hover:bg-neutral-50"
+                        //         >
+                        //           <p className="text-sm text-neutral-700">{sub.name}</p>
+                        //           <div className="flex items-center gap-1">
+                        //             <button
+                        //               type="button"
+                        //               onClick={() => setFieldsDrawer({ categoryId: sub.id, categoryName: `${main.name} › ${sub.name}` })}
+                        //               className="flex items-center gap-1 rounded px-2 py-1 text-xs text-violet-600 hover:bg-violet-50"
+                        //             >
+                        //               <Settings2 size={13} />
+                        //               <span className="hidden sm:inline">Fields</span>
+                        //             </button>
+                        //             <PropertyRowMenu
+                        //               onEdit={() =>
+                        //                 setDrawer({
+                        //                   mode: "edit",
+                        //                   category: sub,
+                        //                   parentName: main.name,
+                        //                 })
+                        //               }
+                        //               onDelete={() => void handleDelete(sub)}
+                        //             />
+                        //           </div>
+                        //         </li>
+                        //       ))}
+                        //     </ul>
+                        //   ) : (
+                        //     <p className="py-2 text-xs text-neutral-400">No subcategories yet.</p>
+                        //   )}
+                        // </div>
+
+<div
+  className={`grid transition-all duration-300 ease-in-out ${
+    isOpen
+      ? "grid-rows-[1fr] opacity-100"
+      : "grid-rows-[0fr] opacity-0"
+  }`}
+>
+  <div className="min-h-0 overflow-hidden">
+    <div className="border-t border-neutral-100 bg-neutral-50 px-4 pb-3 pt-2">
+      {main.children.length > 0 ? (
+        <ul className="max-h-52 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
+          {main.children.map((sub) => (
+            <li
+              key={sub.id}
+              className="flex items-center justify-between border-b border-neutral-100 px-3 py-2 last:border-0 hover:bg-neutral-50"
+            >
+              <p className="text-sm text-neutral-700">
+                {sub.name}
+              </p>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFieldsDrawer({
+                      categoryId: sub.id,
+                      categoryName: `${main.name} › ${sub.name}`,
+                    })
+                  }
+                  className="flex items-center gap-1 rounded px-2 py-1 text-xs text-violet-600 hover:bg-violet-50"
+                >
+                  <Settings2 size={13} />
+                  <span className="hidden sm:inline">
+                    Fields
+                  </span>
+                </button>
+
+                <PropertyRowMenu
+                  onEdit={() =>
+                    setDrawer({
+                      mode: "edit",
+                      category: sub,
+                      parentName: main.name,
+                    })
+                  }
+                  onDelete={() => void handleDelete(sub)}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="py-2 text-xs text-neutral-400">
+          No subcategories yet.
+        </p>
+      )}
+    </div>
+  </div>
+</div>
+
                       )}
                     </li>
                   );

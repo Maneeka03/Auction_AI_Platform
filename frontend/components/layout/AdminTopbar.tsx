@@ -165,7 +165,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             onClick={() => toggleMenu("help")}
             aria-label="Help and support"
             aria-expanded={openMenu === "help"}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
           >
             <HelpCircle size={17} />
           </button>
@@ -250,7 +250,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
             aria-expanded={openMenu === "profile"}
             className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-600 dark:text-white"
           >
-            {session?.avatar_url ? <img src={session.avatar_url} alt="" className="h-full w-full object-cover" /> : userInitials}
+            {session?.avatar_url ? <img src={session.avatar_url} alt="" className="h-full w-full object-cover rounded-full" /> : userInitials}
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success-500" />
           </button>
           {openMenu === "profile" ? (

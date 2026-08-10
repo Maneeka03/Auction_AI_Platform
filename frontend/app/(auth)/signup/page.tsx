@@ -192,6 +192,333 @@
 //     </div>
 //   );
 // }
+// "use client";
+
+// import Link from "next/link";
+// import { useSearchParams } from "next/navigation";
+// import { useState } from "react";
+
+// import { Button } from "@/components/ui/Button";
+// import { Checkbox } from "@/components/ui/Checkbox";
+// import { FormError } from "@/components/ui/FormError";
+// import { Input } from "@/components/ui/Input";
+// import { Label } from "@/components/ui/Label";
+// import { Select } from "@/components/ui/Select";
+
+// import { register } from "@/lib/api/auth";
+// import { ApiRequestError } from "@/lib/api/client";
+// import { resolveErrorMessage } from "@/lib/api/errorMessages";
+// import { validateRegister } from "@/lib/validation/authSchemas";
+// import type { RegisterPayload } from "@/types/auth";
+
+// const INITIAL_VALUES: RegisterPayload = {
+//   email: "",
+//   password: "",
+//   full_name: "",
+//   role: "buyer",
+//   country: "",
+//   business_type: "",
+// };
+
+// export default function SignupPage() {
+//   const searchParams = useSearchParams();
+
+//   const initialRole =
+//     searchParams.get("role") === "seller" ? "seller" : "buyer";
+
+//   const [values, setValues] = useState({
+//     ...INITIAL_VALUES,
+//     role: initialRole,
+//   });
+
+//   const [agreedToTerms, setAgreedToTerms] = useState(false);
+//   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+//   const [termsError, setTermsError] = useState<string | null>(null);
+//   const [formError, setFormError] = useState<string | null>(null);
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+//   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+
+//   async function handleSubmit(event: React.FormEvent) {
+//     event.preventDefault();
+
+//     setFormError(null);
+//     setTermsError(
+//       agreedToTerms ? null : "You must agree to the Terms of Use.",
+//     );
+
+//     const errors = validateRegister(values);
+//     setFieldErrors(errors);
+
+//     if (Object.keys(errors).length > 0 || !agreedToTerms) {
+//       return;
+//     }
+
+//     setIsSubmitting(true);
+
+//     try {
+//       const payload: RegisterPayload = {
+//         ...values,
+//         country: values.country || null,
+//         business_type:
+//           values.role === "seller"
+//             ? values.business_type || null
+//             : null,
+//       };
+
+//       const created = await register(payload);
+
+//       setRegisteredEmail(created.email);
+//     } catch (error) {
+//       if (error instanceof ApiRequestError) {
+//         setFieldErrors((prev) => ({
+//           ...prev,
+//           ...error.fieldErrors,
+//         }));
+
+//         setFormError(
+//           resolveErrorMessage(error.code, error.message),
+//         );
+//       } else {
+//         setFormError("Something went wrong. Please try again.");
+//       }
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   }
+
+//   if (registeredEmail) {
+//     return (
+//       <div className="mx-auto w-full max-w-sm">
+//         <h1 className="text-2xl font-semibold text-neutral-900">
+//           Check your inbox
+//         </h1>
+
+//         <p className="mt-2 text-sm leading-6 text-neutral-600">
+//           We sent a verification link to{" "}
+//           <span className="font-medium text-neutral-900">
+//             {registeredEmail}
+//           </span>
+//           . Confirm your email to activate your account, then log in.
+//         </p>
+
+//         <Link
+//           href="/login"
+//           className="mt-6 inline-flex text-sm font-medium text-brand-600 hover:text-brand-700"
+//         >
+//           Back to log in
+//         </Link>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="w-full">
+//       {/* Back to Home */}
+//       <div className="">
+//         <Link
+//         href="/"
+//         className=" inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
+//       >
+//         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+//         Back to home
+//       </Link>
+//       </div>
+
+//       {/* Heading */}
+//       <h1 className="text-2xl font-semibold text-neutral-900">
+//         Create your account
+//       </h1>
+
+//       <p className="mt-2 text-sm text-neutral-600">
+//         Get started buying and selling on the platform.
+//       </p>
+
+//       <form
+//         className="mt-8 space-y-5"
+//         onSubmit={handleSubmit}
+//         noValidate
+//       >
+//         {/* Full Name */}
+//         <div>
+//           <Label htmlFor="full_name">Full name</Label>
+
+//           <Input
+//             id="full_name"
+//             autoComplete="name"
+//             placeholder="Enter your name"
+//             value={values.full_name}
+//             error={fieldErrors.full_name}
+//             onChange={(event) =>
+//               setValues((prev) => ({
+//                 ...prev,
+//                 full_name: event.target.value,
+//               }))
+//             }
+//           />
+
+//           <FormError
+//             id="full_name-error"
+//             message={fieldErrors.full_name}
+//           />
+//         </div>
+
+//         {/* Email */}
+//         <div>
+//           <Label htmlFor="email">Email</Label>
+
+//           <Input
+//             id="email"
+//             type="email"
+//             autoComplete="email"
+//             placeholder="you@example.com"
+//             value={values.email}
+//             error={fieldErrors.email}
+//             onChange={(event) =>
+//               setValues((prev) => ({
+//                 ...prev,
+//                 email: event.target.value,
+//               }))
+//             }
+//           />
+
+//           <FormError
+//             id="email-error"
+//             message={fieldErrors.email}
+//           />
+//         </div>
+
+//         {/* Password */}
+//         <div>
+//           <Label htmlFor="password">Password</Label>
+
+//           <Input
+//             id="password"
+//             type="password"
+//             autoComplete="new-password"
+//             placeholder="At least 12 characters"
+//             value={values.password}
+//             error={fieldErrors.password}
+//             onChange={(event) =>
+//               setValues((prev) => ({
+//                 ...prev,
+//                 password: event.target.value,
+//               }))
+//             }
+//           />
+
+//           <FormError
+//             id="password-error"
+//             message={fieldErrors.password}
+//           />
+//         </div>
+
+//         {/* Role */}
+//         <div>
+//           <Label htmlFor="role">I want to</Label>
+
+//           <Select
+//             id="role"
+//             value={values.role}
+//             onChange={(value) =>
+//               setValues((prev) => ({
+//                 ...prev,
+//                 role: value as RegisterPayload["role"],
+//               }))
+//             }
+//             options={[
+//               {
+//                 value: "buyer",
+//                 label: "Buy items",
+//               },
+//               {
+//                 value: "seller",
+//                 label: "Sell items",
+//               },
+//             ]}
+//           />
+
+//           <FormError
+//             id="role-error"
+//             message={fieldErrors.role}
+//           />
+//         </div>
+
+//         {/* Seller Business Type */}
+//         {values.role === "seller" ? (
+//           <div>
+//             <Label htmlFor="business_type">
+//               Business type (optional)
+//             </Label>
+
+//             <Input
+//               id="business_type"
+//               placeholder="e.g. private_collector"
+//               value={values.business_type ?? ""}
+//               onChange={(event) =>
+//                 setValues((prev) => ({
+//                   ...prev,
+//                   business_type: event.target.value,
+//                 }))
+//               }
+//             />
+//           </div>
+//         ) : null}
+
+//         {/* Terms */}
+//         <div>
+//           <label className="flex items-start gap-2 text-sm text-neutral-700">
+//             <Checkbox
+//               className="mt-0.5"
+//               checked={agreedToTerms}
+//               onChange={(event) => {
+//                 setAgreedToTerms(event.target.checked);
+
+//                 if (event.target.checked) {
+//                   setTermsError(null);
+//                 }
+//               }}
+//             />
+
+//             <span>
+//               By registering you agree to the{" "}
+//               <Link
+//                 href="/terms"
+//                 className="font-medium text-brand-600 hover:text-brand-700"
+//               >
+//                 Terms of Use
+//               </Link>
+//             </span>
+//           </label>
+
+//           <FormError message={termsError ?? undefined} />
+//         </div>
+
+//         {/* Form Error */}
+//         <FormError message={formError ?? undefined} />
+
+//         {/* Register */}
+//         <Button
+//           type="submit"
+//           isLoading={isSubmitting}
+//         >
+//           Register
+//         </Button>
+//       </form>
+
+//       {/* Login Link */}
+//       <p className="mt-6 text-center text-sm text-neutral-600">
+//         Already have an account?{" "}
+//         <Link
+//           href="/login"
+//           className="font-medium text-brand-600 hover:text-brand-700"
+//         >
+//           Log in
+//         </Link>
+//       </p>
+//     </div>
+//   );
+// }
+
 "use client";
 
 import Link from "next/link";
@@ -288,7 +615,7 @@ export default function SignupPage() {
 
   if (registeredEmail) {
     return (
-      <div className="mx-auto w-full max-w-sm">
+      <div className="w-full">
         <h1 className="text-2xl font-semibold text-neutral-900">
           Check your inbox
         </h1>
@@ -303,7 +630,7 @@ export default function SignupPage() {
 
         <Link
           href="/login"
-          className="mt-6 inline-flex text-sm font-medium text-brand-600 hover:text-brand-700"
+          className="mt-5 inline-flex text-sm font-medium text-brand-600 hover:text-brand-700"
         >
           Back to log in
         </Link>
@@ -314,8 +641,8 @@ export default function SignupPage() {
   return (
     <div className="w-full">
       {/* Back to Home */}
-      <div className="">
-        <Link
+      <div className="mb-4">
+          <Link
         href="/"
         className=" inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
       >
@@ -325,16 +652,19 @@ export default function SignupPage() {
       </div>
 
       {/* Heading */}
-      <h1 className="text-2xl font-semibold text-neutral-900">
-        Create your account
-      </h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-neutral-900">
+          Create your account
+        </h1>
 
-      <p className="mt-2 text-sm text-neutral-600">
-        Get started buying and selling on the platform.
-      </p>
+        <p className="mt-1 text-sm text-neutral-600">
+          Get started buying and selling on the platform.
+        </p>
+      </div>
 
+      {/* Form */}
       <form
-        className="mt-8 space-y-5"
+        className="mt-5 space-y-3"
         onSubmit={handleSubmit}
         noValidate
       >
@@ -443,7 +773,7 @@ export default function SignupPage() {
           />
         </div>
 
-        {/* Seller Business Type */}
+        {/* Business Type */}
         {values.role === "seller" ? (
           <div>
             <Label htmlFor="business_type">
@@ -465,7 +795,7 @@ export default function SignupPage() {
         ) : null}
 
         {/* Terms */}
-        <div>
+        <div className="pt-1">
           <label className="flex items-start gap-2 text-sm text-neutral-700">
             <Checkbox
               className="mt-0.5"
@@ -480,7 +810,7 @@ export default function SignupPage() {
             />
 
             <span>
-              By registering you agree to the{" "}
+              By registering you agree to{" "}
               <Link
                 href="/terms"
                 className="font-medium text-brand-600 hover:text-brand-700"
@@ -505,8 +835,8 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      {/* Login Link */}
-      <p className="mt-6 text-center text-sm text-neutral-600">
+      {/* Login */}
+      <p className="mt-4 text-center text-sm text-neutral-600">
         Already have an account?{" "}
         <Link
           href="/login"
