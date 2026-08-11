@@ -65,15 +65,18 @@ export const superAdminNav: NavSection[] = [
     title: "Communication",
     items: [{ label: "Messages", href: "/admin/messages", icon: MessageSquare }],
   },
-  {
-    title: "Administration",
-    items: [
-      { label: "Profile", href: "/admin/profile", icon: User },
-      { label: "Staff Management", href: "/admin/users", icon: UserCog },
-      { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
-      { label: "FAQ", href: "/admin/faqs", icon: HelpCircle },
-      { label: "Contact Support", href: "/help/contact", icon: LifeBuoy },
-    ],
-  },
+  
+{
+  title: "Administration",
+  items: [
+    { label: "Profile", href: "/admin/profile", icon: User },
+    { label: "Staff Management", href: "/admin/users", icon: UserCog },
+    { label: "KYC Review", href: "/admin/kyc", icon: ShieldCheck },
+    { label: "Seller Bank Accounts", href: "/admin/seller-bank-accounts", icon: Wallet },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
+    { label: "FAQ", href: "/admin/faqs", icon: HelpCircle },
+    { label: "Contact Support", href: "/help/contact", icon: LifeBuoy },
+  ],
+},
+
 ];
