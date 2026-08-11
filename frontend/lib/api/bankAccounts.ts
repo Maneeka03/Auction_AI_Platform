@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import type { BankAccountPage, BankAccountReviewItem, ReviewBankAccountRequest } from "@/types/bankAccount";
+import type { BankAccountPage, BankAccountReviewItem, ReviewBankAccountRequest } from "@/types/bankAccounts";
 
 export function listBankDetails(
   accessToken: string,
