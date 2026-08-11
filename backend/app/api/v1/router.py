@@ -4,8 +4,9 @@ from app.api.v1 import (
     admin, agency, auction_requests, auctions, auth, buyer, campaigns, categories, crm, dev,
     escrow, groups, kyc, me, messages, notifications, properties, push, reports, reviews,
     saved_searches, seller, support_tickets, tasks, ticket_subjects, uploads, users, wallet,faqs,
-    watchlist,
+    watchlist,seller_bank_accounts
 )
+
 from app.core.config import settings
 
 api_router = APIRouter(prefix="/api/v1")
@@ -35,9 +36,14 @@ api_router.include_router(reviews.router)
 api_router.include_router(tasks.router)
 api_router.include_router(auction_requests.router)
 api_router.include_router(admin.router)
+api_router.include_router(seller_bank_accounts.router)
+
 api_router.include_router(faqs.router)
 api_router.include_router(support_tickets.router)
 api_router.include_router(ticket_subjects.router)
+# api_router.include_router(seller_bank_accounts.router)
+# api_router.include_router(admin.router)
+# api_router.include_router(admin_bank_accounts.router)
 
 if not settings.is_production:
     api_router.include_router(dev.router)
