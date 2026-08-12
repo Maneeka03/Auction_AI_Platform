@@ -1,4 +1,4 @@
-export type WalletEntryKind = "deposit" | "withdrawal" | "bid_hold" | "refund" | "purchase";
+export type WalletEntryKind = "deposit" | "withdrawal" | "bid_hold" | "refund" | "purchase" | "payout";
 export interface WalletSummary {
   balance: string;
   held: string;
