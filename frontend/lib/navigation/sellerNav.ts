@@ -3,6 +3,7 @@ import {
   FileText,
   Gavel,
   HelpCircle,
+  Landmark,
   LayoutDashboard,
   LifeBuoy,
   MessageSquare,
@@ -11,6 +12,7 @@ import {
   ShoppingBag,
   Tag,
   User,
+  Wallet,
 } from "lucide-react";
 import type { NavSection } from "@/types/navigation";
 
@@ -32,6 +34,8 @@ export const sellerNav: NavSection[] = [
     items: [
       { label: "Offers", href: "/seller/offers", icon: Tag },
       { label: "Sales History", href: "/seller/sales", icon: ShoppingBag },
+      { label: "Escrow & Payouts", href: "/seller/escrow", icon: Landmark },
+      { label: "Wallet", href: "/seller/wallet", icon: Wallet },
     ],
   },
   {
