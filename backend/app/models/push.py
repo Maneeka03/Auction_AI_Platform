@@ -17,7 +17,11 @@ class PushSubscription(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
+    # endpoint: Mapped[str] = mapped_column(String(500), unique=True)
+    # p256dh: Mapped[str] = mapped_column(String(200))
+    # auth: Mapped[str] = mapped_column(String(100))
     endpoint: Mapped[str] = mapped_column(String(500), unique=True)
+    origin: Mapped[str] = mapped_column(String(500))
     p256dh: Mapped[str] = mapped_column(String(200))
     auth: Mapped[str] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(
