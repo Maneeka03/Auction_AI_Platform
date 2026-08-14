@@ -6,15 +6,18 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { SellerEscrow } from "@/types/portal";
 
+// Mirrors the backend's forward-only pipeline in services/escrow.py (EscrowState).
 const STATE_LABELS: Record<string, string> = {
-  awaiting_payment: "Awaiting Payment",
-  held: "In Escrow",
+  funds_locked: "Funds Locked",
+  asset_held: "Asset Held",
+  authenticated: "Authenticated",
   released: "Released",
 };
 
 const STATE_COLORS: Record<string, string> = {
-  awaiting_payment: "bg-amber-50 text-amber-700",
-  held: "bg-brand-50 text-brand-700",
+  funds_locked: "bg-amber-50 text-amber-700",
+  asset_held: "bg-brand-50 text-brand-700",
+  authenticated: "bg-purple-50 text-purple-700",
   released: "bg-green-50 text-green-700",
 };
 

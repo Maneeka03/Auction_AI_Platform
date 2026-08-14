@@ -14,6 +14,7 @@ Requires-Dist: pyjwt>=2.10
 Requires-Dist: argon2-cffi>=23.1
 Requires-Dist: redis>=5.2
 Requires-Dist: boto3>=1.35
+Requires-Dist: python-multipart>=0.0.9
 Requires-Dist: pywebpush>=2.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.3; extra == "dev"

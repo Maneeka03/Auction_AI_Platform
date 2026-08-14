@@ -115,6 +115,7 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000"]
     app_url: str = "http://localhost:3000"
+    
 
     # MinIO / S3
     s3_endpoint: str = "http://localhost:9000"
@@ -133,6 +134,8 @@ class Settings(BaseSettings):
     vapid_public_key: str = ""
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@provenix.io"
+    push_notifications_enabled: bool = True
+    
 
     # SMTP (leave host blank to disable email sending)
     smtp_host: str = ""

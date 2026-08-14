@@ -43,10 +43,17 @@ export async function enablePush(accessToken: string): Promise<boolean> {
       applicationServerKey: urlBase64ToUint8Array(public_key),
     }));
 
+  // await api("/push/subscribe", accessToken, {
+  //   method: "POST",
+  //   body: JSON.stringify(subscription.toJSON()),
+  // });
   await api("/push/subscribe", accessToken, {
-    method: "POST",
-    body: JSON.stringify(subscription.toJSON()),
-  });
+  method: "POST",
+  body: JSON.stringify({
+    ...subscription.toJSON(),
+    origin: window.location.origin,
+  }),
+});
   return true;
 }
 

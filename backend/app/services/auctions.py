@@ -77,9 +77,11 @@ async def broadcast(session: AsyncSession, auction_id: uuid.UUID, event: str) ->
 async def release_holds(
     session: AsyncSession, auction: Auction, winner_id: uuid.UUID | None
 ) -> None:
-    """Log every bidder's hold coming back, and tell them how it went.
+    """Log every losing bidder's hold coming back, and tell everyone how it went.
 
-    Settling the auction is what frees the money itself - see services/wallets.held.
+    Settling the auction is what frees the money itself - see services/wallets.held. The winner
+    does NOT get a refund entry here: their hold converts into a PURCHASE (logged by the caller),
+    so logging a REFUND for them too would show two contradictory entries at the same instant.
     """
     rows = await session.execute(
         select(Bid.bidder_id, func.max(Bid.amount))
@@ -87,14 +89,15 @@ async def release_holds(
         .group_by(Bid.bidder_id)
     )
     for bidder_id, top_bid in rows.all():
-        wallets.log(
-            session,
-            bidder_id,
-            WalletEntryKind.REFUND,
-            wallets.hold_for(auction, top_bid),
-            auction.id,
-        )
         won = bidder_id == winner_id
+        if not won:
+            wallets.log(
+                session,
+                bidder_id,
+                WalletEntryKind.REFUND,
+                wallets.hold_for(auction, top_bid),
+                auction.id,
+            )
         notifications.push(
             session,
             bidder_id,
@@ -441,7 +444,7 @@ async def award(
     auction.listing.status = PropertyStatus.SOLD
     auction.listing.paid_amount = charge
     auction.listing.purchased_at = datetime.now(UTC)
-    auction.listing.payment_method = PaymentMethod.WALLET
+    auction.listing.payment_method = PaymentMethod.FULL
     
 
     # Release/refund bidder holds
