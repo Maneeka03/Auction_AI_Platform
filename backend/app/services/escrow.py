@@ -1,3 +1,110 @@
+# import uuid
+# from datetime import UTC, datetime
+# from decimal import Decimal
+
+# from fastapi import status
+# from sqlalchemy import func, select
+# from sqlalchemy.ext.asyncio import AsyncSession
+
+# from app.core.errors import AppError
+# from app.models.escrow import Escrow, EscrowState
+# from app.models.property import Property
+# from app.models.wallet import WalletEntryKind
+# from app.services import wallets
+
+# # Forward-only pipeline; RELEASED is terminal and is what actually pays the seller.
+# _NEXT = {
+#     EscrowState.FUNDS_LOCKED: EscrowState.ASSET_HELD,
+#     EscrowState.ASSET_HELD: EscrowState.AUTHENTICATED,
+#     EscrowState.AUTHENTICATED: EscrowState.RELEASED,
+# }
+
+
+# def open_for(
+#     session: AsyncSession,
+#     listing: Property,
+#     buyer_id: uuid.UUID,
+#     amount: Decimal,
+#     auction_id: uuid.UUID | None = None,
+# ) -> None:
+#     """Record a completed sale's funds as locked in escrow. The caller commits."""
+#     session.add(
+#         Escrow(
+#             property_id=listing.id,
+#             buyer_id=buyer_id,
+#             seller_id=listing.seller_id,
+#             amount=amount,
+#             auction_id=auction_id,
+#         )
+#     )
+
+
+# async def get(session: AsyncSession, escrow_id: uuid.UUID) -> Escrow:
+#     escrow = await session.get(Escrow, escrow_id)
+#     if escrow is None:
+#         raise AppError(status.HTTP_404_NOT_FOUND, "escrow_not_found", "Escrow not found.")
+#     return escrow
+
+
+# async def for_buyer(session: AsyncSession, buyer_id: uuid.UUID) -> list[Escrow]:
+#     rows = await session.scalars(
+#         select(Escrow).where(Escrow.buyer_id == buyer_id).order_by(Escrow.created_at.desc())
+#     )
+#     return list(rows)
+
+
+# async def for_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[Escrow]:
+#     rows = await session.scalars(
+#         select(Escrow).where(Escrow.seller_id == seller_id).order_by(Escrow.created_at.desc())
+#     )
+#     return list(rows)
+
+
+# async def mark_delivered(
+#     session: AsyncSession, escrow_id: uuid.UUID, buyer_id: uuid.UUID
+# ) -> Escrow:
+#     """The buyer confirms they received the item."""
+#     escrow = await get(session, escrow_id)
+#     if escrow.buyer_id != buyer_id:
+#         raise AppError(status.HTTP_403_FORBIDDEN, "forbidden", "This purchase is not yours.")
+#     escrow.delivered_at = datetime.now(UTC)
+#     await session.commit()
+#     await session.refresh(escrow)
+#     return escrow
+
+
+# async def paginate(
+#     session: AsyncSession, page: int, size: int, state: EscrowState | None
+# ) -> tuple[list[Escrow], int]:
+#     query = select(Escrow)
+#     if state:
+#         query = query.where(Escrow.state == state)
+
+#     total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
+#     rows = await session.scalars(
+#         query.order_by(Escrow.created_at.desc()).offset((page - 1) * size).limit(size)
+#     )
+#     return list(rows), total
+
+
+# async def advance(session: AsyncSession, escrow_id: uuid.UUID) -> Escrow:
+#     """Move an escrow one step forward. Reaching RELEASED pays the seller."""
+#     escrow = await get(session, escrow_id)
+#     nxt = _NEXT.get(escrow.state)
+#     if nxt is None:
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "escrow_settled", "This escrow has already been released."
+#         )
+
+#     escrow.state = nxt
+#     if nxt is EscrowState.RELEASED and escrow.seller_id is not None:
+#         await wallets.credit(
+#             session, escrow.seller_id, escrow.amount, WalletEntryKind.PAYOUT, escrow.auction_id
+#         )
+#     await session.commit()
+#     await session.refresh(escrow)
+#     return escrow
+
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -10,7 +117,7 @@ from app.core.errors import AppError
 from app.models.escrow import Escrow, EscrowState
 from app.models.property import Property
 from app.models.wallet import WalletEntryKind
-from app.services import wallets
+from app.services import insurance, wallets
 
 # Forward-only pipeline; RELEASED is terminal and is what actually pays the seller.
 _NEXT = {
@@ -95,6 +202,11 @@ async def advance(session: AsyncSession, escrow_id: uuid.UUID) -> Escrow:
         raise AppError(
             status.HTTP_409_CONFLICT, "escrow_settled", "This escrow has already been released."
         )
+
+    # 13 Jul clarifications, section 2 + Side Note B: every sold item mandatorily needs shipping
+    # insurance before it can move to RELEASED (which pays the seller and clears the item to ship).
+    if nxt is EscrowState.RELEASED:
+        await insurance.require_purchased_before_release(session, escrow.id)
 
     escrow.state = nxt
     if nxt is EscrowState.RELEASED and escrow.seller_id is not None:

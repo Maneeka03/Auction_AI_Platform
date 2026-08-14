@@ -159,3 +159,5 @@ async def change_password(
     await auth.change_password(session, user, payload.current_password, payload.new_password)
     await rate_limit.deny_token(token["jti"], token["exp"])
     _clear_refresh_cookie(response)
+
+
