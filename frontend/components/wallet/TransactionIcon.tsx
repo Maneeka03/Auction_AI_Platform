@@ -1,4 +1,11 @@
-import { ArrowDownLeft, ArrowUpRight, Banknote, Lock, ShoppingBag } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Banknote,
+  Lock,
+  ShoppingBag,
+  ShieldCheck,
+} from "lucide-react";
 import type { WalletEntryKind } from "@/types/wallet";
 
 const config: Record<WalletEntryKind, { icon: typeof ArrowUpRight; className: string }> = {
@@ -8,6 +15,10 @@ const config: Record<WalletEntryKind, { icon: typeof ArrowUpRight; className: st
   purchase: { icon: ShoppingBag, className: "bg-brand-500/10 text-brand-600" },
   withdrawal: { icon: ArrowDownLeft, className: "bg-danger-500/10 text-danger-600" },
   payout: { icon: Banknote, className: "bg-success-500/10 text-success-500" },
+  insurance_premium: {
+    icon: ShieldCheck,
+    className: "bg-purple-500/10 text-purple-600",
+  },
 };
 
 export function TransactionIcon({ type }: { type: WalletEntryKind }) {

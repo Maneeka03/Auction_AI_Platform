@@ -54,6 +54,14 @@ export interface LoginPayload {
   password: string;
 }
 
+// export interface RegisterPayload {
+//   email: string;
+//   password: string;
+//   full_name: string;
+//   role: "buyer" | "seller";
+//   country?: string | null;
+//   business_type?: string | null;
+// }
 export interface RegisterPayload {
   email: string;
   password: string;
@@ -61,6 +69,7 @@ export interface RegisterPayload {
   role: "buyer" | "seller";
   country?: string | null;
   business_type?: string | null;
+  accepted_accuracy_agreement: boolean;
 }
 
 export interface ApiErrorField {

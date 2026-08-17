@@ -13,6 +13,7 @@ import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import { mockEscrows } from "@/lib/mock/escrow";
 import type { Escrow, EscrowState } from "@/types/escrow";
+import { InsuranceModal } from "@/components/escrow/InsuranceModal";
 
 type FilterTab = "all" | EscrowState;
 
@@ -61,6 +62,8 @@ export default function EscrowAdminPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [advancingId, setAdvancingId] = useState<string | null>(null);
   const [isMockData, setIsMockData] = useState(false);
+  // When non-null, the InsuranceModal is open for this escrow (release requires insurance first)
+  const [insuranceTarget, setInsuranceTarget] = useState<Escrow | null>(null);
 
   const fetchEscrows = useCallback(async () => {
     if (!accessToken) return;
@@ -104,16 +107,36 @@ export default function EscrowAdminPage() {
     const next = NEXT_STATE[escrow.state];
     if (!next) return;
 
-    const confirmed = await Swal.fire({ title: next === "released" ? "Release escrow payment?" : "Advance escrow?", text: next === "released" ? `Release ${formatMoney(escrow.amount)} to the seller for "${escrow.property_title}"? This cannot be undone.` : `Move "${escrow.property_title}" from ${STATE_LABEL[escrow.state]} to ${STATE_LABEL[next]}?`, icon: "warning", showCancelButton: true, confirmButtonText: next === "released" ? "Release payment" : "Advance", cancelButtonText: "Cancel" });
+    // Release step requires insurance to be purchased first.
+    // Open the InsuranceModal instead of going straight to advanceEscrow — the modal
+    // calls handleReleaseAfterInsurance once the policy is purchased.
+    if (next === "released" && !escrow.id.startsWith("mock-")) {
+      setInsuranceTarget(escrow);
+      return;
+    }
+
+    const confirmed = await Swal.fire({
+      title: next === "released" ? "Release escrow payment?" : "Advance escrow?",
+      text:
+        next === "released"
+          ? `Release ${formatMoney(escrow.amount)} to the seller for "${escrow.property_title}"? This cannot be undone.`
+          : `Move "${escrow.property_title}" from ${STATE_LABEL[escrow.state]} to ${STATE_LABEL[next]}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: next === "released" ? "Release payment" : "Advance",
+      cancelButtonText: "Cancel",
+    });
     if (!confirmed.isConfirmed) return;
 
     setActionError(null);
     setAdvancingId(escrow.id);
 
     if (escrow.id.startsWith("mock-")) {
-      // Demo data — simulate the transition locally instead of calling the real API.
+      // Demo data — simulate the transition locally.
       setEscrows((prev) =>
-        prev.map((e) => (e.id === escrow.id ? { ...e, state: next, updated_at: new Date().toISOString() } : e)),
+        prev.map((e) =>
+          e.id === escrow.id ? { ...e, state: next, updated_at: new Date().toISOString() } : e,
+        ),
       );
       setAdvancingId(null);
       return;
@@ -125,6 +148,27 @@ export default function EscrowAdminPage() {
       void fetchEscrows();
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Failed to advance escrow.");
+    } finally {
+      setAdvancingId(null);
+    }
+  }
+
+  /** Called by InsuranceModal after policy is purchased — now safe to call advanceEscrow. */
+  async function handleReleaseAfterInsurance() {
+    const escrow = insuranceTarget;
+    setInsuranceTarget(null);
+    if (!escrow || !accessToken) return;
+
+    setActionError(null);
+    setAdvancingId(escrow.id);
+    try {
+      await advanceEscrow(accessToken, escrow.id);
+      toast.success("Funds released to seller successfully");
+      void fetchEscrows();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiRequestError ? err.message : "Failed to release escrow funds.",
+      );
     } finally {
       setAdvancingId(null);
     }
@@ -277,6 +321,17 @@ export default function EscrowAdminPage() {
           <Pagination page={page} total={escrows.length} pageSize={PAGE_SIZE} onPageChange={setPage} itemLabel="escrow" />
         </div>
       </RequirePermission>
+      {/* Insurance gate — shown when admin clicks "Release Funds" on an AUTHENTICATED escrow */}
+      {insuranceTarget && accessToken && (
+        <InsuranceModal
+          escrowId={insuranceTarget.id}
+          escrowAmount={insuranceTarget.amount}
+          propertyTitle={insuranceTarget.property_title}
+          accessToken={accessToken}
+          onPurchased={handleReleaseAfterInsurance}
+          onClose={() => setInsuranceTarget(null)}
+        />
+      )}
     </AdminShell>
   );
 }

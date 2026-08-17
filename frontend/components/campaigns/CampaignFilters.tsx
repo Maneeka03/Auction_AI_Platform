@@ -102,7 +102,7 @@ export function CampaignFilters({
         />
 
         <DateRangeDropdown
-          value={dateRange}
+          range={dateRange}
           onChange={onDateRangeChange}
         />
 

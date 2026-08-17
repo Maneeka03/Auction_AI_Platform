@@ -538,6 +538,14 @@ import { resolveErrorMessage } from "@/lib/api/errorMessages";
 import { validateRegister } from "@/lib/validation/authSchemas";
 import type { RegisterPayload } from "@/types/auth";
 
+// const INITIAL_VALUES: RegisterPayload = {
+//   email: "",
+//   password: "",
+//   full_name: "",
+//   role: "buyer",
+//   country: "",
+//   business_type: "",
+// };
 const INITIAL_VALUES: RegisterPayload = {
   email: "",
   password: "",
@@ -545,15 +553,16 @@ const INITIAL_VALUES: RegisterPayload = {
   role: "buyer",
   country: "",
   business_type: "",
+  accepted_accuracy_agreement: false,
 };
 
 export default function SignupPage() {
   const searchParams = useSearchParams();
 
-  const initialRole =
+  const initialRole: RegisterPayload["role"] =
     searchParams.get("role") === "seller" ? "seller" : "buyer";
 
-  const [values, setValues] = useState({
+  const [values, setValues] = useState<RegisterPayload>({
     ...INITIAL_VALUES,
     role: initialRole,
   });
@@ -583,14 +592,23 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const payload: RegisterPayload = {
-        ...values,
-        country: values.country || null,
-        business_type:
-          values.role === "seller"
-            ? values.business_type || null
-            : null,
-      };
+      // const payload: RegisterPayload = {
+      //   ...values,
+      //   country: values.country || null,
+      //   business_type:
+      //     values.role === "seller"
+      //       ? values.business_type || null
+      //       : null,
+      // };
+const payload: RegisterPayload = {
+  ...values,
+  country: values.country || null,
+  business_type:
+    values.role === "seller"
+      ? values.business_type || null
+      : null,
+  accepted_accuracy_agreement: agreedToTerms,
+};
 
       const created = await register(payload);
 
