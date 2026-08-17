@@ -309,9 +309,33 @@ async def get_by_email(session: AsyncSession, email: str) -> User | None:
     return await session.scalar(select(User).where(User.email == email))
 
 
+# async def register(session: AsyncSession, data: RegisterRequest) -> User:
+#     # Schema validation already rejects accepted_accuracy_agreement=False; this timestamp is the
+#     # durable record that the user made that guarantee (13 Jul clarifications, section 3).
+#     user = User(
+#         email=data.email,
+#         password_hash=hash_password(data.password),
+#         full_name=data.full_name,
+#         country=data.country,
+#         business_type=data.business_type,
+#         role_rows=[UserRole(role=data.role)],
+#         accuracy_agreement_accepted_at=datetime.now(UTC),
+#     )
+#     session.add(user)
+#     try:
+#         await session.commit()
+#     except IntegrityError:
+#         await session.rollback()
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "email_taken", "This email is already registered."
+#         ) from None
+
+#     await send_verification(user)
+#     return user
+
 async def register(session: AsyncSession, data: RegisterRequest) -> User:
-    # Schema validation already rejects accepted_accuracy_agreement=False; this timestamp is the
-    # durable record that the user made that guarantee (13 Jul clarifications, section 3).
+    # Schema validation already rejects accepted_accuracy_agreement=False.
+    # Store the timestamp as the durable record of the user's agreement.
     user = User(
         email=data.email,
         password_hash=hash_password(data.password),
@@ -322,16 +346,20 @@ async def register(session: AsyncSession, data: RegisterRequest) -> User:
         accuracy_agreement_accepted_at=datetime.now(UTC),
     )
     session.add(user)
+
     try:
         await session.commit()
     except IntegrityError:
         await session.rollback()
         raise AppError(
-            status.HTTP_409_CONFLICT, "email_taken", "This email is already registered."
+            status.HTTP_409_CONFLICT,
+            "email_taken",
+            "This email is already registered.",
         ) from None
 
     await send_verification(user)
     return user
+
 
 
 async def enroll_seller(session: AsyncSession, user: User, business_type: str | None) -> User:
