@@ -263,7 +263,7 @@ export function AdminTopbar({ isSidebarOpen, onToggleSidebar, onOpenMobileNav }:
               <Link href="/admin/profile" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-700">
                 <UserCircle size={16} /> Profile Settings
               </Link>
-              <Link href="/settings" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-700">
+              <Link href="/admin/settings" onClick={() => setOpenMenu(null)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-700">
                 <Settings size={16} /> Settings
               </Link>
               <div className="my-1 border-t border-neutral-100" />

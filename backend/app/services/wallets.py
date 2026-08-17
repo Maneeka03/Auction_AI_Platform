@@ -132,6 +132,19 @@ async def list_buyers(
     )
     return [(row[0], row[1], row[2]) for row in rows.all()], total
 
+async def platform_account_id(session: AsyncSession) -> uuid.UUID | None:
+    """The wallet that receives platform revenue (currently: shipping insurance premiums, see
+    insurance.purchase_policy). Deterministically the earliest-created Senior Admin (super_admin)
+    account, so this doesn't depend on which admin happens to be logged in. Returns None only if
+    no super_admin exists yet (shouldn't happen past bootstrap)."""
+    return await session.scalar(
+        select(User.id)
+        .where(User.role_rows.any(UserRole.role == Role.SUPER_ADMIN))
+        .order_by(User.created_at.asc())
+        .limit(1)
+    )
+
+
 async def spendable(
     session: AsyncSession, wallet: Wallet, exclude_auction_id: uuid.UUID | None = None
 ) -> Decimal:

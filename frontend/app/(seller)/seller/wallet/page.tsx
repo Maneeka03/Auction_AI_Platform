@@ -18,6 +18,7 @@ const typeLabels: Record<WalletEntryKind, string> = {
   purchase: "Purchase",
   withdrawal: "Withdrawal",
   payout: "Sale Payout",
+  insurance_premium: "Insurance Premium",
 };
 
 function formatDate(iso: string): string {

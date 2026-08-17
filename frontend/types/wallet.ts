@@ -1,4 +1,12 @@
-export type WalletEntryKind = "deposit" | "withdrawal" | "bid_hold" | "refund" | "purchase" | "payout";
+// export type WalletEntryKind = "deposit" | "withdrawal" | "bid_hold" | "refund" | "purchase" | "payout";
+export type WalletEntryKind =
+  | "deposit"
+  | "withdrawal"
+  | "bid_hold"
+  | "refund"
+  | "purchase"
+  | "payout"
+  | "insurance_premium";
 export interface WalletSummary {
   balance: string;
   held: string;
