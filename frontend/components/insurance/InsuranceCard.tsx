@@ -7,7 +7,7 @@ import {
   listInsuranceQuotes,
   purchaseInsurance,
   selectInsuranceQuote,
-} from "@/lib/api/";
+} from "@/lib/api/insurance";
 import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import type { InsurancePolicy, InsuranceQuote } from "@/types/insurance";
@@ -36,6 +36,7 @@ export function InsuranceCard({ escrowId }: InsuranceCardProps) {
   useEffect(() => {
     if (!accessToken || !escrowId) return;
 
+    const token = accessToken;
     let cancelled = false;
 
     async function loadQuotes() {
@@ -43,7 +44,7 @@ export function InsuranceCard({ escrowId }: InsuranceCardProps) {
       setError(null);
 
       try {
-        const result = await listInsuranceQuotes(accessToken, escrowId);
+        const result = await listInsuranceQuotes(token, escrowId);
 
         if (!cancelled) {
           setQuotes(result);

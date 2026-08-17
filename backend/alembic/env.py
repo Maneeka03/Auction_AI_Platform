@@ -84,6 +84,7 @@ from app.models import category as _category  # noqa: F401
 from app.models import chat as _chat  # noqa: F401
 from app.models import comment as _comment  # noqa: F401
 from app.models import escrow as _escrow  # noqa: F401
+from app.models import insurance as _insurance  # noqa: F401
 from app.models import kyc as _kyc  # noqa: F401
 from app.models import lead as _lead  # noqa: F401
 from app.models import messaging as _messaging  # noqa: F401
@@ -95,6 +96,7 @@ from app.models import saved_search as _saved_search  # noqa: F401
 from app.models import sidebar as _sidebar  # noqa: F401
 from app.models import task as _task  # noqa: F401
 from app.models import user as _user  # noqa: F401
+from app.models import vip as _vip  # noqa: F401
 from app.models import wallet as _wallet  # noqa: F401
 from app.models import watchlist as _watchlist  # noqa: F401
 

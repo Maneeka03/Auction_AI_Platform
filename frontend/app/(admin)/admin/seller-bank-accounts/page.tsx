@@ -138,7 +138,6 @@ export default function SellerBankAccountsPage() {
     try {
       setActionLoadingId(id);
 
-      // await reviewBankDetails(accessToken, id, approve);
       await reviewBankDetails(accessToken, id, { approved: approve });
 
       setAccounts((prev) =>

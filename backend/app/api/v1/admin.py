@@ -123,15 +123,19 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DbSession, requires
 from app.core.errors import AppError
 from app.models.bank_account import SellerBankAccount
 from app.models.user import User
 from app.rbac.permissions import Access, Module, Role
-from app.schemas.bank_account import BankAccountOut
+from app.schemas.bank_account import (
+    BankAccountPage,
+    BankAccountReviewOut,
+    ReviewBankAccountRequest,
+)
 from app.schemas.portal import DocumentVerificationOut
 from app.services import portal
 
@@ -166,28 +170,52 @@ async def document_verification(
 #     rows = await session.scalars(select(SellerBankAccount))
 #     return [BankAccountOut.of(item) for item in rows]
 
-@router.get("/seller-bank-accounts", response_model=list[BankAccountOut])
+@router.get("/seller-bank-accounts", response_model=BankAccountPage)
 async def list_bank_accounts(
     session: DbSession,
     actor: CurrentUser,
-) -> list[BankAccountOut]:
+    page: int = Query(1, ge=1),
+    size: int = Query(25, ge=1, le=100),
+    verified: bool | None = Query(None),
+) -> BankAccountPage:
+    if Role.SUPER_ADMIN not in actor.roles:
+        raise AppError(
+            status.HTTP_403_FORBIDDEN,
+            "forbidden",
+            "Only super admins can access bank accounts.",
+        )
 
-    result = await session.execute(select(SellerBankAccount))
-    rows = result.scalars().all()
+    query = select(SellerBankAccount)
+    if verified is not None:
+        query = query.where(SellerBankAccount.is_verified == verified)
 
-    print("BANK ACCOUNT ROWS:", rows)
+    total = await session.scalar(select(func.count()).select_from(query.subquery()))
+    rows = await session.scalars(
+        query.order_by(SellerBankAccount.updated_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
 
-    return [BankAccountOut.of(item) for item in rows]
+    return BankAccountPage(
+        items=[BankAccountReviewOut.of(item) for item in rows],
+        total=total or 0,
+        page=page,
+        size=size,
+    )
+
 
 @router.patch(
-    "/seller-bank-accounts/{account_id}/verify",
-    response_model=BankAccountOut,
+    "/seller-bank-accounts/{account_id}",
+    response_model=BankAccountReviewOut,
 )
-async def verify_bank_account(
+async def review_bank_account(
     account_id: uuid.UUID,
+    payload: ReviewBankAccountRequest,
     session: DbSession,
     actor: CurrentUser,
-) -> BankAccountOut:
+) -> BankAccountReviewOut:
+    """Approve or reject a seller's payout bank details. Rejecting just clears the verified flag
+    so the seller can resubmit - it doesn't delete their details."""
     if Role.SUPER_ADMIN not in actor.roles:
         raise AppError(
             status.HTTP_403_FORBIDDEN,
@@ -203,8 +231,8 @@ async def verify_bank_account(
             "Bank account not found.",
         )
 
-    account.is_verified = True
+    account.is_verified = payload.approved
     await session.commit()
     await session.refresh(account)
 
-    return BankAccountOut.of(account)
+    return BankAccountReviewOut.of(account)

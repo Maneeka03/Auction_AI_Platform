@@ -11,6 +11,7 @@ import { ConnectionStatusBadge } from "@/components/bidding/ConnectionStatusBadg
 import { AdminShell } from "@/components/layout/AdminShell";
 import { listBids } from "@/lib/api/bids";
 import { awardAuctionToHighest, endAuction } from "@/lib/api/auctions";
+import { ApiRequestError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/session-context";
 import { can } from "@/lib/auth/permissions";
 import { useAuctionRoom } from "@/lib/hooks/useAuctionRoom";
@@ -53,8 +54,12 @@ export default function AdminAuctionRoomPage() {
     setActionError(null);
     try {
       await awardAuctionToHighest(accessToken, auctionId);
-    } catch {
-      setActionError("Failed to award auction. Ensure there are active bids.");
+    } catch (err) {
+      setActionError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Failed to award auction. Ensure there are active bids.",
+      );
     } finally {
       setIsActing(false);
     }
@@ -66,8 +71,10 @@ export default function AdminAuctionRoomPage() {
     setActionError(null);
     try {
       await endAuction(accessToken, auctionId);
-    } catch {
-      setActionError("Failed to end auction.");
+    } catch (err) {
+      setActionError(
+        err instanceof ApiRequestError ? err.message : "Failed to end auction.",
+      );
     } finally {
       setIsActing(false);
     }

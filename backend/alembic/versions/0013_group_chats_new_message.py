@@ -14,9 +14,44 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Tables were created by the now-missing migrations 0013-0016.
-    # The DB column for the creator FK is created_by_id (SQLAlchemy auto-naming convention).
-    # We only need to add the missing indexes here.
+    # These tables were only ever created by migrations 0013-0016 that were applied directly to
+    # the client's DB but whose files were never committed to this repo - so on any fresh database
+    # (a new dev machine, CI, a clean deploy) they don't exist yet. Create them here from the
+    # current models (app/models/messaging.py) if missing, so `alembic upgrade head` works from
+    # zero. This is a no-op against a DB that already has them from the original, uncommitted
+    # migrations.
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS group_chats (
+            id UUID PRIMARY KEY,
+            name VARCHAR(120) NOT NULL,
+            created_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS group_chat_members (
+            group_id UUID NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            PRIMARY KEY (group_id, user_id)
+        )
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS group_messages (
+            id UUID PRIMARY KEY,
+            group_id UUID NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
+            sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            body VARCHAR(2000) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
+
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_group_chats_created_by_id"
         " ON group_chats (created_by_id)"
@@ -28,6 +63,10 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_group_messages_sender_id"
         " ON group_messages (sender_id)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_group_messages_group_id"
+        " ON group_messages (group_id)"
     )
 
 
