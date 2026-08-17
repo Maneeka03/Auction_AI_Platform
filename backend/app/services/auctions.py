@@ -1,0 +1,666 @@
+import logging
+import uuid
+from datetime import UTC, datetime
+from decimal import Decimal
+
+from fastapi import status
+from redis.exceptions import RedisError
+from sqlalchemy import ColumnElement, Row, Select, and_, func, not_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core import events
+from app.core.errors import UNPROCESSABLE, AppError
+from app.models.auction import Auction, AuctionInvite, AuctionStatus, Bid
+from app.models.notification import NotificationKind
+# from app.models.property import Property, PropertyStatus
+from app.models.property import Property, PropertyStatus, PaymentMethod
+from app.models.user import User
+from app.models.wallet import WalletEntryKind
+from app.schemas.auction import AuctionOut, CreateAuctionRequest, UpdateAuctionRequest
+from app.services import escrow, notifications, properties, wallets
+
+logger = logging.getLogger(__name__)
+FROZEN_ONCE_LIVE = frozenset({"room_access", "increments"})
+AuctionRow = tuple[Auction, Decimal | None, int]
+
+_BIDS = (
+    select(
+        Bid.auction_id.label("auction_id"),
+        func.max(Bid.amount).label("current_bid"),
+        func.count(func.distinct(Bid.bidder_id)).label("bidder_count"),
+    )
+    .group_by(Bid.auction_id)
+    .subquery()
+)
+
+
+def _open() -> ColumnElement[bool]:
+    """SQL twin of Auction.status: an auction nobody has closed and whose clock has not run out."""
+    return and_(Auction.ended_at.is_(None), Auction.ends_at > func.now())
+
+
+def _status_filter(value: AuctionStatus) -> ColumnElement[bool]:
+    if value is AuctionStatus.ENDED:
+        return not_(_open())
+    if value is AuctionStatus.LIVE:
+        return and_(_open(), Auction.starts_at <= func.now())
+    return and_(_open(), Auction.starts_at > func.now())
+
+
+def _with_totals() -> Select[AuctionRow]:
+    """Carries current bid and bidder count alongside each auction, so a listing costs one query."""
+    return select(
+        Auction,
+        _BIDS.c.current_bid,
+        func.coalesce(_BIDS.c.bidder_count, 0),
+    ).outerjoin(_BIDS, _BIDS.c.auction_id == Auction.id)
+
+
+async def broadcast(session: AsyncSession, auction_id: uuid.UUID, event: str) -> None:
+    """Push the whole room state to every listener.
+
+    Sending the full auction rather than a delta means a client never has to merge partial updates,
+    and a reconnecting one is instantly correct. Call only after the change is committed.
+    """
+    auction = AuctionOut.of(*await detail(session, auction_id))
+    try:
+        await events.publish(
+            events.auction_channel(auction_id),
+            {"type": event, "auction": auction.model_dump(mode="json")},
+        )
+    except RedisError:
+        logger.warning("auction %s: %s broadcast failed", auction_id, event)
+
+
+async def release_holds(
+    session: AsyncSession, auction: Auction, winner_id: uuid.UUID | None
+) -> None:
+    """Log every losing bidder's hold coming back, and tell everyone how it went.
+
+    Settling the auction is what frees the money itself - see services/wallets.held. The winner
+    does NOT get a refund entry here: their hold converts into a PURCHASE (logged by the caller),
+    so logging a REFUND for them too would show two contradictory entries at the same instant.
+    """
+    rows = await session.execute(
+        select(Bid.bidder_id, func.max(Bid.amount))
+        .where(Bid.auction_id == auction.id)
+        .group_by(Bid.bidder_id)
+    )
+    for bidder_id, top_bid in rows.all():
+        won = bidder_id == winner_id
+        if not won:
+            wallets.log(
+                session,
+                bidder_id,
+                WalletEntryKind.REFUND,
+                wallets.hold_for(auction, top_bid),
+                auction.id,
+            )
+        notifications.push(
+            session,
+            bidder_id,
+            NotificationKind.AUCTION_WON if won else NotificationKind.AUCTION_LOST,
+            f"You {'won' if won else 'did not win'} {auction.listing.title}.",
+            auction_id=auction.id,
+        )
+
+
+async def remove(session: AsyncSession, auction_id: uuid.UUID) -> None:
+    """Delete an auction created by mistake.
+
+    Only before anyone has bid: once money is committed the record has to survive, and End is the
+    honest way to close it.
+    """
+    auction = await locked(session, auction_id)
+    if await session.scalar(
+        select(func.count()).select_from(Bid).where(Bid.auction_id == auction_id)
+    ):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "auction_has_bids",
+            "This auction has bids and cannot be deleted. End it instead.",
+        )
+
+    await session.delete(auction)
+    await session.commit()
+
+
+async def locked(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
+    """Fetch an auction FOR UPDATE. Always lock the auction before any wallet."""
+    result = await session.execute(
+        select(Auction).where(Auction.id == auction_id).with_for_update()
+    )
+    auction = result.scalar_one_or_none()
+    if auction is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "auction_not_found", "Auction not found.")
+    return auction
+
+
+async def get(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
+    auction = await session.get(Auction, auction_id)
+    if auction is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "auction_not_found", "Auction not found.")
+    return auction
+
+
+async def detail(session: AsyncSession, auction_id: uuid.UUID) -> AuctionRow:
+    row = (await session.execute(_with_totals().where(Auction.id == auction_id))).first()
+    if row is None:
+        raise AppError(status.HTTP_404_NOT_FOUND, "auction_not_found", "Auction not found.")
+    return row[0], row[1], row[2]
+
+
+async def create(session: AsyncSession, data: CreateAuctionRequest) -> Auction:
+    listing = await properties.get(session, data.property_id)
+    if listing.status is not PropertyStatus.PUBLISHED:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "property_not_published",
+            "Only a published property can be put up for auction.",
+        )
+
+    running = await session.scalar(
+        select(func.count()).select_from(Auction).where(Auction.property_id == listing.id, _open())
+    )
+    if running:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "auction_already_running",
+            "This property already has an auction that has not ended.",
+        )
+
+    auction = Auction(
+        property_id=listing.id,
+        starts_at=data.starts_at,
+        ends_at=data.ends_at,
+        opening_bid=data.opening_bid,
+        reserve_price=data.reserve_price,
+        room_access=data.room_access,
+        increments=data.increments,
+        token_percent=data.token_percent,
+    )
+    session.add(auction)
+    await session.commit()
+    await session.refresh(auction)
+    return auction
+
+
+async def paginate(
+    session: AsyncSession, page: int, size: int, auction_status: AuctionStatus | None
+) -> tuple[list[AuctionRow], int]:
+    query = _with_totals()
+    count_query = select(func.count()).select_from(Auction)
+    if auction_status:
+        condition = _status_filter(auction_status)
+        query = query.where(condition)
+        count_query = count_query.where(condition)
+
+    total = await session.scalar(count_query) or 0
+    rows = await session.execute(
+        query.order_by(Auction.starts_at.desc()).offset((page - 1) * size).limit(size)
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()], total
+
+async def paginate_public(
+    session: AsyncSession, page: int, size: int, auction_status: AuctionStatus | None
+) -> tuple[list[AuctionRow], int]:
+    """Public auction listing (no auth) — only ever shows auctions nobody has closed yet,
+    so `ended` is never a valid filter here."""
+    condition = _open()
+    if auction_status and auction_status is not AuctionStatus.ENDED:
+        condition = and_(condition, _status_filter(auction_status))
+
+    query = _with_totals().where(condition)
+    count_query = select(func.count()).select_from(Auction).where(condition)
+
+    total = await session.scalar(count_query) or 0
+    rows = await session.execute(
+        query.order_by(Auction.starts_at.asc()).offset((page - 1) * size).limit(size)
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()], total
+
+async def update(
+    session: AsyncSession, auction_id: uuid.UUID, data: UpdateAuctionRequest
+) -> Auction:
+    auction = await locked(session, auction_id)
+    if auction.status is AuctionStatus.ENDED:
+        raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
+
+    fields = data.model_dump(exclude_none=True)
+    if auction.status is not AuctionStatus.UPCOMING and FROZEN_ONCE_LIVE.intersection(fields):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "auction_live",
+            "Room access and bid increments are fixed once bidding has opened.",
+        )
+
+    new_end = fields.get("ends_at")
+    if new_end is not None and new_end <= max(auction.starts_at, datetime.now(UTC)):
+        raise AppError(
+            UNPROCESSABLE,
+            "invalid_ends_at",
+            "The closing time must be later than both the start time and now.",
+        )
+
+    for field, value in fields.items():
+        setattr(auction, field, value)
+
+    await session.commit()
+    await broadcast(session, auction_id, "updated")
+    return auction
+
+
+async def invite(session: AsyncSession, auction_id: uuid.UUID, user_ids: list[uuid.UUID]) -> None:
+    auction = await get(session, auction_id)
+    if auction.status is AuctionStatus.ENDED:
+        raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
+
+    try:
+        await session.execute(
+            pg_insert(AuctionInvite)
+            .values([{"auction_id": auction_id, "user_id": user_id} for user_id in set(user_ids)])
+            .on_conflict_do_nothing()
+        )
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise AppError(
+            UNPROCESSABLE, "unknown_user", "One or more of those users do not exist."
+        ) from None
+
+
+async def participants(session: AsyncSession, auction_id: uuid.UUID) -> list[Row]:
+    await get(session, auction_id)
+    rows = await session.execute(
+        select(
+            User.id.label("user_id"),
+            User.full_name,
+            User.email,
+            func.max(Bid.amount).label("top_bid"),
+            func.count().label("bid_count"),
+            func.max(Bid.created_at).label("last_bid_at"),
+        )
+        .join(Bid, Bid.bidder_id == User.id)
+        .where(Bid.auction_id == auction_id)
+        .group_by(User.id, User.full_name, User.email)
+        .order_by(func.max(Bid.amount).desc())
+    )
+    return list(rows.all())
+
+
+async def by_bidder(session: AsyncSession, user_id: uuid.UUID) -> list[tuple[AuctionRow, Decimal]]:
+    """Every auction this user has bid on, each paired with their own highest bid on it."""
+    mine = (
+        select(Bid.auction_id.label("auction_id"), func.max(Bid.amount).label("my_bid"))
+        .where(Bid.bidder_id == user_id)
+        .group_by(Bid.auction_id)
+        .subquery()
+    )
+    rows = await session.execute(
+        _with_totals()
+        .join(mine, mine.c.auction_id == Auction.id)
+        .add_columns(mine.c.my_bid)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [((row[0], row[1], row[2]), row[3]) for row in rows.all()]
+
+
+async def invited(session: AsyncSession, user_id: uuid.UUID) -> list[AuctionRow]:
+    """Private auctions this user has been invited to bid in."""
+    rows = await session.execute(
+        _with_totals()
+        .join(AuctionInvite, AuctionInvite.auction_id == Auction.id)
+        .where(AuctionInvite.user_id == user_id)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()]
+
+
+async def by_seller(session: AsyncSession, seller_id: uuid.UUID) -> list[AuctionRow]:
+    """Auctions running on a seller's own properties, newest first."""
+    rows = await session.execute(
+        _with_totals()
+        .join(Property, Property.id == Auction.property_id)
+        .where(Property.seller_id == seller_id)
+        .order_by(Auction.starts_at.desc())
+    )
+    return [(row[0], row[1], row[2]) for row in rows.all()]
+
+
+def _ics_dt(value: datetime) -> str:
+    return value.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+
+async def calendar_feed(session: AsyncSession) -> str:
+    """An iCalendar feed of upcoming and live auctions, for a buyer to subscribe to."""
+    rows = await session.scalars(select(Auction).where(_open()).order_by(Auction.starts_at))
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Provenix//Auctions//EN"]
+    for auction in rows:
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:{auction.id}@provenix",
+            f"DTSTART:{_ics_dt(auction.starts_at)}",
+            f"DTEND:{_ics_dt(auction.ends_at)}",
+            f"SUMMARY:{auction.listing.title}",
+            "END:VEVENT",
+        ]
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines)
+
+
+# async def award(session: AsyncSession, auction_id: uuid.UUID, bidder_id: uuid.UUID) -> Auction:
+#     """Sell to a bidder of the admin's choosing - not necessarily the highest one."""
+#     auction = await locked(session, auction_id)
+#     if auction.winner_id is not None:
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "already_awarded", "This auction has already been awarded."
+#         )
+
+#     winning_bid = await session.scalar(
+#         select(func.max(Bid.amount)).where(Bid.auction_id == auction_id, Bid.bidder_id == bidder_id)
+#     )
+#     if winning_bid is None:
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "not_a_bidder", "That user has not bid on this auction."
+#         )
+
+#     # charge = wallets.hold_for(auction, winning_bid)
+#     charge = winning_bid
+#     wallet = await wallets.locked(session, bidder_id)
+#     if charge > await wallets.spendable(session, wallet, exclude_auction_id=auction_id):
+#         raise AppError(
+#             status.HTTP_409_CONFLICT,
+#             "insufficient_funds",
+#             "The winner no longer has the funds to cover this bid.",
+#         )
+
+#     wallet.balance -= charge
+#     auction.winner_id = bidder_id
+#     auction.ended_at = datetime.now(UTC)
+#     auction.listing.status = PropertyStatus.SOLD
+#     await release_holds(session, auction, bidder_id)
+#     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
+#     if auction.listing.seller_id is not None:
+#         escrow.open_for(session, auction.listing, bidder_id, charge, auction_id)
+#     await session.commit()
+#     await broadcast(session, auction_id, "ended")
+#     return auction
+
+async def award(
+    session: AsyncSession,
+    auction_id: uuid.UUID,
+    bidder_id: uuid.UUID,
+) -> Auction:
+    """Sell to a bidder of the admin's choosing - not necessarily the highest one."""
+
+    auction = await locked(session, auction_id)
+
+    if auction.winner_id is not None:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "already_awarded",
+            "This auction has already been awarded.",
+        )
+
+    winning_bid = await session.scalar(
+        select(func.max(Bid.amount)).where(
+            Bid.auction_id == auction_id,
+            Bid.bidder_id == bidder_id,
+        )
+    )
+
+    if winning_bid is None:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "not_a_bidder",
+            "That user has not bid on this auction.",
+        )
+
+    charge = winning_bid
+
+    wallet = await wallets.locked(session, bidder_id)
+
+    if charge > await wallets.spendable(
+        session,
+        wallet,
+        exclude_auction_id=auction_id,
+    ):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "insufficient_funds",
+            "The winner no longer has the funds to cover this bid.",
+        )
+
+    # Deduct buyer's wallet
+    wallet.balance -= charge
+
+    # Finish auction
+    auction.winner_id = bidder_id
+    auction.ended_at = datetime.now(UTC)
+
+    # Mark property as sold
+    auction.listing.status = PropertyStatus.SOLD
+    auction.listing.paid_amount = charge
+    auction.listing.purchased_at = datetime.now(UTC)
+    auction.listing.payment_method = PaymentMethod.FULL
+    
+
+    # Release/refund bidder holds
+    await release_holds(session, auction, bidder_id)
+
+    # Buyer transaction
+    wallets.log(
+        session,
+        bidder_id,
+        WalletEntryKind.PURCHASE,
+        -charge,
+        auction_id,
+    )
+
+    # Create seller escrow
+    if auction.listing.seller_id is not None:
+        escrow.open_for(
+            session,
+            auction.listing,
+            bidder_id,
+            charge,
+            auction_id,
+        )
+
+    await session.commit()
+    await broadcast(session, auction_id, "ended")
+
+    return auction
+# async def award_to_highest(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
+#     """Award the auction to whoever placed the highest bid. Raises if no bids exist."""
+#     auction = await locked(session, auction_id)
+#     if auction.winner_id is not None:
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "already_awarded", "This auction has already been awarded."
+#         )
+
+#     row = (
+#         await session.execute(
+#             select(Bid.bidder_id, func.max(Bid.amount).label("top_bid"))
+#             .where(Bid.auction_id == auction_id)
+#             .group_by(Bid.bidder_id)
+#             .order_by(func.max(Bid.amount).desc())
+#             .limit(1)
+#         )
+#     ).first()
+#     if row is None:
+#         raise AppError(
+#             status.HTTP_409_CONFLICT, "no_bids", "This auction has no bids to award."
+#         )
+
+#     bidder_id, winning_bid = row.bidder_id, row.top_bid
+#     # charge = wallets.hold_for(auction, winning_bid)
+#     charge = winning_bid
+#     wallet = await wallets.locked(session, bidder_id)
+#     if charge > await wallets.spendable(session, wallet, exclude_auction_id=auction_id):
+#         raise AppError(
+#             status.HTTP_409_CONFLICT,
+#             "insufficient_funds",
+#             "The winner no longer has the funds to cover this bid.",
+#         )
+
+#     wallet.balance -= charge
+#     auction.winner_id = bidder_id
+#     auction.ended_at = datetime.now(UTC)
+#     auction.listing.status = PropertyStatus.SOLD
+#     await release_holds(session, auction, bidder_id)
+#     wallets.log(session, bidder_id, WalletEntryKind.PURCHASE, -charge, auction_id)
+#     if auction.listing.seller_id is not None:
+#         escrow.open_for(session, auction.listing, bidder_id, charge, auction_id)
+#     await session.commit()
+#     await broadcast(session, auction_id, "ended")
+#     return auction
+async def award_to_highest(
+    session: AsyncSession,
+    auction_id: uuid.UUID,
+) -> Auction:
+    """Award the auction to whoever placed the highest bid."""
+
+    auction = await locked(session, auction_id)
+
+    if auction.winner_id is not None:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "already_awarded",
+            "This auction has already been awarded.",
+        )
+
+    row = (
+        await session.execute(
+            select(
+                Bid.bidder_id,
+                func.max(Bid.amount).label("top_bid"),
+            )
+            .where(Bid.auction_id == auction_id)
+            .group_by(Bid.bidder_id)
+            .order_by(func.max(Bid.amount).desc())
+            .limit(1)
+        )
+    ).first()
+
+    if row is None:
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "no_bids",
+            "This auction has no bids to award.",
+        )
+
+    bidder_id = row.bidder_id
+    winning_bid = row.top_bid
+    charge = winning_bid
+
+    wallet = await wallets.locked(session, bidder_id)
+
+    if charge > await wallets.spendable(
+        session,
+        wallet,
+        exclude_auction_id=auction_id,
+    ):
+        raise AppError(
+            status.HTTP_409_CONFLICT,
+            "insufficient_funds",
+            "The winner no longer has the funds to cover this bid.",
+        )
+
+    # Deduct buyer wallet
+    wallet.balance -= charge
+
+    now = datetime.now(UTC)
+
+    # Finish auction
+    auction.winner_id = bidder_id
+    auction.ended_at = now
+
+    # Mark property as sold
+    listing = auction.listing
+    listing.status = PropertyStatus.SOLD
+    listing.paid_amount = charge
+    listing.purchased_at = now
+    # listing.payment_method = PaymentMethod.WALLET
+    listing.payment_method = PaymentMethod.FULL
+
+    # Release/refund bidder holds
+    await release_holds(
+        session,
+        auction,
+        bidder_id,
+    )
+
+    # Record buyer purchase
+    wallets.log(
+        session,
+        bidder_id,
+        WalletEntryKind.PURCHASE,
+        -charge,
+        auction_id,
+    )
+
+    # Create escrow for seller
+    if listing.seller_id is not None:
+        escrow.open_for(
+            session,
+            listing,
+            bidder_id,
+            charge,
+            auction_id,
+        )
+
+    await session.commit()
+
+    await broadcast(
+        session,
+        auction_id,
+        "ended",
+    )
+
+    return auction
+
+
+async def settle_expired(session: AsyncSession) -> None:
+    """Auto-award or close every auction that ran past ends_at without being manually settled."""
+    result = await session.execute(
+        select(Auction.id).where(
+            Auction.ended_at.is_(None),
+            Auction.ends_at <= func.now(),
+        )
+    )
+    ids = [row[0] for row in result.all()]
+    for auction_id in ids:
+        try:
+            await award_to_highest(session, auction_id)
+        except AppError as exc:
+            if exc.code == "no_bids":
+                try:
+                    auction = await locked(session, auction_id)
+                    if auction.ended_at is None:
+                        auction.ended_at = datetime.now(UTC)
+                        await session.commit()
+                        await broadcast(session, auction_id, "ended")
+                except Exception:
+                    logger.exception("settle_expired: no-sale close %s failed", auction_id)
+                    await session.rollback()
+            elif exc.code not in {"already_awarded", "insufficient_funds"}:
+                logger.warning("settle_expired: %s skipped (%s)", auction_id, exc.code)
+        except Exception:
+            logger.exception("settle_expired: auction %s failed", auction_id)
+            await session.rollback()
+
+
+async def end(session: AsyncSession, auction_id: uuid.UUID) -> Auction:
+    """Close a room with no sale. Every bidder's funds unlock as a result."""
+    auction = await locked(session, auction_id)
+    if auction.status is AuctionStatus.ENDED:
+        raise AppError(status.HTTP_409_CONFLICT, "auction_ended", "This auction has ended.")
+
+    auction.ended_at = datetime.now(UTC)
+    await release_holds(session, auction, None)
+    await session.commit()
+    await broadcast(session, auction_id, "ended")
+    return auction

@@ -1,0 +1,111 @@
+import uuid
+
+from fastapi import APIRouter, Depends, Query, Response, status
+from app.core.errors import AppError
+
+from app.api.deps import CurrentUser, DbSession, requires
+from app.models.kyc import KycStatus
+from app.models.user import User
+from app.rbac.permissions import Access, Module
+from app.schemas.kyc import KycOut, KycPage, KycReviewOut, ReviewKycRequest, SubmitKycRequest
+from app.schemas.upload import DocumentUrlOut
+from app.services import kyc
+
+router = APIRouter(tags=["kyc"])
+
+Reviewer = Depends(requires(Module.USER_MANAGEMENT, Access.FULL))
+
+
+@router.post("/kyc", response_model=KycOut, status_code=status.HTTP_201_CREATED)
+async def submit_kyc(payload: SubmitKycRequest, session: DbSession, actor: CurrentUser) -> KycOut:
+    submission = await kyc.submit(session, actor, payload.legal_name, payload.document_keys)
+    return KycOut.model_validate(submission)
+
+
+@router.get("/kyc/me", response_model=KycOut | None)
+async def my_kyc(session: DbSession, actor: CurrentUser, response: Response) -> KycOut | None:
+    submission = await kyc.mine(session, actor.id)
+    if submission is None:
+        response.status_code = status.HTTP_204_NO_CONTENT
+        return None
+    return KycOut.model_validate(submission)
+
+
+@router.get("/admin/kyc", response_model=KycPage)
+async def list_kyc(
+    session: DbSession,
+    page: int = Query(1, ge=1),
+    size: int = Query(25, ge=1, le=100),
+    status_filter: KycStatus | None = Query(None, alias="status"),
+    _: User = Reviewer,
+) -> KycPage:
+    items, total = await kyc.paginate(session, page, size, status_filter)
+    return KycPage(
+        items=[KycReviewOut.of(item) for item in items], total=total, page=page, size=size
+    )
+
+
+@router.patch("/admin/kyc/{submission_id}", response_model=KycOut)
+async def review_kyc(
+    submission_id: uuid.UUID,
+    payload: ReviewKycRequest,
+    session: DbSession,
+    actor: User = Reviewer,
+) -> KycOut:
+    submission = await kyc.review(session, actor, submission_id, payload.approved, payload.notes)
+    return KycOut.model_validate(submission)
+
+
+@router.get("/admin/kyc/{submission_id}/documents/{key:path}", response_model=DocumentUrlOut)
+async def get_kyc_document_url(
+    submission_id: uuid.UUID, key: str, session: DbSession, _: User = Reviewer
+) -> DocumentUrlOut:
+    url = await kyc.document_url(session, submission_id, key)
+    return DocumentUrlOut(url=url)
+
+
+@router.get("/kyc/me/documents/{key:path}", response_model=DocumentUrlOut)
+async def get_my_kyc_document_url(
+    key: str,
+    session: DbSession,
+    actor: CurrentUser,
+) -> DocumentUrlOut:
+    submission = await kyc.mine(session, actor.id)
+
+    if submission is None:
+        raise AppError(
+            status.HTTP_404_NOT_FOUND,
+            "kyc_not_found",
+            "KYC submission not found.",
+        )
+
+    actual_key = key
+
+    if ":" in actual_key:
+        actual_key = actual_key.split(":", 1)[1]
+
+    url = await kyc.document_url(session, submission.id, actual_key)
+
+    return DocumentUrlOut(url=url)
+
+@router.get("/kyc/me/documents/{key:path}", response_model=DocumentUrlOut)
+async def get_my_kyc_document_url(
+    key: str,
+    session: DbSession,
+    actor: CurrentUser,
+) -> DocumentUrlOut:
+    submission = await kyc.mine(session, actor.id)
+
+    if submission is None:
+        raise AppError(
+            status.HTTP_404_NOT_FOUND,
+            "kyc_not_found",
+            "KYC submission not found.",
+        )
+
+    actual_key = key
+    if ":" in actual_key:
+        actual_key = actual_key.split(":", 1)[1]
+
+    url = await kyc.document_url(session, submission.id, actual_key)
+    return DocumentUrlOut(url=url)

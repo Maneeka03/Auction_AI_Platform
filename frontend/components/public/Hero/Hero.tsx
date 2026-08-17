@@ -1,0 +1,115 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth/session-context";
+
+const STAFF_ROLES = ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"];
+
+const SLOGANS = [
+  "Buy, Sell & Bid on Premium Assets",
+  "Live Auctions. Real Assets. Real Trust.",
+  "Bid With Confidence, Win With Ease",
+];
+
+function useTypewriter(phrases: string[], typeSpeed = 55, deleteSpeed = 30, holdMs = 1800) {
+  const [index, setIndex] = useState(0);
+  const [text, setText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = phrases[index % phrases.length];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!deleting && text === current) {
+      timeout = setTimeout(() => setDeleting(true), holdMs);
+    } else if (deleting && text === "") {
+      setDeleting(false);
+      setIndex((i) => (i + 1) % phrases.length);
+    } else {
+      timeout = setTimeout(
+        () => setText(current.slice(0, deleting ? text.length - 1 : text.length + 1)),
+        deleting ? deleteSpeed : typeSpeed,
+      );
+    }
+
+    return () => clearTimeout(timeout);
+  }, [text, deleting, index, phrases, typeSpeed, deleteSpeed, holdMs]);
+
+  return text;
+}
+
+export default function Hero() {
+  const typed = useTypewriter(SLOGANS, 100, 50, 2200);
+  const { session } = useAuth();
+  const browseHref = (() => {
+    if (!session) return "/browse-properties";
+    if (session.roles.some((r) => STAFF_ROLES.includes(r))) return "/admin/properties";
+    if (session.roles.includes("seller")) return "/seller/dashboard";
+    return "/browse-properties";
+  })();
+
+  return (
+    <section className="relative overflow-hidden bg-[#5B2BE0]">
+      <style>{`
+        @keyframes hero-cursor-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+      `}</style>
+
+      <Image src="/images/hero/banner-bg-4.png" alt="Hero Background" fill priority className="object-contain object-center" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#4B22D1]/80 via-[#5B2BE0]/60 to-transparent" />
+      <div className="relative z-30 mx-auto flex min-h-screen max-w-[1450px] items-center justify-between px-4 sm:px-8 pt-24 sm:pt-28">
+        <div className="w-full lg:w-[45%]">
+          <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+            AI Powered Digital Auction Platform
+          </span>
+
+          <h1 className="mt-6 sm:mt-8 min-h-[2.5em] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight text-white">
+            {typed}
+            <span
+              className="ml-1 inline-block h-[0.9em] w-[4px] translate-y-1 bg-white align-middle"
+              style={{ animation: "hero-cursor-blink 1s steps(1) infinite" }}
+            />
+          </h1>
+
+          <p className="mt-5 max-w-xl text-base sm:text-lg leading-8 text-purple-100">
+            Discover verified assets, participate in live auctions,
+            and experience a secure marketplace built for buyers,
+            sellers and collectors.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link href={browseHref} className="rounded-xl bg-white px-6 sm:px-8 py-3.5 sm:py-4 font-semibold text-violet-700 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+              Browse Assets
+            </Link>
+            <Link href="/live-auctions" className="rounded-xl border border-white px-6 sm:px-8 py-3.5 sm:py-4 font-semibold text-white transition duration-300 hover:bg-white hover:text-violet-700">
+              Explore Auctions
+            </Link>
+          </div>
+          <div className="relative z-30 mt-12 sm:mt-16 flex gap-8 sm:gap-12 pb-20 sm:pb-40">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">15K+</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Assets Listed</p>
+            </div>
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">500+</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Live Auctions</p>
+            </div>
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white">99%</h2>
+              <p className="mt-1 text-sm sm:text-base text-purple-200">Secure Deals</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute right-0 bottom-10 z-20 hidden lg:block">
+        <Image src="/images/hero/banner-5.png" alt="Auction Illustration" width={900} height={900} priority className="w-[800px] max-w-none" />
+      </div>
+      <div className="absolute bottom-0 left-0 z-10 w-full">
+        <Image src="/images/hero/banner-shape-4.png" alt="Wave Shape" width={2000} height={657} priority className="w-full h-auto object-contain" />
+      </div>
+    </section>
+  );
+}

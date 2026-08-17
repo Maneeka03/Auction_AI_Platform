@@ -1,0 +1,157 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
+import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
+import { Input } from "@/components/ui/Input";  
+import { Label } from "@/components/ui/Label";
+import { ApiRequestError } from "@/lib/api/client";
+import { resolveErrorMessage } from "@/lib/api/errorMessages";
+import { useAuth } from "@/lib/auth/session-context";
+import { validateLogin, type LoginFieldErrors } from "@/lib/validation/authSchemas";
+import type { LoginPayload } from "@/types/auth";
+
+const INITIAL_VALUES: LoginPayload = { email: "", password: "" };
+
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
+  const [values, setValues] = useState<LoginPayload>(INITIAL_VALUES);
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+    setNeedsVerification(false);
+
+    const errors = validateLogin(values);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const session = await login(values);
+      const isAgencyAdmin = session.roles.includes("agency_admin");
+      const isStaff = session.roles.some((role) =>
+        ["super_admin", "auction_manager", "marketing", "legal", "finance", "gemologist", "executive"].includes(role),
+      );
+      const isSeller = session.roles.includes("seller");
+      const redirect = searchParams.get("redirect");
+
+      let destination: string;
+      if (isAgencyAdmin) {
+        destination = "/agency-admin/dashboard";
+      } else if (isStaff) {
+        if (redirect?.startsWith("/browse-properties/")) {
+          destination = redirect.replace("/browse-properties/", "/admin/properties/");
+        } else if (redirect?.startsWith("/live-auctions/")) {
+          const auctionId = redirect.slice("/live-auctions/".length);
+          const isAppraiserOrManager = session.roles.some((r) =>
+            ["auction_manager", "gemologist"].includes(r),
+          );
+          destination = isAppraiserOrManager
+            ? `/auctions?edit=${auctionId}`
+            : `/auctions/${auctionId}`;
+        } else {
+          destination = "/dashboard";
+        }
+      } else if (isSeller) {
+        destination = "/seller/dashboard";
+                // destination = "/login";
+
+      } else {
+        if (redirect?.startsWith("/browse-properties/")) {
+          const propertyId = redirect.slice("/browse-properties/".length);
+          destination = `/properties/${propertyId}?buy=true`;
+        } else {
+          destination = redirect ?? "/home";
+        }
+      }
+
+      router.push(destination);
+      router.refresh();
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setFieldErrors((prev) => ({ ...prev, ...error.fieldErrors }));
+        setFormError(resolveErrorMessage(error.code, error.message));
+        if (error.code === "email_not_verified") setNeedsVerification(true);
+      } else {
+        setFormError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div>
+      <Link
+        href="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        Back to home
+      </Link>
+      <h1 className="text-2xl font-semibold text-neutral-900">Welcome back</h1>
+      <p className="mt-1.5 text-sm text-neutral-600">Log in to continue to your account.</p>
+
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={values.email}
+            error={fieldErrors.email}
+            onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
+          />
+          <FormError id="email-error" message={fieldErrors.email} />
+        </div>
+
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter password"
+            value={values.password}
+            error={fieldErrors.password}
+            onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
+          />
+          <FormError id="password-error" message={fieldErrors.password} />
+        </div>
+
+        <div className="flex items-center justify-end">
+          <Link href="/forgot-password" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+            Forgot password?
+          </Link>
+        </div>
+
+        <FormError message={formError ?? undefined} />
+
+        <Button type="submit" isLoading={isSubmitting}>
+          Log in
+        </Button>
+      </form>
+
+      {needsVerification ? <ResendVerificationForm initialEmail={values.email} /> : null}
+
+      <p className="mt-6 text-center text-sm text-neutral-600">
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
+          Sign up
+        </Link>
+      </p>
+    </div>
+  );
+}

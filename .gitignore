@@ -1,0 +1,75 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+backend/.venv/
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.py[cod]
+*.pyo
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# VAPID keys
+backend/private_key.pem
+backend/public_key.pem
+
+# Generated package metadata
+backend/provenix_api.egg-info/
+
+# TypeScript build cache
+frontend/tsconfig.tsbuildinfo
+
+# Temporary files
+*.save
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Temporary files
+*.save
+
+# Next.js / TypeScript generated files
+.next/
+out/
+tsconfig.tsbuildinfo
+
+# Node
+node_modules/
+npm-debug.log*
